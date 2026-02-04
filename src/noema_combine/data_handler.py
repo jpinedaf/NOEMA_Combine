@@ -40,6 +40,18 @@ if not os.path.isfile(file_line_catalogue):
             f"File not found: {config['catalogues']['line_catalogue']}"
         )
 
+# handle single dish parameters
+# defaults to IRAM 30m
+telescope_sd = config.get("single_dish", "telescope", fallback="IRAM30m")
+if telescope_sd.lower() == "iram30m":
+    file_extensions_sd = ".30m"
+    telescope_class = "30M-MRT"
+elif telescope_sd.lower() == "apex":
+    file_extensions_sd = ".apex"
+    telescope_class = "APEX"
+else:
+    raise ValueError(f"Unknown single dish telescope: {telescope_sd}")
+
 
 list_source_name: NDArray[np.str_]
 list_source_key: NDArray[np.str_]
@@ -250,11 +262,11 @@ def get_30m_file(
     source_name: str, line_name: str, qn: str, Lid: str, merge: bool = False
 ) -> str:
     """
-    Function to generate the output file name for the 30m data.
+    Function to generate the output file name for the single dish data.
     The format will be:
-    {dir_30}{source_out}_{line_name}_{qn}.30m
+    {dir_30m}{source_out}_{line_name}_{qn}.{file_extensions_sd}
     of
-    {dir_30}{source_out}_{line_name}_{qn}_{Lid}.30m
+    {dir_30m}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
     depending on the merge parameter.
 
     parameters:
@@ -271,9 +283,9 @@ def get_30m_file(
         If True, the file will include the Lid information in the name.
     """
     if merge:
-        name_out = f"{source_name}_{line_name}_{qn}_{Lid}.30m"
+        name_out = f"{source_name}_{line_name}_{qn}_{Lid}{file_extensions_sd}"
     else:
-        name_out = f"{source_name}_{line_name}_{qn}.30m"
+        name_out = f"{source_name}_{line_name}_{qn}{file_extensions_sd}"
     outputfile = os.path.join(dir_30m, name_out)
     return outputfile
 
@@ -366,8 +378,8 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     # Get data files list from all input directories
     inputfiles: list[str] = []
     for input_dir in inputdir:
-        # Use glob to find all .30m files in each directory
-        files_in_dir = glob(os.path.join(input_dir, "*.30m"))
+        # Use glob to find all single dish files in each directory
+        files_in_dir = glob(os.path.join(input_dir, f"*{file_extensions_sd}"))
         inputfiles.extend(files_in_dir)
     if len(inputfiles) == 0:
         raise ValueError(f"No files found in the input directory: {inputdir}")
@@ -427,7 +439,7 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
         fb.write(f"  modify source {source_out}\n")
         # RA and Dec centers are in hrs and degrees, respectively
         fb.write(f"  modify projection = {ra0/15.0} {dec0} =\n")
-        fb.write("  modify telescope 30M-MRT\n")
+        fb.write(f"  modify telescope {telescope_class}\n")
         fb.write(f"  extract {vel_ext} velocity\n")  # cut out spectra
         fb.write(f"  set window {vel_win}\n")  # define baseline window
         fb.write("  base 1\n")  # first order baseline
