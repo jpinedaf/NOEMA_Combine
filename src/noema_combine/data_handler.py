@@ -283,9 +283,9 @@ def get_30m_file(
         If True, the file will include the Lid information in the name.
     """
     if merge:
-        name_out = f"{source_name}_{line_name}_{qn}_{Lid}.{file_extensions_sd}"
+        name_out = f"{source_name}_{line_name}_{qn}_{Lid}{file_extensions_sd}"
     else:
-        name_out = f"{source_name}_{line_name}_{qn}.{file_extensions_sd}"
+        name_out = f"{source_name}_{line_name}_{qn}{file_extensions_sd}"
     outputfile = os.path.join(dir_30m, name_out)
     return outputfile
 
