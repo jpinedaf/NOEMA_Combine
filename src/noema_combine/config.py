@@ -159,8 +159,10 @@ def get_config() -> Config:
 
 def reload_config(config_file: str | None = None):
     """Reload configuration from a specific file."""
+    global _config
     Config._instance = None  # Reset singleton
     cfg = Config()  # Creates new instance
+    _config = cfg
     if config_file:
         cfg.config.read(config_file)
     return cfg
