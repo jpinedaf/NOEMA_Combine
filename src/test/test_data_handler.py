@@ -347,7 +347,7 @@ def test_line_reduce_30m_deprecated(mock_get_source_param, mock_line_reduce_sd):
 #     mock_get_line_param.return_value = 0
 #     mock_get_sd_file.return_value = "/data/sd/B5_CO_1-0.apex"
 #     mock_glob.return_value = ["./input/file1.apex", "./input/file2.apex"]
-#     line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
+#     line_reduce_sd(source_name, line_i, qn_i)
 #     mock_file = MagicMock()
 #     mock_temp.return_value.__enter__.return_value = mock_file
 #     mock_file.name = "temp.class"

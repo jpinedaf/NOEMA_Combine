@@ -78,8 +78,8 @@ name_str: NDArray[np.str_]
 qn_str: NDArray[np.str_]
 Lid: NDArray[np.str_]
 vel_width: NDArray[np.str_]
-vel_width_30m: NDArray[np.str_]
-vel_width_base_30m: NDArray[np.str_]
+vel_width_sd: NDArray[np.str_]
+vel_width_base_sd: NDArray[np.str_]
 
 (
     line_name,
@@ -89,8 +89,8 @@ vel_width_base_30m: NDArray[np.str_]
     qn_str,
     Lid,
     vel_width,
-    vel_width_30m,
-    vel_width_base_30m,
+    vel_width_sd,
+    vel_width_base_sd,
 ) = np.loadtxt(
     file_line_catalogue,
     dtype="U",
@@ -101,10 +101,20 @@ vel_width_base_30m: NDArray[np.str_]
     usecols=(0, 1, 2, 3, 4, 9, 10, 13, 14),
     unpack=True,
 )
-# name, qn(filename), freq (GHz), mol(plot), qn(plot), Aul (log s^-1), Eul (K), cat, NOEMAbb, unit, width (km/s), 30msetup, 30mbb, 30mwidth (km/s), 30mline (km/s)
+# name, qn(filename), freq (GHz), mol(plot), qn(plot), Aul (log s^-1), Eul (K), cat, NOEMAbb, unit, width (km/s), sd_setup, sd_bb, sd_width (km/s), sd_line (km/s)
 
 uvt_dir = config["folders"]["uvt_dir"]
-dir_30m = config["folders"]["dir_30m"]
+if config.has_option("folders", "dir_30m"):
+    warnings.warn(
+        "The 'dir_30m' configuration option is deprecated and will be removed in a future version. "
+        "Use 'dir_sd' instead to specify the directory for single dish data.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    dir_sd = config["folders"]["dir_30m"]
+else:
+    dir_sd = config["folders"]["dir_sd"]
+
 uvt_dir_out = config["folders"]["uvt_dir_out"]
 inputdir_str = config["folders"]["inputdir"]
 inputdir: list[str] = [path.strip() for path in inputdir_str.split(",")]
@@ -143,8 +153,8 @@ def get_source_param(source_name: str) -> tuple[str, str, str, float, float, flo
     --------
     source_name: str
         Name of the source to reduce, e.g., "B5-IRS1"
-    source_30m: str
-        Name of the source in the 30m observations, e.g., "B5", or "B5-Box1 B5-Box2"
+    source_sd: str
+        Name of the source in the single dish (30m) observations, e.g., "B5", or "B5-Box1 B5-Box2"
     source_out: str
         Name of the source for the output files, e.g., "B5"
     ra0: float
@@ -189,7 +199,7 @@ def get_source_param(source_name: str) -> tuple[str, str, str, float, float, flo
     dec_cat: float = skycoord.dec.degree  # type: ignore
     return (
         source_name,
-        region_catalogue[source_name]["source_30m"],
+        region_catalogue[source_name]["source_sd"],
         region_catalogue[source_name]["source_out"],
         ra_cat,
         dec_cat,
@@ -265,9 +275,9 @@ def get_30m_file(
     """
     Function to generate the output file name for the single dish data.
     The format will be:
-    {dir_30m}{source_out}_{line_name}_{qn}.{file_extensions_sd}
+    {dir_sd}{source_out}_{line_name}_{qn}.{file_extensions_sd}
     of
-    {dir_30m}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
+    {dir_sd}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
     depending on the merge parameter.
 
     .. deprecated::
@@ -328,16 +338,16 @@ def get_sd_file(
         name_out = f"{source_name}_{line_name}_{qn}_{Lid}{file_extensions_sd}"
     else:
         name_out = f"{source_name}_{line_name}_{qn}{file_extensions_sd}"
-    outputfile = os.path.join(dir_30m, name_out)
+    outputfile = os.path.join(dir_sd, name_out)
     return outputfile
 
 
 def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     """
-    Function to prepare the 30m data for the merging.
-    It will ensure that the 30m data are in Tmb and in the correct frequency.
+    Function to prepare the single dish (30m) data for the merging.
+    It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
     It will use the uvt file from the NOEMA observations to regrid the
-    speactral axis of the 30m data.
+    speactral axis of the single dish (30m) data.
 
     parameters:
     -----------
@@ -359,15 +369,15 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     merge_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
 
-    file_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    merge_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    merge_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
 
-    os.system(f"rm {os.path.splitext(merge_30m)[0]}.*")
+    os.system(f"rm {os.path.splitext(merge_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
-    fb.write(f'file in "{file_30m}"\n')
-    fb.write(f'file out "{merge_30m}"  single /overwrite\n')
+    fb.write(f'file in "{file_sd}"\n')
+    fb.write(f'file out "{merge_sd}"  single /overwrite\n')
     fb.write("say [INFO] Removing old output file\n")
-    fb.write(f'say "[INFO] Making new output file: {merge_30m}"\n')
+    fb.write(f'say "[INFO] Making new output file: {merge_sd}"\n')
     fb.write("find\n")
     fb.write("set mode x auto\n")
     fb.write("set unit v f\n")
@@ -382,7 +392,7 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     fb.write("  write\n")
     fb.write("next\n")
     fb.write("sic message class s+i\n")
-    fb.write(f'file in "{merge_30m}"\n')
+    fb.write(f'file in "{merge_sd}"\n')
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
     fb.write(
@@ -469,8 +479,8 @@ def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
     qn_name_i = qn[index]
     line_name_i = line_name[index]
     freq_i = freq[index].astype(float) * 1e3
-    dv_base = vel_width_base_30m[index].astype(float)
-    dv = vel_width_30m[index].astype(float)
+    dv_base = vel_width_base_sd[index].astype(float)
+    dv = vel_width_sd[index].astype(float)
     print(vlsr + 0.1, dv + 0.1, dv_base + 0.1)
     vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_base, vlsr + dv_base)
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
@@ -550,7 +560,7 @@ def line_make_uvt(
 ) -> None:
     """
     Function to perform an exision of a targeted molecular line, from NOEMA data already calibrated.
-    It will ensure that the 30m data use the correct frequency.
+    It will ensure that the Single Dish (30m) data use the correct frequency.
     The velocity range will be defined by the vlsr and the velocity width from the line catalogue, unless explicity requested using an ad-hoc dv value or direcly providing [vmin, vmax] parameters.
 
     parameters:
