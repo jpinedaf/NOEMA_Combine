@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock  # , mock_open, call
 import numpy as np
+import warnings
 
 
 from noema_combine.data_handler import (
@@ -9,8 +10,10 @@ from noema_combine.data_handler import (
     get_uvt_window,
     get_uvt_file,
     get_30m_file,
+    get_sd_file,
     # line_prepare_merge,
-    # line_reduce_30m,
+    line_reduce_30m,
+    line_reduce_sd,
     line_make_uvt,
 )
 
@@ -242,26 +245,118 @@ def test_get_uvt_file_complex_qn():
     assert result == "/data/uvt/L09/B5_N2H+_J=1-0,F=2-1_L09.uvt"
 
 
-# Tests for get_30m_file
+# Tests for get_30m_file (deprecated, use get_sd_file instead)
 @patch("noema_combine.data_handler.dir_30m", "/path/to/30m")
 def test_get_30m_file_no_merge():
-    """Test 30m filename generation without merge"""
-    result = get_30m_file("B5", "CO", "1-0", "L09", merge=False)
-    assert result == "/path/to/30m/B5_CO_1-0.30m"
+    """Test 30m filename generation without merge - deprecated function"""
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        result = get_30m_file("B5", "CO", "1-0", "L09", merge=False)
+        assert result == "/path/to/30m/B5_CO_1-0.30m"
+        # Check that deprecation warning was issued
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "get_30m_file() is deprecated" in str(w[0].message)
 
 
 @patch("noema_combine.data_handler.dir_30m", "/path/to/30m")
 def test_get_30m_file_with_merge():
-    """Test 30m filename generation with merge"""
-    result = get_30m_file("B5", "CO", "1-0", "L09", merge=True)
-    assert result == "/path/to/30m/B5_CO_1-0_L09.30m"
+    """Test 30m filename generation with merge - deprecated function"""
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        result = get_30m_file("B5", "CO", "1-0", "L09", merge=True)
+        assert result == "/path/to/30m/B5_CO_1-0_L09.30m"
+        # Check that deprecation warning was issued
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "get_30m_file() is deprecated" in str(w[0].message)
 
 
 @patch("noema_combine.data_handler.dir_30m", "/data/30m")
 def test_get_30m_file_different_molecule():
-    """Test 30m filename with different molecule"""
-    result = get_30m_file("NGC1333", "13CO", "2-1", "L11", merge=False)
-    assert result == "/data/30m/NGC1333_13CO_2-1.30m"
+    """Test 30m filename with different molecule - deprecated function"""
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        result = get_30m_file("NGC1333", "13CO", "2-1", "L11", merge=False)
+        assert result == "/data/30m/NGC1333_13CO_2-1.30m"
+        # Check that deprecation warning was issued
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+
+
+# Tests for get_sd_file (new generic single-dish function)
+@patch("noema_combine.data_handler.dir_30m", "/path/to/sd")
+def test_get_sd_file_no_merge():
+    """Test single-dish filename generation without merge"""
+    result = get_sd_file("B5", "CO", "1-0", "L09", merge=False)
+    assert result == "/path/to/sd/B5_CO_1-0.30m"
+
+
+@patch("noema_combine.data_handler.dir_30m", "/path/to/sd")
+def test_get_sd_file_with_merge():
+    """Test single-dish filename generation with merge"""
+    result = get_sd_file("B5", "CO", "1-0", "L09", merge=True)
+    assert result == "/path/to/sd/B5_CO_1-0_L09.30m"
+
+
+@patch("noema_combine.data_handler.dir_30m", "/data/sd")
+def test_get_sd_file_different_molecule():
+    """Test single-dish filename with different molecule"""
+    result = get_sd_file("NGC1333", "13CO", "2-1", "L11", merge=False)
+    assert result == "/data/sd/NGC1333_13CO_2-1.30m"
+
+
+# Tests for line_reduce_30m (deprecated, use line_reduce_sd instead)
+@patch("noema_combine.data_handler.line_reduce_sd")
+@patch("noema_combine.data_handler.get_source_param")
+def test_line_reduce_30m_deprecated(mock_get_source_param, mock_line_reduce_sd):
+    """Test that line_reduce_30m shows deprecation warning and calls line_reduce_sd"""
+    mock_get_source_param.return_value = ("B5", "B5", "B5_out", 50.5, 30.2, 10.0)
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        line_reduce_30m("B5", "CO", "1-0")
+
+        # Check that deprecation warning was issued
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "line_reduce_30m() is deprecated" in str(w[0].message)
+        assert "line_reduce_sd()" in str(w[0].message)
+
+
+# # Tests for line_reduce_sd (new generic single-dish function)
+# @patch("noema_combine.data_handler.glob")
+# @patch("noema_combine.data_handler.tempfile.NamedTemporaryFile")
+# @patch("noema_combine.data_handler.os.system")
+# @patch("noema_combine.data_handler.get_source_param")
+# @patch("noema_combine.data_handler.get_line_param")
+# @patch("noema_combine.data_handler.get_sd_file")
+# @patch("noema_combine.data_handler.line_name", np.array(["CO"]))
+# @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
+# @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
+# @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
+# @patch("noema_combine.data_handler.vel_width_base_30m", np.array(["5.0"]))
+# @patch("noema_combine.data_handler.vel_width_30m", np.array(["3.0"]))
+# @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
+# @patch("noema_combine.data_handler.telescope_class", "APEX")
+# @patch("noema_combine.data_handler.inputdir", ["./input"])
+# @patch("noema_combine.data_handler.file_extensions_sd", ".apex")
+# def test_line_reduce_sd_basic():
+#     """Test line_reduce_sd basic functionality"""
+#     mock_get_source_param.return_value = ("B5", "B5", "B5_out", 50.5, 30.2, 10.0)
+#     mock_get_line_param.return_value = 0
+#     mock_get_sd_file.return_value = "/data/sd/B5_CO_1-0.apex"
+#     mock_glob.return_value = ["./input/file1.apex", "./input/file2.apex"]
+#     line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
+#     mock_file = MagicMock()
+#     mock_temp.return_value.__enter__.return_value = mock_file
+#     mock_file.name = "temp.class"
+
+#     # Should not raise any error
+#     line_reduce_sd("B5", "CO", "1-0")
+
+#     # Verify get_sd_file was called
+#     mock_get_sd_file.assert_called()
 
 
 # Tests for line_make_uvt
