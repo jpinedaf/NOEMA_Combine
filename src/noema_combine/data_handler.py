@@ -6,6 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 import configparser
 from importlib.resources import files
+import warnings
 from astropy.coordinates import SkyCoord  # type: ignore
 import astropy.units as u  # type: ignore
 
@@ -269,6 +270,47 @@ def get_30m_file(
     {dir_30m}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
     depending on the merge parameter.
 
+    .. deprecated::
+        This function is deprecated and will be removed in a future version.
+        Use `get_sd_file()` instead, which supports all single dish telescopes
+        (IRAM 30m, APEX, etc.) through the `telescope_sd` configuration.
+
+    parameters:
+    -----------
+    source_name: str
+        Name of the source to reduce, e.g., "B5"
+    line_name: str
+        Molecule to reduce, e.g., "CO", "13CO", "N2H+"
+    qn: str
+        Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
+    Lid: str
+        Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
+    merge: bool
+        If True, the file will include the Lid information in the name.
+    """
+    warnings.warn(
+        "get_30m_file() is deprecated and will be removed in a future version. "
+        "Use get_sd_file() instead, which supports all single dish telescopes.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_sd_file(source_name, line_name, qn, Lid, merge=merge)
+
+
+def get_sd_file(
+    source_name: str, line_name: str, qn: str, Lid: str, merge: bool = False
+) -> str:
+    """
+    Function to generate the output file name for single dish data.
+    Supports all single dish telescopes (IRAM 30m, APEX, etc.) as configured
+    in the `telescope_sd` setting.
+
+    The file format will be:
+    {dir_sd}{source_out}_{line_name}_{qn}.{file_extensions_sd}
+    or
+    {dir_sd}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
+    depending on the merge parameter.
+
     parameters:
     -----------
     source_name: str
@@ -343,7 +385,9 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     fb.write(f'file in "{merge_30m}"\n')
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
-    fb.write(f'table "{merge_uvt[:-4]}" new /NOCHECK source /like "{file_uvt}"\n')
+    fb.write(
+        f'table "{os.path.splitext(merge_uvt)[0]}" new /NOCHECK source /like "{file_uvt}"\n'
+    )
     fb.write("exit\n")
     fb.flush()
     merged_folder = os.path.dirname(merge_uvt)  # get path only
@@ -362,6 +406,38 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     Function to perform a simple data reduction ot the 30m data.
     Output spectra will be stores in Ta* scale.
     It will ensure that the 30m data use the correct frequency and coordinate center.
+
+    .. deprecated::
+        This function is deprecated and will be removed in a future version.
+        Use `line_reduce_sd()` instead, which supports all single dish telescopes
+        (IRAM 30m, APEX, etc.) through the `telescope_sd` configuration.
+
+    parameters:
+    -----------
+    source_name: str
+        Name of the source to reduce, e.g., "B5"
+    line_i: str
+        Molecule to reduce, e.g., "CO", "13CO", "N2H+"
+    qn_i: str
+        Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
+    """
+    warnings.warn(
+        "line_reduce_30m() is deprecated and will be removed in a future version. "
+        "Use line_reduce_sd() instead, which supports all single dish telescopes.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    line_reduce_sd(source_name, line_i, qn_i)
+
+
+def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
+    """
+    Function to perform simple data reduction on single dish data.
+    Supports all single dish telescopes (IRAM 30m, APEX, etc.) as configured
+    in the `telescope_sd` setting.
+
+    Output spectra will be stored in Ta* scale.
+    It will ensure that the single dish data use the correct frequency and coordinate center.
 
     parameters:
     -----------
@@ -399,14 +475,12 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_base, vlsr + dv_base)
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
     # Define output
-    file_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    # outputfile = get_30m_file(
-    #     source_out, line_name[index][0], qn[index][0])
-    os.system(f"rm {os.path.splitext(file_30m)[0]}.*")
+    file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    os.system(f"rm {os.path.splitext(file_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
-    fb.write(f"file out {file_30m}  single\n")
+    fb.write(f"file out {file_sd}  single\n")
     fb.write("say [INFO] Removing old output file\n")
-    fb.write(f'say "[INFO] Making new output file: {file_30m}"\n')
+    fb.write(f'say "[INFO] Making new output file: {file_sd}"\n')
     ####
     # Loop through files - one file per date
     for inputfile in inputfiles:
@@ -449,15 +523,15 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
         fb.write("sic message class s+i\n")
     # Now process the whole dataset available
     # Regrid and output to fits file
-    print(file_30m)
-    fb.write(f"file in {file_30m}\n")
+    print(file_sd)
+    fb.write(f"file in {file_sd}\n")
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
-    fb.write(f"table {os.path.splitext(file_30m)[0]} new /nocheck\n")
-    fb.write(f"xy_map {os.path.splitext(file_30m)[0]}\n")
+    fb.write(f"table {os.path.splitext(file_sd)[0]} new /nocheck\n")
+    fb.write(f"xy_map {os.path.splitext(file_sd)[0]}\n")
     fb.write("exit\n")
     fb.flush()
-    os.system(f"rm -f {file_30m}")
+    os.system(f"rm -f {file_sd}")
     os.system(f"class -nw @ {fb.name}")
     fb.close()
 
@@ -518,10 +592,10 @@ def line_make_uvt(
     else:
         vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_window, vlsr + dv_window)
     # remove previous version of the file
-    os.system(f"rm {file_uvt[:-4]}.*")
+    os.system(f"rm {os.path.splitext(file_uvt)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".map")
     fb.write(f'modify "{window_uvt}" /frequency {name_str[index]} {freq_i}\n')
-    fb.write(f'let name "{window_uvt[:-4]}"\n')
+    fb.write(f'let name "{os.path.splitext(window_uvt)[0]}"\n')
     fb.write("let type uvt\n")
     fb.write("go setup\n")
     fb.write(f"uv_extract /range {vel_win} velocity\n")
