@@ -1,123 +1,48 @@
 import tempfile
 import os
 from glob import glob
-import yaml
 import numpy as np
 from numpy.typing import NDArray
-import configparser
-from importlib.resources import files
 import warnings
 from astropy.coordinates import SkyCoord  # type: ignore
 import astropy.units as u  # type: ignore
 
-# from typing import Any
+# Import configuration
+from .config import get_config
 
+# Initialize configuration (loaded once)
+_cfg = get_config()
 
-config = configparser.ConfigParser()
-config_file = "config.ini"
-if os.path.isfile(config_file):
-    config.read(config_file)
-else:
-    pack_file = str(files("noema_combine").joinpath(config_file))
-    config.read(pack_file)
+# Create module-level aliases for backward compatibility
+file_source_catalogue = _cfg.file_source_catalogue
+region_catalogue = _cfg.region_catalogue
+selfcal_ext = _cfg.selfcal_ext
+uvsub_ext = _cfg.uvsub_ext
+file_line_catalogue = _cfg.file_line_catalogue
+file_extensions_sd = _cfg.file_extensions_sd
+telescope_class = _cfg.telescope_class
+ignorefiles = _cfg.ignorefiles
+line_name = _cfg.line_name
+qn = _cfg.qn
+freq = _cfg.freq
+name_str = _cfg.name_str
+qn_str = _cfg.qn_str
+Lid = _cfg.Lid
+vel_width = _cfg.vel_width
+vel_width_sd = _cfg.vel_width_sd
+vel_width_base_sd = _cfg.vel_width_base_sd
+uvt_dir = _cfg.uvt_dir
+dir_sd = _cfg.dir_sd  # Uses config with automatic deprecation warning for dir_30m
+uvt_dir_out = _cfg.uvt_dir_out
+inputdir = _cfg.inputdir
 
-file_source_catalogue = config["catalogues"]["source_catalogue"]
-if not os.path.isfile(file_source_catalogue):
-    file_source_catalogue = str(files("noema_combine").joinpath(file_source_catalogue))
-    if not os.path.isfile(file_source_catalogue):
-        raise FileNotFoundError(
-            f"File not found: {config['catalogues']['source_catalogue']}"
-        )
-
-# file extenstions from congig file
-selfcal_ext = config.get("file_extensions", "selfcal", fallback="_sc")
-uvsub_ext = config.get("file_extensions", "uvsub", fallback="_uvsub")
-
-file_line_catalogue = config["catalogues"]["line_catalogue"]
-if not os.path.isfile(file_line_catalogue):
-    file_line_catalogue = str(files("noema_combine").joinpath(file_line_catalogue))
-    if not os.path.isfile(file_line_catalogue):
-        raise FileNotFoundError(
-            f"File not found: {config['catalogues']['line_catalogue']}"
-        )
-
-# handle single dish parameters
-# defaults to IRAM 30m
-telescope_sd = config.get("single_dish", "telescope", fallback="IRAM30m")
-if telescope_sd.lower() == "iram30m":
-    file_extensions_sd = ".30m"
-    telescope_class = "30M-MRT"
-elif telescope_sd.lower() == "apex":
-    file_extensions_sd = ".apex"
-    telescope_class = "APEX"
-else:
-    raise ValueError(f"Unknown single dish telescope: {telescope_sd}")
-
-
+# Type hints for data arrays
 list_source_name: NDArray[np.str_]
 list_source_key: NDArray[np.str_]
 list_source_out: NDArray[np.str_]
 list_RA: NDArray[np.str_]
 list_Dec: NDArray[np.str_]
 list_Vlsr: NDArray[np.str_]
-
-with open(file_source_catalogue, "r") as fh:
-    region_catalogue: dict[str, dict[str, str]] = yaml.safe_load(fh)
-
-ignorefiles: list[str] = []
-for key, item in config.items("file_handling"):
-    if key.startswith("ignorefiles"):
-        ignorefiles.append(item)
-
-
-# load parameters used for the preparation of the data
-line_name: NDArray[np.str_]
-qn: NDArray[np.str_]
-freq: NDArray[np.str_]
-name_str: NDArray[np.str_]
-qn_str: NDArray[np.str_]
-Lid: NDArray[np.str_]
-vel_width: NDArray[np.str_]
-vel_width_sd: NDArray[np.str_]
-vel_width_base_sd: NDArray[np.str_]
-
-(
-    line_name,
-    qn,
-    freq,
-    name_str,
-    qn_str,
-    Lid,
-    vel_width,
-    vel_width_sd,
-    vel_width_base_sd,
-) = np.loadtxt(
-    file_line_catalogue,
-    dtype="U",
-    delimiter=",",
-    quotechar='"',
-    comments="#",
-    skiprows=1,
-    usecols=(0, 1, 2, 3, 4, 9, 10, 13, 14),
-    unpack=True,
-)
-# name, qn(filename), freq (GHz), mol(plot), qn(plot), Aul (log s^-1), Eul (K), cat, NOEMAbb, unit, width (km/s), sd_setup, sd_bb, sd_width (km/s), sd_line (km/s)
-
-uvt_dir = config["folders"]["uvt_dir"]
-if config.has_option("folders", "dir_30m"):
-    warnings.warn(
-        "The 'dir_30m' configuration option is deprecated and will be removed in a future version. "
-        "Use 'dir_sd' instead to specify the directory for single dish data.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    dir_sd = config["folders"]["dir_30m"]
-else:
-    dir_sd = config["folders"]["dir_sd"]
-
-uvt_dir_out = config["folders"]["uvt_dir_out"]
-inputdir_str = config["folders"]["inputdir"]
-inputdir: list[str] = [path.strip() for path in inputdir_str.split(",")]
 
 
 def get_line_param(line_name_i: str, qn_i: str | None) -> int:
