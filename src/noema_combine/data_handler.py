@@ -320,7 +320,7 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     file_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     merge_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
 
-    os.system(f"rm {merge_30m[:-4]}.*")
+    os.system(f"rm {os.path.splitext(merge_30m)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
     fb.write(f'file in "{file_30m}"\n')
     fb.write(f'file out "{merge_30m}"  single /overwrite\n')
@@ -402,7 +402,7 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     file_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     # outputfile = get_30m_file(
     #     source_out, line_name[index][0], qn[index][0])
-    os.system(f"rm {file_30m[:-4]}.*")
+    os.system(f"rm {os.path.splitext(file_30m)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
     fb.write(f"file out {file_30m}  single\n")
     fb.write("say [INFO] Removing old output file\n")
@@ -453,8 +453,8 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     fb.write(f"file in {file_30m}\n")
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
-    fb.write(f"table {file_30m[:-4]} new /nocheck\n")
-    fb.write(f"xy_map {file_30m[:-4]}\n")
+    fb.write(f"table {os.path.splitext(file_30m)[0]} new /nocheck\n")
+    fb.write(f"xy_map {os.path.splitext(file_30m)[0]}\n")
     fb.write("exit\n")
     fb.flush()
     os.system(f"rm -f {file_30m}")
