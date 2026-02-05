@@ -1,113 +1,48 @@
 import tempfile
 import os
 from glob import glob
-import yaml
 import numpy as np
 from numpy.typing import NDArray
-import configparser
-from importlib.resources import files
 import warnings
 from astropy.coordinates import SkyCoord  # type: ignore
 import astropy.units as u  # type: ignore
 
-# from typing import Any
+# Import configuration
+from .config import get_config
 
+# Initialize configuration (loaded once)
+_cfg = get_config()
 
-config = configparser.ConfigParser()
-config_file = "config.ini"
-if os.path.isfile(config_file):
-    config.read(config_file)
-else:
-    pack_file = str(files("noema_combine").joinpath(config_file))
-    config.read(pack_file)
+# Create module-level aliases for backward compatibility
+file_source_catalogue = _cfg.file_source_catalogue
+region_catalogue = _cfg.region_catalogue
+selfcal_ext = _cfg.selfcal_ext
+uvsub_ext = _cfg.uvsub_ext
+file_line_catalogue = _cfg.file_line_catalogue
+file_extensions_sd = _cfg.file_extensions_sd
+telescope_class = _cfg.telescope_class
+ignorefiles = _cfg.ignorefiles
+line_name = _cfg.line_name
+qn = _cfg.qn
+freq = _cfg.freq
+name_str = _cfg.name_str
+qn_str = _cfg.qn_str
+Lid = _cfg.Lid
+vel_width = _cfg.vel_width
+vel_width_sd = _cfg.vel_width_sd
+vel_width_base_sd = _cfg.vel_width_base_sd
+uvt_dir = _cfg.uvt_dir
+dir_sd = _cfg.dir_sd  # Uses config with automatic deprecation warning for dir_30m
+uvt_dir_out = _cfg.uvt_dir_out
+inputdir = _cfg.inputdir
 
-file_source_catalogue = config["catalogues"]["source_catalogue"]
-if not os.path.isfile(file_source_catalogue):
-    file_source_catalogue = str(files("noema_combine").joinpath(file_source_catalogue))
-    if not os.path.isfile(file_source_catalogue):
-        raise FileNotFoundError(
-            f"File not found: {config['catalogues']['source_catalogue']}"
-        )
-
-# file extenstions from congig file
-selfcal_ext = config.get("file_extensions", "selfcal", fallback="_sc")
-uvsub_ext = config.get("file_extensions", "uvsub", fallback="_uvsub")
-
-file_line_catalogue = config["catalogues"]["line_catalogue"]
-if not os.path.isfile(file_line_catalogue):
-    file_line_catalogue = str(files("noema_combine").joinpath(file_line_catalogue))
-    if not os.path.isfile(file_line_catalogue):
-        raise FileNotFoundError(
-            f"File not found: {config['catalogues']['line_catalogue']}"
-        )
-
-# handle single dish parameters
-# defaults to IRAM 30m
-telescope_sd = config.get("single_dish", "telescope", fallback="IRAM30m")
-if telescope_sd.lower() == "iram30m":
-    file_extensions_sd = ".30m"
-    telescope_class = "30M-MRT"
-elif telescope_sd.lower() == "apex":
-    file_extensions_sd = ".apex"
-    telescope_class = "APEX"
-else:
-    raise ValueError(f"Unknown single dish telescope: {telescope_sd}")
-
-
+# Type hints for data arrays
 list_source_name: NDArray[np.str_]
 list_source_key: NDArray[np.str_]
 list_source_out: NDArray[np.str_]
 list_RA: NDArray[np.str_]
 list_Dec: NDArray[np.str_]
 list_Vlsr: NDArray[np.str_]
-
-with open(file_source_catalogue, "r") as fh:
-    region_catalogue: dict[str, dict[str, str]] = yaml.safe_load(fh)
-
-ignorefiles: list[str] = []
-for key, item in config.items("file_handling"):
-    if key.startswith("ignorefiles"):
-        ignorefiles.append(item)
-
-
-# load parameters used for the preparation of the data
-line_name: NDArray[np.str_]
-qn: NDArray[np.str_]
-freq: NDArray[np.str_]
-name_str: NDArray[np.str_]
-qn_str: NDArray[np.str_]
-Lid: NDArray[np.str_]
-vel_width: NDArray[np.str_]
-vel_width_30m: NDArray[np.str_]
-vel_width_base_30m: NDArray[np.str_]
-
-(
-    line_name,
-    qn,
-    freq,
-    name_str,
-    qn_str,
-    Lid,
-    vel_width,
-    vel_width_30m,
-    vel_width_base_30m,
-) = np.loadtxt(
-    file_line_catalogue,
-    dtype="U",
-    delimiter=",",
-    quotechar='"',
-    comments="#",
-    skiprows=1,
-    usecols=(0, 1, 2, 3, 4, 9, 10, 13, 14),
-    unpack=True,
-)
-# name, qn(filename), freq (GHz), mol(plot), qn(plot), Aul (log s^-1), Eul (K), cat, NOEMAbb, unit, width (km/s), 30msetup, 30mbb, 30mwidth (km/s), 30mline (km/s)
-
-uvt_dir = config["folders"]["uvt_dir"]
-dir_30m = config["folders"]["dir_30m"]
-uvt_dir_out = config["folders"]["uvt_dir_out"]
-inputdir_str = config["folders"]["inputdir"]
-inputdir: list[str] = [path.strip() for path in inputdir_str.split(",")]
 
 
 def get_line_param(line_name_i: str, qn_i: str | None) -> int:
@@ -143,8 +78,8 @@ def get_source_param(source_name: str) -> tuple[str, str, str, float, float, flo
     --------
     source_name: str
         Name of the source to reduce, e.g., "B5-IRS1"
-    source_30m: str
-        Name of the source in the 30m observations, e.g., "B5", or "B5-Box1 B5-Box2"
+    source_sd: str
+        Name of the source in the single dish (30m) observations, e.g., "B5", or "B5-Box1 B5-Box2"
     source_out: str
         Name of the source for the output files, e.g., "B5"
     ra0: float
@@ -189,7 +124,7 @@ def get_source_param(source_name: str) -> tuple[str, str, str, float, float, flo
     dec_cat: float = skycoord.dec.degree  # type: ignore
     return (
         source_name,
-        region_catalogue[source_name]["source_30m"],
+        region_catalogue[source_name]["source_sd"],
         region_catalogue[source_name]["source_out"],
         ra_cat,
         dec_cat,
@@ -265,9 +200,9 @@ def get_30m_file(
     """
     Function to generate the output file name for the single dish data.
     The format will be:
-    {dir_30m}{source_out}_{line_name}_{qn}.{file_extensions_sd}
+    {dir_sd}{source_out}_{line_name}_{qn}.{file_extensions_sd}
     of
-    {dir_30m}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
+    {dir_sd}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
     depending on the merge parameter.
 
     .. deprecated::
@@ -328,16 +263,16 @@ def get_sd_file(
         name_out = f"{source_name}_{line_name}_{qn}_{Lid}{file_extensions_sd}"
     else:
         name_out = f"{source_name}_{line_name}_{qn}{file_extensions_sd}"
-    outputfile = os.path.join(dir_30m, name_out)
+    outputfile = os.path.join(dir_sd, name_out)
     return outputfile
 
 
 def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     """
-    Function to prepare the 30m data for the merging.
-    It will ensure that the 30m data are in Tmb and in the correct frequency.
+    Function to prepare the single dish (30m) data for the merging.
+    It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
     It will use the uvt file from the NOEMA observations to regrid the
-    speactral axis of the 30m data.
+    speactral axis of the single dish (30m) data.
 
     parameters:
     -----------
@@ -359,15 +294,15 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     merge_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
 
-    file_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    merge_30m = get_30m_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    merge_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
 
-    os.system(f"rm {os.path.splitext(merge_30m)[0]}.*")
+    os.system(f"rm {os.path.splitext(merge_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
-    fb.write(f'file in "{file_30m}"\n')
-    fb.write(f'file out "{merge_30m}"  single /overwrite\n')
+    fb.write(f'file in "{file_sd}"\n')
+    fb.write(f'file out "{merge_sd}"  single /overwrite\n')
     fb.write("say [INFO] Removing old output file\n")
-    fb.write(f'say "[INFO] Making new output file: {merge_30m}"\n')
+    fb.write(f'say "[INFO] Making new output file: {merge_sd}"\n')
     fb.write("find\n")
     fb.write("set mode x auto\n")
     fb.write("set unit v f\n")
@@ -382,7 +317,7 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     fb.write("  write\n")
     fb.write("next\n")
     fb.write("sic message class s+i\n")
-    fb.write(f'file in "{merge_30m}"\n')
+    fb.write(f'file in "{merge_sd}"\n')
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
     fb.write(
@@ -469,8 +404,8 @@ def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
     qn_name_i = qn[index]
     line_name_i = line_name[index]
     freq_i = freq[index].astype(float) * 1e3
-    dv_base = vel_width_base_30m[index].astype(float)
-    dv = vel_width_30m[index].astype(float)
+    dv_base = vel_width_base_sd[index].astype(float)
+    dv = vel_width_sd[index].astype(float)
     print(vlsr + 0.1, dv + 0.1, dv_base + 0.1)
     vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_base, vlsr + dv_base)
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
@@ -550,7 +485,7 @@ def line_make_uvt(
 ) -> None:
     """
     Function to perform an exision of a targeted molecular line, from NOEMA data already calibrated.
-    It will ensure that the 30m data use the correct frequency.
+    It will ensure that the Single Dish (30m) data use the correct frequency.
     The velocity range will be defined by the vlsr and the velocity width from the line catalogue, unless explicity requested using an ad-hoc dv value or direcly providing [vmin, vmax] parameters.
 
     parameters:

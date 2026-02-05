@@ -14,7 +14,7 @@ The file name is `config.ini` and an example configuration file is shown below.
     [folders]
     uvt_dir = D/
     uvt_dir_out = D30m/
-    dir_30m = 30m/
+    dir_sd = 30m/
     inputdir = raw_data/, additional_data/, more_data/
 
     [catalogues]
@@ -29,25 +29,31 @@ The file name is `config.ini` and an example configuration file is shown below.
     selfcal = _sc
     uvsub = _contsub
 
+    [single_dish]
+    telescope = iram30m
+
 The different sections of the configuration file are described below:
 
 - **[folders]**: This section specifies the directories used for input and output data. 
     - `uvt_dir`: Folder with calibrated uv-tables.
     - `uvt_dir_out`: Folder to store calibrated uv-tables output.
-    - `dir_30m`: Folder to store calibrated and gridded 30m data.
-    - `inputdir`: list of directories on which to search for raw 30m data.
+    - `dir_sd`: Folder to store calibrated and gridded single dish data.
+    - `inputdir`: list of directories on which to search for raw single dish data.
 - **[catalogues]**: This section allows you to specify the line and source catalogue files used in the analysis.
     - `line_catalogue`: File containing the line catalogue. It is a CSV file with the list of lines, spectroscopic parameters and processing parameters (see below).
     - `source_catalogue`: File containing the source catalogue. It is a YAML file with the list of sources and their properties (see below).
 - **[file_handling]**: Here, you can list files to be ignored during processing. 
   This is useful for excluding specific datasets that may not be relevant, or to avoid unreliable scans.
 - **[file_extensions]**: This section defines custom file extensions for self-calibrated and continuum-subtracted files.
+- **[single_dish]**: This section specifies the single dish telescope used for the observations. 
+  This information is important for correctly processing the single dish data, as different telescopes may have different data formats and characteristics.
+  Currently, the only supported telescopes are IRAM 30m ("iram30m") and APEX ("apex"), but support for other telescopes may be added in the future.
 
 
-Avoid Bad 30m Scans
--------------------
+Avoid Bad Single Dish Scans
+---------------------------
 
-In some cases, certain scans from the 30m telescope may be unreliable or contain bad data.
+In some cases, certain scans from the single dish telescope may be unreliable or contain bad data.
 To avoid processing these bad scans, you can specify them in the configuration file
 under the **[file_handling]** section using the ``ignorefiles_1`` and ``ignorefiles_2`` options.
 For example:
@@ -58,7 +64,7 @@ For example:
     ignorefiles_1 = raw_data/FTSOdp20220220.30m
 
 
-The following ``CLASS`` script will create a new 30m file excluding the bad scans. 
+The following ``CLASS`` script will create a new single dish file excluding the bad scans. 
 Here from scan 1 until 53, the **LO** and **UO** scans are compromised and 
 will be removed.
 The output file will be named ``FTSOdp20220220_fix.30m`` and when combined with 
@@ -126,7 +132,7 @@ an example of a source catalogue entry in YAML format is shown below:
     fig_width: 6.0
     fig_height: 6.0
     Vlsr: 9.0
-    source_30m: "L1448N"
+    source_sd: "L1448N"
     source_out: "L1448N"
     B5-IRS1:
     RA0: "03h47m41.591s"
@@ -136,12 +142,12 @@ an example of a source catalogue entry in YAML format is shown below:
     fig_width: 6.0
     fig_height: 6.0
     Vlsr: 9.0
-    source_30m: "B5-IRS1 B5-Cond*"
+    source_sd: "B5-IRS1 B5-Cond*"
     source_out: "B5-IRS1"
 
 - The ``RA0`` and ``Dec0`` fields specify the coordinates of the source to be used for the single dish cubes.
-- The ``Vlsr`` is also used for the 30m gridding, and it is in ``km/s``, it is also used to extract uv-tables around the systemic velocity of the source.
-- The ``source_30m`` field is used to identify the 30m data files corresponding to the source. It is a string that can include a list of names to be later used in the ``find /source source_30m`` within ``CLASS`` 
+- The ``Vlsr`` is also used for the single dish gridding, and it is in ``km/s``, it is also used to extract uv-tables around the systemic velocity of the source.
+- The ``source_sd`` field is used to identify the single dish data files corresponding to the source. It is a string that can include a list of names to be later used in the ``find /source source_sd`` within ``CLASS`` 
 - The ``source_out`` field specifies the name to be used for output files related to the source.
 
 Line Catalogue

@@ -64,7 +64,7 @@ def test_get_line_param_with_qn_second_entry():
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "B5",
+            "source_sd": "B5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
@@ -83,21 +83,21 @@ def test_get_source_param_found():
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
             "Vlsr": "10.0",
         },
         "B5_HMS": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "03h22m0s",
             "Dec0": "30d12m0s",
             "Vlsr": "10.0",
         },
         "B5_HMS_v2": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "03:22:00",
             "Dec0": "30:12:00",
@@ -135,14 +135,14 @@ def test_get_source_param_coordinates():
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "B5",
+            "source_sd": "B5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
             "Vlsr": "10.0",
         },
         "NGC1333": {
-            "source_30m": "NGC1333",
+            "source_sd": "NGC1333",
             "source_out": "NGC1333_out",
             "RA0": "52.3",
             "Dec0": "31.1",
@@ -161,14 +161,14 @@ def test_get_source_param_second_source():
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "B5",
+            "source_sd": "B5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
             "Vlsr": "10.0",
         },
         "NGC1333": {
-            "source_30m": "NGC1333",
+            "source_sd": "NGC1333",
             "source_out": "NGC1333_out",
             "RA0": "52.3",
             "Dec0": "31.1",
@@ -246,7 +246,7 @@ def test_get_uvt_file_complex_qn():
 
 
 # Tests for get_30m_file (deprecated, use get_sd_file instead)
-@patch("noema_combine.data_handler.dir_30m", "/path/to/30m")
+@patch("noema_combine.data_handler.dir_sd", "/path/to/30m")
 def test_get_30m_file_no_merge():
     """Test 30m filename generation without merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
@@ -259,7 +259,7 @@ def test_get_30m_file_no_merge():
         assert "get_30m_file() is deprecated" in str(w[0].message)
 
 
-@patch("noema_combine.data_handler.dir_30m", "/path/to/30m")
+@patch("noema_combine.data_handler.dir_sd", "/path/to/30m")
 def test_get_30m_file_with_merge():
     """Test 30m filename generation with merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
@@ -272,7 +272,7 @@ def test_get_30m_file_with_merge():
         assert "get_30m_file() is deprecated" in str(w[0].message)
 
 
-@patch("noema_combine.data_handler.dir_30m", "/data/30m")
+@patch("noema_combine.data_handler.dir_sd", "/data/30m")
 def test_get_30m_file_different_molecule():
     """Test 30m filename with different molecule - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
@@ -285,21 +285,21 @@ def test_get_30m_file_different_molecule():
 
 
 # Tests for get_sd_file (new generic single-dish function)
-@patch("noema_combine.data_handler.dir_30m", "/path/to/sd")
+@patch("noema_combine.data_handler.dir_sd", "/path/to/sd")
 def test_get_sd_file_no_merge():
     """Test single-dish filename generation without merge"""
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=False)
     assert result == "/path/to/sd/B5_CO_1-0.30m"
 
 
-@patch("noema_combine.data_handler.dir_30m", "/path/to/sd")
+@patch("noema_combine.data_handler.dir_sd", "/path/to/sd")
 def test_get_sd_file_with_merge():
     """Test single-dish filename generation with merge"""
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=True)
     assert result == "/path/to/sd/B5_CO_1-0_L09.30m"
 
 
-@patch("noema_combine.data_handler.dir_30m", "/data/sd")
+@patch("noema_combine.data_handler.dir_sd", "/data/sd")
 def test_get_sd_file_different_molecule():
     """Test single-dish filename with different molecule"""
     result = get_sd_file("NGC1333", "13CO", "2-1", "L11", merge=False)
@@ -347,7 +347,7 @@ def test_line_reduce_30m_deprecated(mock_get_source_param, mock_line_reduce_sd):
 #     mock_get_line_param.return_value = 0
 #     mock_get_sd_file.return_value = "/data/sd/B5_CO_1-0.apex"
 #     mock_glob.return_value = ["./input/file1.apex", "./input/file2.apex"]
-#     line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
+#     line_reduce_sd(source_name, line_i, qn_i)
 #     mock_file = MagicMock()
 #     mock_temp.return_value.__enter__.return_value = mock_file
 #     mock_file.name = "temp.class"
@@ -364,7 +364,7 @@ def test_line_reduce_30m_deprecated(mock_get_source_param, mock_line_reduce_sd):
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
@@ -406,7 +406,7 @@ def test_line_make_uvt_default_parameters(
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
@@ -451,7 +451,7 @@ def test_line_make_uvt_with_custom_dv(
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
@@ -495,7 +495,7 @@ def test_line_make_uvt_with_dv_min_max(
     "noema_combine.data_handler.region_catalogue",
     {
         "B5": {
-            "source_30m": "b5",
+            "source_sd": "b5",
             "source_out": "B5_out",
             "RA0": "50.5",
             "Dec0": "30.2",
