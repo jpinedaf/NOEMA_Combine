@@ -521,6 +521,8 @@ def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
         fb.write("next\n")
         # ! Toggle back screen informational messages
         fb.write("sic message class s+i\n")
+        # back to not setting up the source
+        fb.write("set source\n")
     # Now process the whole dataset available
     # Regrid and output to fits file
     print(file_sd)
