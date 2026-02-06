@@ -8,33 +8,52 @@ from astropy.coordinates import SkyCoord  # type: ignore
 import astropy.units as u  # type: ignore
 
 # Import configuration
-from .config import get_config
+from .config import get_config, Config
 
 # Initialize configuration (loaded once)
 _cfg = get_config()
 
-# Create module-level aliases for backward compatibility
-file_source_catalogue = _cfg.file_source_catalogue
-region_catalogue = _cfg.region_catalogue
-selfcal_ext = _cfg.selfcal_ext
-uvsub_ext = _cfg.uvsub_ext
-file_line_catalogue = _cfg.file_line_catalogue
-file_extensions_sd = _cfg.file_extensions_sd
-telescope_class = _cfg.telescope_class
-ignorefiles = _cfg.ignorefiles
-line_name = _cfg.line_name
-qn = _cfg.qn
-freq = _cfg.freq
-name_str = _cfg.name_str
-qn_str = _cfg.qn_str
-Lid = _cfg.Lid
-vel_width = _cfg.vel_width
-vel_width_sd = _cfg.vel_width_sd
-vel_width_base_sd = _cfg.vel_width_base_sd
-uvt_dir = _cfg.uvt_dir
-dir_sd = _cfg.dir_sd  # Uses config with automatic deprecation warning for dir_30m
-uvt_dir_out = _cfg.uvt_dir_out
-inputdir = _cfg.inputdir
+
+def _bind_config(cfg: Config) -> None:
+    """Bind config values to module-level aliases for backward compatibility."""
+    global _cfg
+    global file_source_catalogue, region_catalogue
+    global selfcal_ext, uvsub_ext, file_line_catalogue
+    global file_extensions_sd, telescope_class
+    global ignorefiles, line_name, qn, freq, name_str, qn_str, Lid
+    global vel_width, vel_width_sd, vel_width_base_sd
+    global uvt_dir, dir_sd, uvt_dir_out, inputdir
+
+    _cfg = cfg
+    file_source_catalogue = cfg.file_source_catalogue
+    region_catalogue = cfg.region_catalogue
+    selfcal_ext = cfg.selfcal_ext
+    uvsub_ext = cfg.uvsub_ext
+    file_line_catalogue = cfg.file_line_catalogue
+    file_extensions_sd = cfg.file_extensions_sd
+    telescope_class = cfg.telescope_class
+    ignorefiles = cfg.ignorefiles
+    line_name = cfg.line_name
+    qn = cfg.qn
+    freq = cfg.freq
+    name_str = cfg.name_str
+    qn_str = cfg.qn_str
+    Lid = cfg.Lid
+    vel_width = cfg.vel_width
+    vel_width_sd = cfg.vel_width_sd
+    vel_width_base_sd = cfg.vel_width_base_sd
+    uvt_dir = cfg.uvt_dir
+    dir_sd = cfg.dir_sd  # Uses config with automatic deprecation warning for dir_30m
+    uvt_dir_out = cfg.uvt_dir_out
+    inputdir = cfg.inputdir
+
+
+def refresh_config() -> None:
+    """Refresh module-level aliases from the current global configuration."""
+    _bind_config(get_config())
+
+
+_bind_config(_cfg)
 
 # Type hints for data arrays
 list_source_name: NDArray[np.str_]
@@ -43,6 +62,29 @@ list_source_out: NDArray[np.str_]
 list_RA: NDArray[np.str_]
 list_Dec: NDArray[np.str_]
 list_Vlsr: NDArray[np.str_]
+
+# Type hints for configuration variables
+file_source_catalogue: str
+region_catalogue: dict[str, dict[str, str]]
+selfcal_ext: str
+uvsub_ext: str
+file_line_catalogue: str
+file_extensions_sd: str
+telescope_class: str
+ignorefiles: list[str]
+line_name: NDArray[np.str_]
+qn: NDArray[np.str_]
+freq: list[str]
+name_str: NDArray[np.str_]
+qn_str: NDArray[np.str_]
+Lid: NDArray[np.str_]
+vel_width: list[str]
+vel_width_sd: list[str]
+vel_width_base_sd: list[str]
+uvt_dir: str
+dir_sd: str
+uvt_dir_out: str
+inputdir: list[str]
 
 
 def get_line_param(line_name_i: str, qn_i: str | None) -> int:
@@ -339,7 +381,7 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
 def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     """
     Function to perform a simple data reduction ot the 30m data.
-    Output spectra will be stores in Ta* scale.
+    Output spectra will be stored in Ta* scale.
     It will ensure that the 30m data use the correct frequency and coordinate center.
 
     .. deprecated::
@@ -456,8 +498,8 @@ def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
         fb.write("next\n")
         # ! Toggle back screen informational messages
         fb.write("sic message class s+i\n")
-        # back to not setting up the source
-        fb.write("set source\n")
+        # back to default settings
+        fb.write("set default\n")
     # Now process the whole dataset available
     # Regrid and output to fits file
     print(file_sd)

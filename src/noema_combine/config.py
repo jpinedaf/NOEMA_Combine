@@ -164,5 +164,11 @@ def reload_config(config_file: str | None = None):
     cfg = Config()  # Creates new instance
     _config = cfg
     if config_file:
+        # Read additional/overriding configuration from the given file
         cfg.config.read(config_file)
+        # Re-load dependent configuration sections so they reflect the updated config
+        cfg._load_catalogues()
+        cfg._load_telescope_params()
+        cfg._load_line_data()
+        cfg._load_file_handling()
     return cfg

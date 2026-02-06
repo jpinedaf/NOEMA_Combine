@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock  # , mock_open, call
 import numpy as np
 import warnings
 
-
+import noema_combine.data_handler as dh
 from noema_combine.data_handler import (
     get_line_param,
     get_source_param,
@@ -11,6 +11,7 @@ from noema_combine.data_handler import (
     get_uvt_file,
     get_30m_file,
     get_sd_file,
+    refresh_config,
     # line_prepare_merge,
     line_reduce_30m,
     line_reduce_sd,
@@ -306,10 +307,46 @@ def test_get_sd_file_different_molecule():
     assert result == "/data/sd/NGC1333_13CO_2-1.30m"
 
 
+@patch("noema_combine.data_handler.get_config")
+def test_refresh_config_updates_aliases(mock_get_config: MagicMock):
+    """Test refresh_config updates module-level aliases."""
+    cfg = MagicMock()
+    cfg.file_source_catalogue = "/catalogue/source.yml"
+    cfg.region_catalogue = {}
+    cfg.selfcal_ext = "_sc"
+    cfg.uvsub_ext = "_uvsub"
+    cfg.file_line_catalogue = "/catalogue/line.csv"
+    cfg.file_extensions_sd = ".apex"
+    cfg.telescope_class = "APEX"
+    cfg.ignorefiles = []
+    cfg.line_name = np.array(["CO"])
+    cfg.qn = np.array(["1-0"])
+    cfg.freq = np.array(["115.271"])
+    cfg.name_str = np.array(["CO(1-0)"])
+    cfg.qn_str = np.array(["1-0"])
+    cfg.Lid = np.array(["L09"])
+    cfg.vel_width = np.array(["5.0"])
+    cfg.vel_width_sd = np.array(["3.0"])
+    cfg.vel_width_base_sd = np.array(["5.0"])
+    cfg.uvt_dir = "/uvt"
+    cfg.dir_sd = "/sd"
+    cfg.uvt_dir_out = "/uvt_out"
+    cfg.inputdir = ["/input"]
+    mock_get_config.return_value = cfg
+
+    refresh_config()
+
+    assert dh.dir_sd == "/sd"
+    assert dh.telescope_class == "APEX"
+    assert dh.uvt_dir == "/uvt"
+
+
 # Tests for line_reduce_30m (deprecated, use line_reduce_sd instead)
 @patch("noema_combine.data_handler.line_reduce_sd")
 @patch("noema_combine.data_handler.get_source_param")
-def test_line_reduce_30m_deprecated(mock_get_source_param, mock_line_reduce_sd):
+def test_line_reduce_30m_deprecated(
+    mock_get_source_param: MagicMock, mock_line_reduce_sd: MagicMock
+):
     """Test that line_reduce_30m shows deprecation warning and calls line_reduce_sd"""
     mock_get_source_param.return_value = ("B5", "B5", "B5_out", 50.5, 30.2, 10.0)
 
@@ -322,6 +359,7 @@ def test_line_reduce_30m_deprecated(mock_get_source_param, mock_line_reduce_sd):
         assert issubclass(w[0].category, DeprecationWarning)
         assert "line_reduce_30m() is deprecated" in str(w[0].message)
         assert "line_reduce_sd()" in str(w[0].message)
+        mock_line_reduce_sd.assert_called_once_with("B5", "CO", "1-0")
 
 
 # # Tests for line_reduce_sd (new generic single-dish function)
