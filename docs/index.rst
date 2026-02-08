@@ -38,12 +38,12 @@ Creating uvt tables
 
      generate_uvt.rst
      
-.. Offsets and Sky rotation
-.. ^^^^^^^^^^^^^^^^^^^^^^^^
-.. .. toctree::
-..      :maxdepth: 2
+Reduce single dish data
+^^^^^^^^^^^^^^^^^^^^^^^
+.. toctree::
+     :maxdepth: 2
 
-..      offset_rotation.rst
+     reduce_single_dish.rst
 
 .. Velocity fields
 .. ^^^^^^^^^^^^^^^
@@ -53,18 +53,12 @@ Creating uvt tables
 
 ..      Velocity_fields.rst
 
-.. Streamline model
-.. ^^^^^^^^^^^^^^^^
-
-.. .. toctree::
-..      :maxdepth: 2
-
-..      streamline.rst
 
 
-.. Indices and tables
-.. ------------------
 
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
