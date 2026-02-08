@@ -94,7 +94,7 @@ For example:
     /path/to/data/B5_N2D+_1-0.lmv
 
 Preparing Data for Merging
----------------------------
+==========================
 
 After reducing single dish data, prepare it for merging with NOEMA observations using:
 

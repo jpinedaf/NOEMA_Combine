@@ -45,6 +45,14 @@ Reduce single dish data
 
      reduce_single_dish.rst
 
+
+Combination of single dish and interferometric data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. toctree::
+     :maxdepth: 2
+
+     merge_sd_interferometer.rst
+
 .. Velocity fields
 .. ^^^^^^^^^^^^^^^
 
