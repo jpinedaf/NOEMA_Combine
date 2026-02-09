@@ -37,11 +37,11 @@ Required Parameters
     Name of the source to reduce (e.g., ``"B5"``, ``"B5-IRS1"``).
     Must exist in the ``region_catalogue`` configuration.
 
-**line_i** : str
+**molecule** : str
     Molecule name (e.g., ``"CO"``, ``"N2D+"``, ``"HCN"``).
     Must exist in the line catalogue.
 
-**qn_i** : str
+**quantum_number** : str
     Quantum numbers of the line (e.g., ``"1-0"``, ``"N=1-0,J=3/2-1/2,F=1/2-1/2"``).
     Combined with the molecule name, must uniquely identify a line in the catalogue.
 
@@ -78,7 +78,7 @@ The reduction involves the following steps:
 Output Files
 ------------
 
-The reduced data will be saved to a file with the individual spectra and a re3gridded cube in the specified output directory. 
+The reduced data will be saved to a file with the individual spectra and a regridded cube in the specified output directory. 
 The filenames will follow the pattern:
 
 .. code-block:: text
@@ -107,7 +107,7 @@ This function:
 1. Reads the reduced single dish data
 2. Updates metadata to match the interferometric data
 3. Regrids the spectral axis to match NOEMA observations
-4. It updates the antenna efficiency to get the units in Main Beam Temperature (Tmb)
+4. Updates the antenna efficiency to get the units in Main Beam Temperature (Tmb)
 5. Generates the appropriate output files in the merge directory
 
 Example Workflow

@@ -56,7 +56,7 @@ This function prepares the single dish data for combination with NOEMA observati
 
 1. Reading the reduced single dish data
 2. Converting to Tmb scale
-3. Regriding the spectral axis to match NOEMA observations
+3. Regridding the spectral axis to match NOEMA observations
 4. Generating output files for further processing
 
 For detailed information about the reduction and preparation steps, see :doc:`reduce_single_dish`.

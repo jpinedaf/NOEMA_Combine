@@ -195,14 +195,14 @@ def get_uvt_file(
 
 
 def get_30m_file(
-    source_name: str, line_name: str, qn: str, Lid: str, merge: bool = False
+    source_name: str, molecule: str, quantum_number: str, Lid: str, merge: bool = False
 ) -> str:
     """
     Function to generate the output file name for the single dish data.
     The format will be:
-    {dir_sd}{source_out}_{line_name}_{qn}.{file_extensions_sd}
+    {dir_sd}{source_out}_{molecule}_{quantum_number}.{file_extensions_sd}
     of
-    {dir_sd}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
+    {dir_sd}{source_out}_{molecule}_{quantum_number}_{Lid}.{file_extensions_sd}
     depending on the merge parameter.
 
     .. deprecated::
@@ -214,9 +214,9 @@ def get_30m_file(
     -----------
     source_name: str
         Name of the source to reduce, e.g., "B5"
-    line_name: str
+    molecule: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    qn: str
+    quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     Lid: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
@@ -229,11 +229,11 @@ def get_30m_file(
         DeprecationWarning,
         stacklevel=2,
     )
-    return get_sd_file(source_name, line_name, qn, Lid, merge=merge)
+    return get_sd_file(source_name, molecule, quantum_number, Lid, merge=merge)
 
 
 def get_sd_file(
-    source_name: str, line_name: str, qn: str, Lid: str, merge: bool = False
+    source_name: str, molecule: str, quantum_number: str, Lid: str, merge: bool = False
 ) -> str:
     """
     Function to generate the output file name for single dish data.
@@ -241,18 +241,18 @@ def get_sd_file(
     in the `telescope_sd` setting.
 
     The file format will be:
-    {dir_sd}{source_out}_{line_name}_{qn}.{file_extensions_sd}
+    {dir_sd}{source_out}_{molecule}_{quantum_number}.{file_extensions_sd}
     or
-    {dir_sd}{source_out}_{line_name}_{qn}_{Lid}.{file_extensions_sd}
+    {dir_sd}{source_out}_{molecule}_{quantum_number}_{Lid}.{file_extensions_sd}
     depending on the merge parameter.
 
     parameters:
     -----------
     source_name: str
         Name of the source to reduce, e.g., "B5"
-    line_name: str
+    molecule: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    qn: str
+    quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     Lid: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
@@ -260,14 +260,16 @@ def get_sd_file(
         If True, the file will include the Lid information in the name.
     """
     if merge:
-        name_out = f"{source_name}_{line_name}_{qn}_{Lid}{file_extensions_sd}"
+        name_out = (
+            f"{source_name}_{molecule}_{quantum_number}_{Lid}{file_extensions_sd}"
+        )
     else:
-        name_out = f"{source_name}_{line_name}_{qn}{file_extensions_sd}"
+        name_out = f"{source_name}_{molecule}_{quantum_number}{file_extensions_sd}"
     outputfile = os.path.join(dir_sd, name_out)
     return outputfile
 
 
-def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
+def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> None:
     """
     Function to prepare the single dish (30m) data for the merging.
     It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
@@ -278,15 +280,15 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     -----------
     source_name: str
         Name of the source to reduce, e.g., "B5"
-    line: str
+    molecule: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    qn: str
+    quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     """
     _, _, source_out, _, _, _ = get_source_param(source_name)
 
-    print(f"[INFO] Reducing line: {line_i} with qn: {qn_i}")
-    index = get_line_param(line_i, qn_i)
+    print(f"[INFO] Reducing line: {molecule} with qn: {quantum_number}")
+    index = get_line_param(molecule, quantum_number)
     qn_name_i = qn[index]
     line_name_i = line_name[index]
     freq_i = freq[index].astype(float) * 1e3
@@ -336,7 +338,7 @@ def line_prepare_merge(source_name: str, line_i: str, qn_i: str) -> None:
     os.system(f"cp {file_uvt} {merged_folder}/.")
 
 
-def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
+def line_reduce_30m(source_name: str, molecule: str, quantum_number: str) -> None:
     """
     Function to perform a simple data reduction ot the 30m data.
     Output spectra will be stores in Ta* scale.
@@ -351,9 +353,9 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
     -----------
     source_name: str
         Name of the source to reduce, e.g., "B5"
-    line_i: str
+    molecule: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    qn_i: str
+    quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     """
     warnings.warn(
@@ -362,10 +364,10 @@ def line_reduce_30m(source_name: str, line_i: str, qn_i: str) -> None:
         DeprecationWarning,
         stacklevel=2,
     )
-    line_reduce_sd(source_name, line_i, qn_i)
+    line_reduce_sd(source_name, molecule, quantum_number)
 
 
-def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
+def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None:
     """
     Function to perform simple data reduction on single dish data.
     Supports all single dish telescopes (IRAM 30m, APEX, etc.) as configured
@@ -378,9 +380,9 @@ def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
     -----------
     source_name: str
         Name of the source to reduce, e.g., "B5"
-    line_i: str
+    molecule: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    qn_i: str
+    quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     """
     _, source_find, source_out, ra0, dec0, vlsr = get_source_param(source_name)
@@ -396,8 +398,8 @@ def line_reduce_sd(source_name: str, line_i: str, qn_i: str) -> None:
         raise ValueError(f"No files found in the input directory: {inputdir}")
 
     print(f"[INFO] Found {len(inputfiles)} files in input directories")
-    print(f"[INFO] Reducing line: {line_i} with qn: {qn_i}")
-    index = get_line_param(line_i, qn_i)
+    print(f"[INFO] Reducing line: {molecule} with qn: {quantum_number}")
+    index = get_line_param(molecule, quantum_number)
     print(source_out, line_name[index], qn[index])
     # Get frequency
     Lid_i = Lid[index]
