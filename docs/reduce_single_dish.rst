@@ -90,7 +90,7 @@ For example:
 
 .. code-block:: text
 
-    /path/to/data/B5_N2D+_1-0.{single_dish_extension}
+    /path/to/data/B5_N2D+_1-0{single_dish_extension}
     /path/to/data/B5_N2D+_1-0.lmv
 
 Preparing Data for Merging
