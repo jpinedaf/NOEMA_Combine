@@ -83,8 +83,8 @@ The filenames will follow the pattern:
 
 .. code-block:: text
 
-    {dir_sd}/{source_name}_{molecule}_{qn}.{single_dish_extension}
-    {dir_sd}/{source_name}_{molecule}_{qn}.lmv
+    {dir_sd}/{source_name}_{molecule}_{quantum_numbers}{single_dish_extension}
+    {dir_sd}/{source_name}_{molecule}_{quantum_numbers}.lmv
 
 For example:
 
