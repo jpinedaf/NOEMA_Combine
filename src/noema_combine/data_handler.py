@@ -311,7 +311,7 @@ def get_sd_file(
     return outputfile
 
 
-def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> None:
+def line_prepare_merge(source_name: str, molecule: str, quantum_number: str, Beam_Eff: float | None = None) -> None:
     """
     Function to prepare the single dish (30m) data for the merging.
     It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
