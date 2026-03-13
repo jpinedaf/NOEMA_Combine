@@ -38,6 +38,13 @@ Creating uvt tables
 
      generate_uvt.rst
      
+
+Creating 30m cubes
+^^^^^^^^^^^^^^^^^^^
+.. toctree::
+     :maxdepth: 2
+     generate_sd_cubes.rst
+     
 .. Offsets and Sky rotation
 .. ^^^^^^^^^^^^^^^^^^^^^^^^
 .. .. toctree::

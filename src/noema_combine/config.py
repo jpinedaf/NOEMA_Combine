@@ -117,6 +117,13 @@ class Config:
             if key.startswith("ignorefiles"):
                 self.ignorefiles.append(item)
 
+    def _reload_all(self):
+        """Reload all configuration sections."""
+        self._load_catalogues()
+        self._load_telescope_params()
+        self._load_line_data()
+        self._load_file_handling()
+
     @property
     def uvt_dir(self) -> str:
         """Get UVT directory."""
@@ -167,8 +174,5 @@ def reload_config(config_file: str | None = None):
         # Read additional/overriding configuration from the given file
         cfg.config.read(config_file)
         # Re-load dependent configuration sections so they reflect the updated config
-        cfg._load_catalogues()
-        cfg._load_telescope_params()
-        cfg._load_line_data()
-        cfg._load_file_handling()
+        cfg._reload_all()
     return cfg

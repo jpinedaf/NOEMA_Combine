@@ -3,7 +3,6 @@ from unittest.mock import patch, MagicMock  # , mock_open, call
 import numpy as np
 import warnings
 
-import noema_combine.data_handler as dh
 from noema_combine.data_handler import (
     get_line_param,
     get_source_param,
@@ -11,7 +10,6 @@ from noema_combine.data_handler import (
     get_uvt_file,
     get_30m_file,
     get_sd_file,
-    refresh_config,
     # line_prepare_merge,
     line_reduce_30m,
     line_reduce_sd,
@@ -248,6 +246,7 @@ def test_get_uvt_file_complex_qn():
 
 # Tests for get_30m_file (deprecated, use get_sd_file instead)
 @patch("noema_combine.data_handler.dir_sd", "/path/to/30m")
+@patch("noema_combine.data_handler.file_extensions_sd", ".30m")
 def test_get_30m_file_no_merge():
     """Test 30m filename generation without merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
@@ -261,6 +260,7 @@ def test_get_30m_file_no_merge():
 
 
 @patch("noema_combine.data_handler.dir_sd", "/path/to/30m")
+@patch("noema_combine.data_handler.file_extensions_sd", ".30m")
 def test_get_30m_file_with_merge():
     """Test 30m filename generation with merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
@@ -274,6 +274,7 @@ def test_get_30m_file_with_merge():
 
 
 @patch("noema_combine.data_handler.dir_sd", "/data/30m")
+@patch("noema_combine.data_handler.file_extensions_sd", ".30m")
 def test_get_30m_file_different_molecule():
     """Test 30m filename with different molecule - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
@@ -287,58 +288,22 @@ def test_get_30m_file_different_molecule():
 
 # Tests for get_sd_file (new generic single-dish function)
 @patch("noema_combine.data_handler.dir_sd", "/path/to/sd")
-def test_get_sd_file_no_merge():
-    """Test single-dish filename generation without merge"""
+@patch("noema_combine.data_handler.file_extensions_sd", ".30m")
+def test_get_sd_file():
+    """Test single-dish filename generation with and without merge"""
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=False)
     assert result == "/path/to/sd/B5_CO_1-0.30m"
 
-
-@patch("noema_combine.data_handler.dir_sd", "/path/to/sd")
-def test_get_sd_file_with_merge():
-    """Test single-dish filename generation with merge"""
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=True)
     assert result == "/path/to/sd/B5_CO_1-0_L09.30m"
 
 
 @patch("noema_combine.data_handler.dir_sd", "/data/sd")
+@patch("noema_combine.data_handler.file_extensions_sd", ".30m")
 def test_get_sd_file_different_molecule():
     """Test single-dish filename with different molecule"""
     result = get_sd_file("NGC1333", "13CO", "2-1", "L11", merge=False)
     assert result == "/data/sd/NGC1333_13CO_2-1.30m"
-
-
-@patch("noema_combine.data_handler.get_config")
-def test_refresh_config_updates_aliases(mock_get_config: MagicMock):
-    """Test refresh_config updates module-level aliases."""
-    cfg = MagicMock()
-    cfg.file_source_catalogue = "/catalogue/source.yml"
-    cfg.region_catalogue = {}
-    cfg.selfcal_ext = "_sc"
-    cfg.uvsub_ext = "_uvsub"
-    cfg.file_line_catalogue = "/catalogue/line.csv"
-    cfg.file_extensions_sd = ".apex"
-    cfg.telescope_class = "APEX"
-    cfg.ignorefiles = []
-    cfg.line_name = np.array(["CO"])
-    cfg.qn = np.array(["1-0"])
-    cfg.freq = np.array(["115.271"])
-    cfg.name_str = np.array(["CO(1-0)"])
-    cfg.qn_str = np.array(["1-0"])
-    cfg.Lid = np.array(["L09"])
-    cfg.vel_width = np.array(["5.0"])
-    cfg.vel_width_sd = np.array(["3.0"])
-    cfg.vel_width_base_sd = np.array(["5.0"])
-    cfg.uvt_dir = "/uvt"
-    cfg.dir_sd = "/sd"
-    cfg.uvt_dir_out = "/uvt_out"
-    cfg.inputdir = ["/input"]
-    mock_get_config.return_value = cfg
-
-    refresh_config()
-
-    assert dh.dir_sd == "/sd"
-    assert dh.telescope_class == "APEX"
-    assert dh.uvt_dir == "/uvt"
 
 
 # Tests for line_reduce_30m (deprecated, use line_reduce_sd instead)
@@ -366,32 +331,59 @@ def test_line_reduce_30m_deprecated(
 # @patch("noema_combine.data_handler.glob")
 # @patch("noema_combine.data_handler.tempfile.NamedTemporaryFile")
 # @patch("noema_combine.data_handler.os.system")
-# @patch("noema_combine.data_handler.get_source_param")
+# # @patch("noema_combine.data_handler.get_source_param")
+# @patch.dict(
+#     "noema_combine.data_handler.region_catalogue",
+#     {
+#         "B5": {
+#             "source_sd": "B5",
+#             "source_out": "B5_out",
+#             "RA0": "50.5",
+#             "Dec0": "30.2",
+#             "Vlsr": "10.0",
+#         },
+#         "NGC1333": {
+#             "source_sd": "NGC1333",
+#             "source_out": "NGC1333_out",
+#             "RA0": "52.3",
+#             "Dec0": "31.1",
+#             "Vlsr": "8.5",
+#         },
+#     },
+#     clear=True,
+# )
 # @patch("noema_combine.data_handler.get_line_param")
 # @patch("noema_combine.data_handler.get_sd_file")
 # @patch("noema_combine.data_handler.line_name", np.array(["CO"]))
 # @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
 # @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
 # @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
-# @patch("noema_combine.data_handler.vel_width_base_30m", np.array(["5.0"]))
-# @patch("noema_combine.data_handler.vel_width_30m", np.array(["3.0"]))
+# @patch("noema_combine.data_handler.vel_width_base_sd", np.array(["5.0"]))
+# @patch("noema_combine.data_handler.vel_width_sd", np.array(["3.0"]))
 # @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
 # @patch("noema_combine.data_handler.telescope_class", "APEX")
 # @patch("noema_combine.data_handler.inputdir", ["./input"])
 # @patch("noema_combine.data_handler.file_extensions_sd", ".apex")
-# def test_line_reduce_sd_basic():
+# def test_line_reduce_sd_basic(
+#     mock_glob: MagicMock,
+#     mock_get_source_param: MagicMock,
+#     mock_get_line_param: MagicMock,
+#     mock_get_sd_file: MagicMock,
+#     mock_os: MagicMock,
+#     mock_temp: MagicMock,
+# ):
 #     """Test line_reduce_sd basic functionality"""
-#     mock_get_source_param.return_value = ("B5", "B5", "B5_out", 50.5, 30.2, 10.0)
+#     # mock_get_source_param.return_value = ("B5", "B5", "B5_out", 50.5, 30.2, 10.0)
 #     mock_get_line_param.return_value = 0
 #     mock_get_sd_file.return_value = "/data/sd/B5_CO_1-0.apex"
 #     mock_glob.return_value = ["./input/file1.apex", "./input/file2.apex"]
-#     line_reduce_sd(source_name, line_i, qn_i)
+#     line_reduce_sd("B5", "CO", "1-0")
 #     mock_file = MagicMock()
-#     mock_temp.return_value.__enter__.return_value = mock_file
+#     # mock_temp.return_value.__enter__.return_value = mock_file
 #     mock_file.name = "temp.class"
 
 #     # Should not raise any error
-#     line_reduce_sd("B5", "CO", "1-0")
+#     # line_reduce_sd("B5", "CO", "1-0")
 
 #     # Verify get_sd_file was called
 #     mock_get_sd_file.assert_called()
