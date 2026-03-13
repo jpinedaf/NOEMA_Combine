@@ -6,7 +6,7 @@ L1448N:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "L1448N"
+  source_sd: "L1448N"
   source_out: "L1448N"
 B5-IRS1:
   RA0: "03h47m41.591s"
@@ -16,7 +16,7 @@ B5-IRS1:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "B5*"
+  source_sd: "B5*"
   source_out: "B5-IRS1"
 L1448IRS3A:
   RA0: "03h25m36.499s"
@@ -26,7 +26,7 @@ L1448IRS3A:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "L1448IRS3A"
+  source_sd: "L1448IRS3A"
   source_out: "L1448IRS3A"
 L1448-IRS3B:
   RA0: "03h25m36.379s"
@@ -36,7 +36,7 @@ L1448-IRS3B:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "L1448IRS3B"
+  source_sd: "L1448IRS3B"
   source_out: "L1448IRS3B"
 L1448C:
   RA0: "03h25m38.875s"
@@ -46,7 +46,7 @@ L1448C:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "L1448C"
+  source_sd: "L1448C"
   source_out: "L1448C"
 Per-emb-2:
   RA0: "03h32m17.928s"
@@ -56,7 +56,7 @@ Per-emb-2:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per-emb-2"
+  source_sd: "Per-emb-2"
   source_out: "Per-emb-2"
 Per-emb-5:
   RA0: "03h31m20.939s"
@@ -66,7 +66,7 @@ Per-emb-5:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per-emb-5"
+  source_sd: "Per-emb-5"
   source_out: "Per-emb-5"
 Per-emb-8:
   RA0: "03h44m43.982s"
@@ -76,7 +76,7 @@ Per-emb-8:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per8"
+  source_sd: "Per8"
   source_out: "Per-emb-8"
 Per-emb-18:
   RA0: "03h29m11.258s"
@@ -86,7 +86,7 @@ Per-emb-18:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per18"
+  source_sd: "Per18"
   source_out: "Per-emb-18"
 Per-emb-22:
   RA0: "03h25m22.409s"
@@ -96,7 +96,7 @@ Per-emb-22:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per22"
+  source_sd: "Per22"
   source_out: "Per-emb-22"
 Per-emb-29:
   RA0: "03h33m17.877s"
@@ -106,7 +106,7 @@ Per-emb-29:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per29"
+  source_sd: "Per29"
   source_out: "Per-emb-29"
 Per-emb-30:
   RA0: "03h33m27.303s"
@@ -116,7 +116,7 @@ Per-emb-30:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per30"
+  source_sd: "Per30"
   source_out: "Per-emb-30"
 Per-emb-50:
   RA0: "03h29m07.768s"
@@ -126,7 +126,7 @@ Per-emb-50:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per50"
+  source_sd: "Per50"
   source_out: "Per-emb-50"
 Per-emb-62:
   RA0: "03h44m12.977s"
@@ -136,7 +136,7 @@ Per-emb-62:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "Per62"
+  source_sd: "Per62"
   source_out: "Per-emb-62"
 B1-bN:
   RA0: "03h33m21.209s"
@@ -146,7 +146,7 @@ B1-bN:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "B1bN"
+  source_sd: "B1bN"
   source_out: "B1-bN"
 B1-bS:
   RA0: "03h33m21.355s"
@@ -156,7 +156,7 @@ B1-bS:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "B1bS"
+  source_sd: "B1bS"
   source_out: "B1-bS"
 HH211:
   RA0: "03h43m56.806s"
@@ -166,7 +166,7 @@ HH211:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "HH211"
+  source_sd: "HH211"
   source_out: "HH211"
 IC348MMS:
   RA0: "03h43m57.065s"
@@ -176,7 +176,7 @@ IC348MMS:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "IC348MMS"
+  source_sd: "IC348MMS"
   source_out: "IC348MMS"
 IRAS2A:
   RA0: "03h28m55.569s"
@@ -186,7 +186,7 @@ IRAS2A:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "IRAS2A"
+  source_sd: "IRAS2A"
   source_out: "IRAS2A"
 IRAS2B:
   RA0: "03h28m57.374s"
@@ -196,7 +196,7 @@ IRAS2B:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "IRAS2B"
+  source_sd: "IRAS2B"
   source_out: "IRAS2B"
 IRAS4B:
   RA0: "03h29m12.016s"
@@ -206,7 +206,7 @@ IRAS4B:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "IRAS4B"
+  source_sd: "IRAS4B"
   source_out: "IRAS4B"
 IRAS4C:
   RA0: "03h29m13.548s"
@@ -216,7 +216,7 @@ IRAS4C:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "IRAS4C"
+  source_sd: "IRAS4C"
   source_out: "IRAS4C"
 L1448NW:
   RA0: "03h25m35.671s"
@@ -226,7 +226,7 @@ L1448NW:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "L1448NW"
+  source_sd: "L1448NW"
   source_out: "L1448NW"
 SVS13A:
   RA0: "03h29m03.764s"
@@ -236,7 +236,7 @@ SVS13A:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "SVS13A"
+  source_sd: "SVS13A"
   source_out: "SVS13A"
 SVS13B:
   RA0: "03h29m03.078s"
@@ -246,30 +246,5 @@ SVS13B:
   fig_width: 6.0
   fig_height: 6.0
   Vlsr: 9.0
-  source_30m: "SVS13B"
+  source_sd: "SVS13B"
   source_out: "SVS13B"
-# sources:
-#   B5:
-#     source_key: "B5*"
-#     source_out: "B5"
-#     RA: 3.794
-#     Dec: 32.865
-#     Vlsr: 9.0
-#   NGC1333:
-#     source_key: "NGC1333*"
-#     source_out: "NGC1333"
-#     RA: 3.4862
-#     Dec: 31.23
-#     Vlsr: 5.0
-#   PER2:
-#     source_key: "PER2*"
-#     source_out: "Per-emb-2"
-#     RA: 3.53806
-#     Dec: 30.83
-#     Vlsr: 5.0
-#   CLOUDH:
-#     source_key: "CLOUDH*"
-#     source_out: "CloudH"
-#     RA: 18.9521
-#     Dec: 2.1775
-#     Vlsr: 45.0

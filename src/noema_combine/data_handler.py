@@ -8,33 +8,52 @@ from astropy.coordinates import SkyCoord  # type: ignore
 import astropy.units as u  # type: ignore
 
 # Import configuration
-from .config import get_config
+from .config import get_config, Config
 
 # Initialize configuration (loaded once)
 _cfg = get_config()
 
-# Create module-level aliases for backward compatibility
-file_source_catalogue = _cfg.file_source_catalogue
-region_catalogue = _cfg.region_catalogue
-selfcal_ext = _cfg.selfcal_ext
-uvsub_ext = _cfg.uvsub_ext
-file_line_catalogue = _cfg.file_line_catalogue
-file_extensions_sd = _cfg.file_extensions_sd
-telescope_class = _cfg.telescope_class
-ignorefiles = _cfg.ignorefiles
-line_name = _cfg.line_name
-qn = _cfg.qn
-freq = _cfg.freq
-name_str = _cfg.name_str
-qn_str = _cfg.qn_str
-Lid = _cfg.Lid
-vel_width = _cfg.vel_width
-vel_width_sd = _cfg.vel_width_sd
-vel_width_base_sd = _cfg.vel_width_base_sd
-uvt_dir = _cfg.uvt_dir
-dir_sd = _cfg.dir_sd  # Uses config with automatic deprecation warning for dir_30m
-uvt_dir_out = _cfg.uvt_dir_out
-inputdir = _cfg.inputdir
+
+def _bind_config(cfg: Config) -> None:
+    """Bind config values to module-level aliases for backward compatibility."""
+    global _cfg
+    global file_source_catalogue, region_catalogue
+    global selfcal_ext, uvsub_ext, file_line_catalogue
+    global file_extensions_sd, telescope_class
+    global ignorefiles, line_name, qn, freq, name_str, qn_str, Lid
+    global vel_width, vel_width_sd, vel_width_base_sd
+    global uvt_dir, dir_sd, uvt_dir_out, inputdir
+
+    _cfg = cfg
+    file_source_catalogue = cfg.file_source_catalogue
+    region_catalogue = cfg.region_catalogue
+    selfcal_ext = cfg.selfcal_ext
+    uvsub_ext = cfg.uvsub_ext
+    file_line_catalogue = cfg.file_line_catalogue
+    file_extensions_sd = cfg.file_extensions_sd
+    telescope_class = cfg.telescope_class
+    ignorefiles = cfg.ignorefiles
+    line_name = cfg.line_name
+    qn = cfg.qn
+    freq = cfg.freq
+    name_str = cfg.name_str
+    qn_str = cfg.qn_str
+    Lid = cfg.Lid
+    vel_width = cfg.vel_width
+    vel_width_sd = cfg.vel_width_sd
+    vel_width_base_sd = cfg.vel_width_base_sd
+    uvt_dir = cfg.uvt_dir
+    dir_sd = cfg.dir_sd  # Uses config with automatic deprecation warning for dir_30m
+    uvt_dir_out = cfg.uvt_dir_out
+    inputdir = cfg.inputdir
+
+
+def refresh_config() -> None:
+    """Refresh module-level aliases from the current global configuration."""
+    _bind_config(get_config())
+
+
+_bind_config(_cfg)
 
 # Type hints for data arrays
 list_source_name: NDArray[np.str_]
@@ -43,6 +62,29 @@ list_source_out: NDArray[np.str_]
 list_RA: NDArray[np.str_]
 list_Dec: NDArray[np.str_]
 list_Vlsr: NDArray[np.str_]
+
+# Type hints for configuration variables
+file_source_catalogue: str
+region_catalogue: dict[str, dict[str, str]]
+selfcal_ext: str
+uvsub_ext: str
+file_line_catalogue: str
+file_extensions_sd: str
+telescope_class: str
+ignorefiles: list[str]
+line_name: NDArray[np.str_]
+qn: NDArray[np.str_]
+freq: list[str]
+name_str: NDArray[np.str_]
+qn_str: NDArray[np.str_]
+Lid: NDArray[np.str_]
+vel_width: list[str]
+vel_width_sd: list[str]
+vel_width_base_sd: list[str]
+uvt_dir: str
+dir_sd: str
+uvt_dir_out: str
+inputdir: list[str]
 
 
 def get_line_param(line_name_i: str, qn_i: str | None) -> int:
@@ -269,12 +311,12 @@ def get_sd_file(
     return outputfile
 
 
-def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> None:
+def line_prepare_merge(source_name: str, molecule: str, quantum_number: str, Beam_Eff: float | None = None) -> None:
     """
     Function to prepare the single dish (30m) data for the merging.
     It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
     It will use the uvt file from the NOEMA observations to regrid the
-    speactral axis of the single dish (30m) data.
+    spectral axis of the single dish (30m) data.
 
     parameters:
     -----------
@@ -284,6 +326,8 @@ def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> 
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
     quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
+    Beam_Eff: float | None
+        Beam efficiency to convert from Ta* to Tmb. If None, the conversion will be done using the Ruze formula with the parameters in CLASS.
     """
     _, _, source_out, _, _, _ = get_source_param(source_name)
 
@@ -291,7 +335,7 @@ def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> 
     index = get_line_param(molecule, quantum_number)
     qn_name_i = qn[index]
     line_name_i = line_name[index]
-    freq_i = freq[index].astype(float) * 1e3
+    freq_i = float(freq[index]) * 1e3
     Lid_i = Lid[index]
     file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     merge_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
@@ -315,7 +359,10 @@ def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> 
     fb.write(f"  modify linename {name_str[index]}\n")
     fb.write(f"  modify freq {freq_i}\n")
     fb.write(f"  modify source {source_out}\n")
-    fb.write("  modify Beam_Eff /Ruze\n")
+    if Beam_Eff is not None:
+        fb.write(f"  modify Beam_Eff {Beam_Eff}\n")
+    else:
+        fb.write("  modify Beam_Eff /Ruze\n")
     fb.write("  write\n")
     fb.write("next\n")
     fb.write("sic message class s+i\n")
@@ -340,8 +387,8 @@ def line_prepare_merge(source_name: str, molecule: str, quantum_number: str) -> 
 
 def line_reduce_30m(source_name: str, molecule: str, quantum_number: str) -> None:
     """
-    Function to perform a simple data reduction ot the 30m data.
-    Output spectra will be stores in Ta* scale.
+    Function to perform a simple data reduction of the 30m data.
+    Output spectra will be stored in Ta* scale.
     It will ensure that the 30m data use the correct frequency and coordinate center.
 
     .. deprecated::
@@ -405,9 +452,9 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     Lid_i = Lid[index]
     qn_name_i = qn[index]
     line_name_i = line_name[index]
-    freq_i = freq[index].astype(float) * 1e3
-    dv_base = vel_width_base_sd[index].astype(float)
-    dv = vel_width_sd[index].astype(float)
+    freq_i = float(freq[index]) * 1e3
+    dv_base = float(vel_width_base_sd[index])
+    dv = float(vel_width_sd[index])
     print(vlsr + 0.1, dv + 0.1, dv_base + 0.1)
     vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_base, vlsr + dv_base)
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
@@ -458,8 +505,8 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
         fb.write("next\n")
         # ! Toggle back screen informational messages
         fb.write("sic message class s+i\n")
-        # back to not setting up the source
-        fb.write("set source\n")
+        # back to default settings
+        fb.write("set default\n")
     # Now process the whole dataset available
     # Regrid and output to fits file
     print(file_sd)
@@ -486,9 +533,9 @@ def line_make_uvt(
     dv_max: float | None = None,
 ) -> None:
     """
-    Function to perform an exision of a targeted molecular line, from NOEMA data already calibrated.
+    Function to perform an excision of a targeted molecular line, from NOEMA data already calibrated.
     It will ensure that the Single Dish (30m) data use the correct frequency.
-    The velocity range will be defined by the vlsr and the velocity width from the line catalogue, unless explicity requested using an ad-hoc dv value or direcly providing [vmin, vmax] parameters.
+    The velocity range will be defined by the vlsr and the velocity width from the line catalogue, unless explicitly requested using an ad-hoc dv value or direcly providing [vmin, vmax] parameters.
 
     parameters:
     -----------
@@ -518,11 +565,11 @@ def line_make_uvt(
     Lid_i = Lid[index]
     qn_name_i = qn[index]
     line_name_i = line_name[index]
-    freq_i = freq[index].astype(float) * 1e3
+    freq_i = float(freq[index]) * 1e3
     if dv is not None:
         dv_window = dv
     else:
-        dv_window = vel_width[index].astype(float)
+        dv_window = float(vel_width[index])
     #
     window_uvt = get_uvt_window(source_out, Lid_i, uvsub=uvsub, selfcal=selfcal)
     file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)

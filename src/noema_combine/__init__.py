@@ -5,5 +5,6 @@ from .data_handler import (  # type: ignore[reportUnusedImport]
     line_reduce_sd,
     get_sd_file,
     get_30m_file,  # deprecated, use get_sd_file instead
+    refresh_config,
 )
 from .generate_uvt import process_source  # type: ignore[reportUnusedImport]
