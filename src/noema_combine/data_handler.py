@@ -74,13 +74,13 @@ telescope_class: str
 ignorefiles: list[str]
 line_name: NDArray[np.str_]
 qn: NDArray[np.str_]
-freq: list[str]
+freq: NDArray[np.str_]
 name_str: NDArray[np.str_]
 qn_str: NDArray[np.str_]
 Lid: NDArray[np.str_]
-vel_width: list[str]
-vel_width_sd: list[str]
-vel_width_base_sd: list[str]
+vel_width: NDArray[np.str_]
+vel_width_sd: NDArray[np.str_]
+vel_width_base_sd: NDArray[np.str_]
 uvt_dir: str
 dir_sd: str
 uvt_dir_out: str
@@ -311,7 +311,9 @@ def get_sd_file(
     return outputfile
 
 
-def line_prepare_merge(source_name: str, molecule: str, quantum_number: str, Beam_Eff: float | None = None) -> None:
+def line_prepare_merge(
+    source_name: str, molecule: str, quantum_number: str, beam_eff: float | None = None
+) -> None:
     """
     Function to prepare the single dish (30m) data for the merging.
     It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
@@ -326,7 +328,7 @@ def line_prepare_merge(source_name: str, molecule: str, quantum_number: str, Bea
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
     quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
-    Beam_Eff: float | None
+    beam_eff: float | None
         Beam efficiency to convert from Ta* to Tmb. If None, the conversion will be done using the Ruze formula with the parameters in CLASS.
     """
     _, _, source_out, _, _, _ = get_source_param(source_name)
@@ -359,8 +361,8 @@ def line_prepare_merge(source_name: str, molecule: str, quantum_number: str, Bea
     fb.write(f"  modify linename {name_str[index]}\n")
     fb.write(f"  modify freq {freq_i}\n")
     fb.write(f"  modify source {source_out}\n")
-    if Beam_Eff is not None:
-        fb.write(f"  modify Beam_Eff {Beam_Eff}\n")
+    if beam_eff is not None:
+        fb.write(f"  modify Beam_Eff {beam_eff}\n")
     else:
         fb.write("  modify Beam_Eff /Ruze\n")
     fb.write("  write\n")
@@ -535,7 +537,7 @@ def line_make_uvt(
     """
     Function to perform an excision of a targeted molecular line, from NOEMA data already calibrated.
     It will ensure that the Single Dish (30m) data use the correct frequency.
-    The velocity range will be defined by the vlsr and the velocity width from the line catalogue, unless explicitly requested using an ad-hoc dv value or direcly providing [vmin, vmax] parameters.
+    The velocity range will be defined by the vlsr and the velocity width from the line catalogue, unless explicitly requested using an ad-hoc dv value or directly providing [vmin, vmax] parameters.
 
     parameters:
     -----------

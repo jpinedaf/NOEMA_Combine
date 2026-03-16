@@ -4,8 +4,8 @@ Reducing Single Dish Data
 Overview
 --------
 
-The NOEMA Combine package provides functionality to reduce single dish data from various telescopes (IRAM 30m, APEX, etc.) and prepare it for merging with interferometric observations. 
-This guide walks through the process of reducing single dish data for a specific molecular line.
+The NOEMA Combine package provides functionality to reduce single dish data from various telescopes (IRAM 30m, APEX, etc.) and prepare it for merging with interferometric observations.
+This guide walks through the full workflow for a specific molecular line: reduction to Ta* and preparation of merge-ready products in Tmb.
 
 Basic Usage
 -----------
@@ -29,6 +29,8 @@ This function will:
 3. Extract spectra at the specified frequency with the correct velocity window
 4. Apply baseline subtraction and coordinate centering
 5. Regrid the data and output to the configured format
+
+The reduction step supports all configured single-dish telescopes (including IRAM 30m and APEX) and produces reduced spectra on the Ta* scale.
 
 Required Parameters
 -------------------
@@ -73,7 +75,7 @@ The reduction involves the following steps:
    - Modifies observation parameters (line name, frequency, source name, coordinate centering)
    - Extracts spectra within the velocity window
    - Applies first-order baseline subtraction
-5. **Output Generation**: Creates output files in the configured format (CLASS and lmv)
+5. **Output Generation**: Creates output files in the configured format (CLASS, lmv, and tab)
 
 Output Files
 ------------
@@ -85,6 +87,7 @@ The filenames will follow the pattern:
 
     {dir_sd}/{source_name}_{molecule}_{quantum_numbers}{single_dish_extension}
     {dir_sd}/{source_name}_{molecule}_{quantum_numbers}.lmv
+    {dir_sd}/{source_name}_{molecule}_{quantum_numbers}.tab
 
 For example:
 
@@ -92,6 +95,13 @@ For example:
 
     /path/to/data/B5_N2D+_1-0{single_dish_extension}
     /path/to/data/B5_N2D+_1-0.lmv
+
+For IRAM 30m and APEX setups, typical reduced output names are:
+
+.. code-block:: text
+
+    /path/to/data/B5-IRS1_CO_1_0.30m
+    /path/to/data/B5-IRS1_CO_1_0.apex
 
 Preparing Data for Merging
 ==========================
@@ -105,10 +115,14 @@ After reducing single dish data, prepare it for merging with NOEMA observations 
 This function:
 
 1. Reads the reduced single dish data
-2. Updates metadata to match the interferometric data
-3. Regrids the spectral axis to match NOEMA observations
-4. Updates the antenna efficiency to get the units in Main Beam Temperature (Tmb)
-5. Generates the appropriate output files in the merge directory
+2. Resolves source and line metadata from the configured catalogues
+3. Builds output names for single-dish and merged products
+4. Rewrites CLASS headers (line name, frequency, source, and beam efficiency)
+5. Regrids the spectral axis to match NOEMA observations
+6. Updates antenna efficiency to convert to Main Beam Temperature (Tmb)
+7. Generates merge-ready output files in the merge directory, including a ``.tab`` product matched to the NOEMA UV table spectral setup
+
+By default, beam efficiency is computed with the Ruze formula. You can override this with the ``beam_eff`` argument.
 
 Example Workflow
 ----------------
@@ -123,7 +137,10 @@ Example Workflow
     # Step 2: Prepare for merging
     noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0")
 
-    # Task complete - data is ready for merging with NOEMA observations
+    # Optional: user-defined beam efficiency instead of default Ruze estimate
+    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", beam_eff=0.82)
+
+    # Task complete - data is ready for MAPPING uv_merge
 
 Troubleshooting
 ---------------

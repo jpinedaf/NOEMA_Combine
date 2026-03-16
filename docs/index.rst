@@ -2,9 +2,8 @@ Welcome to NOEMA_Combine's documentation!
 ==========================================
 
 The ``NOEMA_Combine`` is a Python package to help wiht the processing of 30m and NOEMA data. 
-It is developed to support the different kinematical analysis of 
-cubes and some sections of the package can improve the analysis 
-of data cubes with `SpectralCube <https://spectral-cube.readthedocs.io>`_.
+It is developed to support a simple data reduction of single-dish cubes and the combination of single-dish and interferometric data in the GILDAS package.
+Notice, that is designed for single-dish mapping observed with position switching and not for frequency switching (this could be further configured and developed as a new feature).
 
 
 The package includes the following functionalities:
@@ -39,16 +38,6 @@ Creating uvt tables
      generate_uvt.rst
      
 
-Creating 30m cubes
-^^^^^^^^^^^^^^^^^^^
-.. toctree::
-     :maxdepth: 2
-     generate_sd_cubes.rst
-     
-.. Offsets and Sky rotation
-.. ^^^^^^^^^^^^^^^^^^^^^^^^
-.. .. toctree::
-..      :maxdepth: 2
 Reduce single dish data
 ^^^^^^^^^^^^^^^^^^^^^^^
 .. toctree::
@@ -63,15 +52,6 @@ Combination of single dish and interferometric data
      :maxdepth: 2
 
      merge_sd_interferometer.rst
-
-.. Velocity fields
-.. ^^^^^^^^^^^^^^^
-
-.. .. toctree::
-..      :maxdepth: 2
-
-..      Velocity_fields.rst
-
 
 
 
