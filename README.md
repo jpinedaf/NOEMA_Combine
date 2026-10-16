@@ -7,9 +7,21 @@
 
 
 
-Python functions to handle NOEMA and 30-m data.
+Python functions for processing NOEMA and 30-m data.
 
-It includes functions to process stand-alone 30-m and NOEMA data, as well as, functions to prepare 30-m data for combination with NOEMA.
+The package supports:
+
+- generating calibrated UV tables;
+- reducing single-dish data and preparing it for combination;
+- configurable continuum subtraction;
+- dirty imaging and CLEAN imaging for wideband and narrowband windows;
+- UV restoration of continuum images, cubes, and individual lines; and
+- preparation of combined NOEMA and single-dish products.
+
+The imaging workflows generate GILDAS scripts and execute them by default.
+Pass ``execute=False`` to generate scripts without running GILDAS. Folder and
+filename conventions are configured through naming templates; see
+``docs/configuration_files.rst`` and ``examples/config_raw_scripts.ini``.
 
 
 Credits

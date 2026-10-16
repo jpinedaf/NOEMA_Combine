@@ -32,22 +32,122 @@ The file name is `config.ini` and an example configuration file is shown below.
     [single_dish]
     telescope = iram30m
 
+    [gildas]
+    # Execution is enabled by default. Set execute = false for script-only mode.
+    execute = true
+    workdir = .
+    class = class
+    mapping = mapping
+    clic = clic
+
+    [project]
+    # Optional base directory for relative folders and naming roots.
+    base_dir = .
+
+    [naming]
+    # Optional: override folder and filename conventions.  If omitted,
+    # existing NOEMA_Combine filenames are used.
+    uvt_file = {root}/{config}/wideband/{source}_{config}_{lid}_{line}_{selfcal}{contsub}.uvt
+    narrowband_folder = {root}/{config}/narrowband/{lid_pair}
+    search_uvt = {root}/{config}/**/{source}*{lid}*{line}*.uvt
+
 The different sections of the configuration file are described below:
 
-- **[folders]**: This section specifies the directories used for input and output data. 
-    - `uvt_dir`: Folder with calibrated uv-tables.
-    - `uvt_dir_out`: Folder to store calibrated uv-tables output.
-    - `dir_sd`: Folder to store calibrated and gridded single dish data.
-    - `inputdir`: list of directories on which to search for raw single dish data.
-- **[catalogues]**: This section allows you to specify the line and source catalogue files used in the analysis.
-    - `line_catalogue`: File containing the line catalogue. It is a CSV file with the list of lines, spectroscopic parameters and processing parameters (see below).
-    - `source_catalogue`: File containing the source catalogue. It is a YAML file with the list of sources and their properties (see below).
-- **[file_handling]**: Here, you can list files to be ignored during processing. 
+Complete example configurations are provided in the repository:
+
+- ``examples/config.ini`` preserves the original package configuration.
+- ``examples/config_raw_scripts.ini`` configures the directory and filename
+  conventions used by the scripts in ``raw_scripts/``.
+- ``examples/config_narrowband_lid_folder.ini`` shows the ``l10``, ``L10``,
+  and ``l10l49`` narrowband folder variants.
+
+- **[folders]**: Specifies the directories used for input and output data.
+  ``uvt_dir`` contains calibrated UV tables, ``uvt_dir_out`` stores merged UV
+  tables, ``dir_sd`` stores single-dish products, and ``inputdir`` lists the
+  directories searched for raw single-dish data.
+- **[project]**: Defines the optional base directory used to resolve
+  relative paths. When an explicit configuration file is loaded, relative paths
+  are resolved from that file's directory unless ``base_dir`` overrides it.
+- **[catalogues]**: Selects the line catalogue (CSV) and source catalogue (YAML).
+- **[file_handling]**: Lists files to ignore during processing.
   This is useful for excluding specific datasets that may not be relevant, or to avoid unreliable scans.
-- **[file_extensions]**: This section defines custom file extensions for self-calibrated and continuum-subtracted files.
+- **[file_extensions]**: Defines suffixes for self-calibrated and continuum-subtracted files.
 - **[single_dish]**: This section specifies the single dish telescope used for the observations. 
   This information is important for correctly processing the single dish data, as different telescopes may have different data formats and characteristics.
   Currently, the only supported telescopes are IRAM 30m ("iram30m") and APEX ("apex"), but support for other telescopes may be added in the future.
+- **[gildas]**: This optional section controls execution of generated GILDAS
+  scripts. Execution defaults to enabled. Set ``execute = false`` to retain
+  generated scripts without running them. ``class``, ``mapping``, and ``clic``
+  can override executable names, and ``timeout`` can set a limit in seconds.
+- **[continuum_subtraction]**: Optional per-window wideband channel ranges.
+  **[narrowband_channel_ranges]** provides the equivalent narrowband values.
+  If no explicit range, range file, or configured value is available, generated
+  scripts use ``uv_baseline 0``.
+- **[narrowband]**: The optional ``windows`` value selects the narrowband
+  windows processed by the workflow. If omitted, the standard l009l048 through
+  l047l086 window list is used.
+- **[imaging]**: Controls dirty-image window selection. The default includes
+  all four wideband windows and the configured narrowband windows.
+- **[cleaning]**: Controls clean-image weighting, threshold, iteration count,
+  and primary-beam correction. The raw-script-compatible defaults use natural
+  weighting, a five-times-noise threshold, and 20 percent beam truncation.
+  Wideband and narrowband cleaning use the same Python workflow; their paths
+  can be customized independently with the ``clean_*`` and
+  ``clean_*_narrowband`` naming templates.
+- **Restoration** uses ``restore_image(...)`` for continuum images, cubes, and
+  individual lines. It reads the UV data, clean image, and clean components,
+  then writes a UV-restored image and optional primary-beam-corrected products.
+  The ``restore_*``, ``restore_*_narrowband``, and ``restore_*_line`` templates
+  control the three input paths, output paths, and generated script names.
+
+Running generated scripts directly
+----------------------------------
+
+Generated scripts can also be run directly from Python:
+
+.. code-block:: python
+
+    from noema_combine import GildasRunner
+    from noema_combine.config import get_config
+
+    runner = get_config().make_gildas_runner(execute=False)
+    result = runner.run_mapping("say 'script generated'")
+    print(result.script_path)
+
+``GildasRunner`` defaults to execution enabled. Passing ``execute=False``
+selects script-only mode and retains the generated script for inspection.
+
+Naming templates
+----------------
+
+The optional **[naming]** section controls folder and filename templates. Existing
+  configurations need no changes. Templates may use ``root``, ``source``, ``config``,
+  ``line``, ``qn``, ``lid``, ``lid_lower``, ``lid_upper``, ``lid_folder``, ``lid_pair``,
+  ``window``, ``window_upper``, ``window_folder``, ``selfcal``, ``contsub``, and
+  ``product_type``. Output templates should describe exact filenames;
+  ``search_*`` templates may contain wildcards for locating files made by older scripts.
+The active templates can be inspected with ``get_config().naming.describe()`` and
+representative paths can be previewed with ``get_config().naming.preview(...)``.
+
+For a complete structured preview, use the public Python function:
+
+.. code-block:: python
+
+    from noema_combine import preview_naming
+
+    paths = preview_naming(
+        source="B5",
+        config="CD",
+        line="CO",
+        qn="1-0",
+        lid="l10",
+        lid_pair="l10l49",
+        config_file="examples/config_raw_scripts.ini",
+    )
+
+The returned dictionary contains the resolved base directory, active templates,
+output paths, and search patterns. Supplying ``config_file`` uses an isolated
+configuration and does not change the package's active global configuration.
 
 
 Avoid Bad Single Dish Scans
