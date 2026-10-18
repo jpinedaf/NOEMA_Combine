@@ -14,6 +14,7 @@ from noema_combine.workflows import make_dirty_images
 from noema_combine.workflows import make_clean_images
 from noema_combine.workflows import restore_image
 from noema_combine.naming import FileNaming, preview_naming
+from noema_combine import create_config, create_line_catalogue, create_project_files
 
 
 def test_default_naming_matches_package_paths():
@@ -22,6 +23,32 @@ def test_default_naming_matches_package_paths():
     assert naming.uvt_file("B5", "CO", "1-0", "L09") == "D/L09/B5_CO_1-0_L09.uvt"
     assert naming.uvt_window("B5", "L09") == "D/L09/B5_L09_contsub.uvt"
     assert naming.sd_file("B5", "CO", "1-0", "L09") == "30m/B5_CO_1-0.30m"
+
+
+def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path: Path):
+    config_path = tmp_path / "config.ini"
+    assert create_config("propstar", config_path) == config_path
+    content = config_path.read_text()
+    assert "style = propstar" in content
+    assert "restore_output = {root}/{config}config/" in content
+    with pytest.raises(FileExistsError):
+        create_config("propstar", config_path)
+
+
+def test_create_line_catalogue_and_project_files(tmp_path: Path):
+    catalogue_path = tmp_path / "lines.csv"
+    assert create_line_catalogue("3mm", catalogue_path) == catalogue_path
+    assert "#name" in catalogue_path.read_text()
+    with pytest.raises(FileExistsError):
+        create_line_catalogue("3mm", catalogue_path)
+
+    config_path, default_catalogue = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "project.ini",
+        catalogue_filename=tmp_path / "project_lines.csv",
+    )
+    assert config_path.exists()
+    assert default_catalogue.exists()
 
 
 def test_custom_case_and_pair_templates():

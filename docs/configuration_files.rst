@@ -61,6 +61,33 @@ Complete example configurations are provided in the repository:
 - ``examples/config_narrowband_lid_folder.ini`` shows the ``l10``, ``L10``,
   and ``l10l49`` narrowband folder variants.
 
+Create project files
+--------------------
+
+Create an editable configuration and starter line catalogue in the current
+directory instead of copying files from the package installation:
+
+.. code-block:: python
+
+    from noema_combine import create_project_files
+
+    config_path, catalogue_path = create_project_files(style="prodige")
+
+The supported configuration profiles are ``"prodige"`` and ``"propstar"``.
+They provide different starter naming conventions while retaining the same
+workflow options. The line catalogue is created separately so it can be
+selected or replaced without changing the configuration profile:
+
+.. code-block:: python
+
+    from noema_combine import create_config, create_line_catalogue
+
+    create_config(style="propstar", filename="config.ini")
+    create_line_catalogue(catalogue="miop", filename="line_catalogue.csv")
+
+Existing files are protected by default. Pass ``overwrite=True`` only when a
+replacement is intended.
+
 - **[folders]**: Specifies the directories used for input and output data.
   ``uvt_dir`` contains calibrated UV tables, ``uvt_dir_out`` stores merged UV
   tables, ``dir_sd`` stores single-dish products, and ``inputdir`` lists the

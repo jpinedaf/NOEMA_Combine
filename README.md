@@ -23,6 +23,18 @@ Pass ``execute=False`` to generate scripts without running GILDAS. Folder and
 filename conventions are configured through naming templates; see
 ``docs/configuration_files.rst`` and ``examples/config_raw_scripts.ini``.
 
+To start a project without copying files from the installation, create an
+editable configuration and starter line catalogue in the current directory:
+
+```python
+from noema_combine import create_project_files
+
+create_project_files(style="prodige")
+```
+
+Use `style="propstar"` for the ProPStar naming profile. Existing files are
+protected unless `overwrite=True` is supplied.
+
 
 Credits
 -------
