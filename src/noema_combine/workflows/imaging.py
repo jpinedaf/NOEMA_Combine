@@ -293,7 +293,9 @@ def restore_image(
         else set()
     )
     if selected is None:
-        selected = list(cfg.imaging_wideband_windows) + list(cfg.narrowband_windows)
+        selected = list(cfg.imaging_wideband_windows) + (
+            list(cfg.narrowband_windows) if cfg.imaging_include_narrowband else []
+        )
     selected = [normalize_window(value) for value in selected]
     if product_type != "line":
         unknown = sorted(set(selected) - (wideband | narrowband))
