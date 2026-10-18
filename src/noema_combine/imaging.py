@@ -100,7 +100,7 @@ def build_restore_image_script(
         "sic message mapping s-i",
         f"define header H '{clean_image}' Read",
         "let map_cell 'H%convert[3,2]*60*60*360/2/pi'",
-        "let map_size 'H%dim[1]' 'H%dim[1]'",
+        "let map_size 'H%dim[1]' 'H%dim[2]'",
         "delete /VARIABLE H",
         "let map_weight robust",
         "let map_robust 1",
