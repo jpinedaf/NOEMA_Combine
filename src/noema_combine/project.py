@@ -91,6 +91,8 @@ def create_config(
     style: ConfigStyle = "prodige",
     filename: str | Path = "config.ini",
     *,
+    catalogue: Literal["3mm", "miop"] | None = None,
+    catalogue_filename: str | Path | None = None,
     overwrite: bool = False,
 ) -> Path:
     """Create an editable style-specific configuration in the current folder."""
@@ -101,8 +103,17 @@ def create_config(
         "uvt_dir": "uvts", "uvt_dir_out": "merged_uvts", "dir_sd": "30m",
         "inputdir": "raw_data",
     }
+    selected_catalogue = catalogue or ("miop" if selected == "prodige" else "3mm")
+    if selected_catalogue not in {"3mm", "miop"}:
+        raise ValueError("catalogue must be '3mm' or 'miop'")
     parser["catalogues"] = {
-        "line_catalogue": "line_catalogue_3mm.csv",
+        "line_catalogue": str(
+            catalogue_filename
+            or {
+                "3mm": "line_catalogue_3mm.csv",
+                "miop": "line_catalogue_MIOP.csv",
+            }[selected_catalogue]
+        ),
         "source_catalogue": "region_catalogue.yml",
     }
     parser["file_handling"] = {}
@@ -149,15 +160,25 @@ def create_line_catalogue(
 def create_project_files(
     style: ConfigStyle = "prodige",
     *,
-    catalogue: Literal["3mm", "miop"] = "3mm",
+    catalogue: Literal["3mm", "miop"] | None = None,
     config_filename: str | Path = "config.ini",
     catalogue_filename: str | Path | None = None,
     overwrite: bool = False,
 ) -> tuple[Path, Path]:
     """Create a configuration and starter line catalogue together."""
-    config = create_config(style, config_filename, overwrite=overwrite)
+    selected_style = _check_style(style)
+    selected_catalogue = catalogue or ("miop" if selected_style == "prodige" else "3mm")
+    config = create_config(
+        selected_style,
+        config_filename,
+        catalogue=selected_catalogue,
+        catalogue_filename=catalogue_filename,
+        overwrite=overwrite,
+    )
     try:
-        catalogue_path = create_line_catalogue(catalogue, catalogue_filename, overwrite=overwrite)
+        catalogue_path = create_line_catalogue(
+            selected_catalogue, catalogue_filename, overwrite=overwrite
+        )
     except Exception:
         if not overwrite:
             config.unlink(missing_ok=True)

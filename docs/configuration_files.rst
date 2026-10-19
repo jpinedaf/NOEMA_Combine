@@ -75,8 +75,10 @@ directory instead of copying files from the package installation:
 
 The supported configuration profiles are ``"prodige"`` and ``"propstar"``.
 They provide different starter naming conventions while retaining the same
-workflow options. The line catalogue is created separately so it can be
-selected or replaced without changing the configuration profile:
+workflow options. By default, PRODIGE uses the packaged 1 mm MIOP catalogue
+and ProPStar uses the packaged 3 mm catalogue. The line catalogue is created
+separately so it can be selected or replaced without changing the configuration
+profile:
 
 .. code-block:: python
 

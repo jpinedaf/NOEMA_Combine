@@ -32,8 +32,9 @@ from noema_combine import create_project_files
 create_project_files(style="prodige")
 ```
 
-Use `style="propstar"` for the ProPStar naming profile. Existing files are
-protected unless `overwrite=True` is supplied.
+Use `style="propstar"` for the ProPStar naming profile. PRODIGE defaults to
+the packaged 1 mm MIOP catalogue, while ProPStar defaults to the packaged 3 mm
+catalogue. Existing files are protected unless `overwrite=True` is supplied.
 
 
 Credits

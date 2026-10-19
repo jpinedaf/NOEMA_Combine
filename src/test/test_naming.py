@@ -30,6 +30,7 @@ def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path:
     assert create_config("propstar", config_path) == config_path
     content = config_path.read_text()
     assert "style = propstar" in content
+    assert "line_catalogue = line_catalogue_3mm.csv" in content
     assert "restore_output = {root}/{config}config/" in content
     with pytest.raises(FileExistsError):
         create_config("propstar", config_path)
@@ -49,6 +50,19 @@ def test_create_line_catalogue_and_project_files(tmp_path: Path):
     )
     assert config_path.exists()
     assert default_catalogue.exists()
+    assert "line_catalogue = " + str(default_catalogue) in config_path.read_text()
+    assert default_catalogue.read_text() == (
+        Path(__file__).parents[1] / "noema_combine/line_catalogue_MIOP.csv"
+    ).read_text()
+
+    custom_config, custom_catalogue = create_project_files(
+        "propstar",
+        catalogue="miop",
+        config_filename=tmp_path / "custom.ini",
+        catalogue_filename=tmp_path / "catalogues/custom.csv",
+    )
+    assert custom_config.exists() and custom_catalogue.exists()
+    assert "line_catalogue = " + str(custom_catalogue) in custom_config.read_text()
 
 
 def test_custom_case_and_pair_templates():
