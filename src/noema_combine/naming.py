@@ -83,7 +83,7 @@ _ALLOWED_FIELDS = {
     "lid", "lid_lower", "lid_upper", "lid_folder", "lid_pair",
     "narrowband_folder", "window", "window_upper", "window_folder", "dirty_folder",
     "selfcal", "contsub", "uvsub", "lid_suffix", "suffix", "product",
-    "resolution", "weighting", "beam", "smoothing", "extension", "product_type",
+    "resolution", "weighting", "beam", "smoothing", "extension", "product_type", "style",
 }
 
 
@@ -169,6 +169,7 @@ class FileNaming:
         context.setdefault("uvsub", context.get("contsub", ""))
         context.setdefault("lid_suffix", "")
         context.setdefault("suffix", "")
+        context.setdefault("style", "prodige")
         try:
             return os.path.normpath(self.templates[template_name].format_map(context))
         except KeyError as exc:
@@ -272,11 +273,12 @@ class FileNaming:
 def preview_naming(
     source: str,
     config: str,
-    line: str,
-    qn: str,
-    lid: str,
+    line: str = "",
+    qn: str = "",
+    lid: str | None = None,
     *,
     lid_pair: str | None = None,
+    style: str | None = None,
     config_file: str | None = None,
     **values: object,
 ) -> dict[str, object]:
@@ -302,12 +304,12 @@ def preview_naming(
         "config": config,
         "line": line,
         "qn": qn,
-        "lid": lid,
-        "lid_pair": lid_pair or lid.lower(),
+        "lid": lid or "",
+        "lid_pair": lid_pair or (lid.lower() if lid else ""),
         "selfcal": "_sc",
         "contsub": "_contsub",
         "uvsub": "_contsub",
-        "lid_suffix": f"_{lid}",
+        "lid_suffix": f"_{lid}" if lid else "",
         "suffix": "_product",
         "product": "product",
         "resolution": "natural",
@@ -315,6 +317,7 @@ def preview_naming(
         "beam": "pb",
         "smoothing": "smooth",
         "extension": ".fits",
+        "style": style or cfg.config.get("project", "style", fallback="prodige"),
     }
     context.update(values)
 

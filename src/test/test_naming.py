@@ -150,6 +150,18 @@ def test_preview_naming_returns_outputs_and_search_patterns():
     assert "search_uvt" in preview["search_patterns"]
 
 
+def test_preview_naming_allows_single_dish_only_context():
+    preview = preview_naming(source="B5", config="CD")
+
+    assert "outputs" in preview
+    assert preview["outputs"]["sd_file"] == "30m/B5__.30m"
+
+
+def test_preview_naming_defaults_style_to_prodige_for_custom_templates():
+    naming = FileNaming({"style_marker": "{style}"})
+    assert naming.render("style_marker") == "prodige"
+
+
 def test_explicit_config_resolves_relative_paths_from_base_dir(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "project.ini"

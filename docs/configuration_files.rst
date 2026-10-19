@@ -182,6 +182,9 @@ For a complete structured preview, use the public Python function:
 The returned dictionary contains the resolved base directory, active templates,
 output paths, and search patterns. Supplying ``config_file`` uses an isolated
 configuration and does not change the package's active global configuration.
+For a single-dish-only preview, ``line``, ``qn``, ``lid``, and ``lid_pair`` may
+be omitted. The preview uses ``prodige`` as the default style; pass
+``style="propstar"`` when a custom template needs the ProPStar profile.
 
 
 Avoid Bad Single Dish Scans
