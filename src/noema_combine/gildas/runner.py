@@ -47,6 +47,8 @@ class GildasRunner:
         keep_scripts: bool | None = None,
         setup: str | None = None,
         shell: str = "/bin/bash",
+        setup_file: str | os.PathLike[str] | None = None,
+        interactive: bool = False,
     ) -> None:
         self.execute = execute
         self.workdir = Path(workdir).expanduser().resolve()
@@ -62,6 +64,8 @@ class GildasRunner:
         self.keep_scripts = not execute if keep_scripts is None else keep_scripts
         self.setup = (setup or "").strip()
         self.shell = shell
+        self.setup_file = str(setup_file) if setup_file else ""
+        self.interactive = interactive
 
     def run(
         self,
@@ -96,9 +100,16 @@ class GildasRunner:
             script_path = Path(handle.name)
 
         direct_command = (command_program, "-nw", "@", str(script_path))
-        if self.setup:
-            command_text = f"{self.setup} && exec {shlex.join(direct_command)}"
-            command = (self.shell, "-lc", command_text)
+        if self.setup or self.setup_file:
+            setup_parts = []
+            if self.setup_file:
+                setup_parts.append(f"source {shlex.quote(self.setup_file)}")
+            if self.setup:
+                setup_parts.append(self.setup)
+            setup_parts.append(f"exec {shlex.join(direct_command)}")
+            command_text = " && ".join(setup_parts)
+            shell_flags = "-ilc" if self.interactive else "-lc"
+            command = (self.shell, shell_flags, command_text)
         else:
             command = direct_command
         result = GildasResult(

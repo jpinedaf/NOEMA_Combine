@@ -121,7 +121,8 @@ def create_config(
     parser["file_extensions"] = {"selfcal": "_sc", "uvsub": "_contsub"}
     parser["single_dish"] = {"telescope": "iram30m"}
     parser["gildas"] = {
-        "execute": "true", "workdir": ".", "setup": "", "shell": "/bin/bash",
+        "execute": "true", "workdir": ".", "setup": "", "setup_file": "",
+        "shell": "/bin/bash", "interactive": "false",
         "class": "class",
         "mapping": "mapping", "clic": "clic",
     }

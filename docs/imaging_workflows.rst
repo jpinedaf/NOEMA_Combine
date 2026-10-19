@@ -23,6 +23,9 @@ The default can also be set in the configuration file:
     mapping = mapping
     # Set this when GILDAS is not already available in PATH.
     setup = gildas_latest
+    # Use these when setup is defined as a shell function.
+    setup_file = ~/.bashrc
+    interactive = true
 
 Continuum subtraction
 ----------------------

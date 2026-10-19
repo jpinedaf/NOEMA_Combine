@@ -321,6 +321,17 @@ class Config:
         return self.config.get("gildas", "shell", fallback="/bin/bash").strip()
 
     @property
+    def gildas_setup_file(self) -> str:
+        """Get the optional shell file defining the GILDAS setup command."""
+        value = self.config.get("gildas", "setup_file", fallback="").strip()
+        return self._resolve_path(value) if value else ""
+
+    @property
+    def gildas_interactive(self) -> bool:
+        """Whether the setup shell should load interactive startup files."""
+        return self.config.getboolean("gildas", "interactive", fallback=False)
+
+    @property
     def gildas_timeout(self) -> float | None:
         """Get the optional GILDAS command timeout in seconds."""
         value = self.config.get("gildas", "timeout", fallback="").strip()
@@ -337,6 +348,8 @@ class Config:
             "timeout": self.gildas_timeout,
             "setup": self.gildas_setup,
             "shell": self.gildas_shell,
+            "setup_file": self.gildas_setup_file,
+            "interactive": self.gildas_interactive,
         }
         defaults.update(kwargs)
         return GildasRunner(**defaults)

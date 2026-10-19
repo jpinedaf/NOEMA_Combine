@@ -38,6 +38,9 @@ The file name is `config.ini` and an example configuration file is shown below.
     workdir = .
     # Optional command, such as gildas_latest or gildas_jun26a.
     setup =
+    # Optional file containing the setup function definition.
+    setup_file =
+    interactive = false
     shell = /bin/bash
     class = class
     mapping = mapping
@@ -117,8 +120,10 @@ replacement is intended.
   generated scripts without running them. ``class``, ``mapping``, and ``clic``
   can override executable names, and ``timeout`` can set a limit in seconds.
   ``setup`` optionally initializes GILDAS before each command, for example
-  ``gildas_latest`` or ``gildas_jun26a``. ``shell`` selects the shell used for
-  the setup command.
+  ``gildas_latest`` or ``gildas_jun26a``. If the setup is a shell function,
+  ``setup_file`` can point to the file defining it and ``interactive = true``
+  loads interactive shell startup files. ``shell`` selects the shell used for
+  setup.
 - **[continuum_subtraction]**: Optional per-window wideband channel ranges.
   **[narrowband_channel_ranges]** provides the equivalent narrowband values.
   If no explicit range, range file, or configured value is available, generated
