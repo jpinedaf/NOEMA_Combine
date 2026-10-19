@@ -151,10 +151,15 @@ def test_preview_naming_returns_outputs_and_search_patterns():
 
 
 def test_preview_naming_allows_single_dish_only_context():
-    preview = preview_naming(source="B5", config="CD")
+    preview = preview_naming(source="B5", config="CD", line="N2Dp", qn="3-2")
 
     assert "outputs" in preview
-    assert preview["outputs"]["sd_file"] == "30m/B5__.30m"
+    assert preview["outputs"]["restore_output_line"].endswith(
+        "/B5_CD_N2Dp_3-2_sc_contsub_uvres.lmv-clean"
+    )
+    assert preview["outputs"]["merged_cube"].endswith(
+        "/B5_N2Dp_3-2_product.fits"
+    )
 
 
 def test_preview_naming_defaults_style_to_prodige_for_custom_templates():

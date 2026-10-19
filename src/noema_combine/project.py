@@ -50,14 +50,14 @@ _RESTORE = {
     "restore_pb_cube_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
     "restore_pb_fits_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.fits",
     "restore_script_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_restore.map",
-    "restore_uvt_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
-    "restore_cct_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.cct",
-    "restore_clean_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.lmv-clean",
-    "restore_output_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres.lmv-clean",
-    "restore_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres.fits",
-    "restore_pb_cube_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
-    "restore_pb_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres-pbcor.fits",
-    "restore_script_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_restore.map",
+    "restore_uvt_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.uvt",
+    "restore_cct_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.cct",
+    "restore_clean_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
+    "restore_output_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.lmv-clean",
+    "restore_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.fits",
+    "restore_pb_cube_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
+    "restore_pb_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
+    "restore_script_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
 }
 
 

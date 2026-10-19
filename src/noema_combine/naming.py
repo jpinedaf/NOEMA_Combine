@@ -62,17 +62,17 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "restore_pb_cube_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
     "restore_pb_fits_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.fits",
     "restore_script_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_restore.map",
-    "restore_uvt_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
-    "restore_cct_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.cct",
-    "restore_clean_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.lmv-clean",
-    "restore_output_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres.lmv-clean",
-    "restore_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres.fits",
-    "restore_pb_cube_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
-    "restore_pb_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_uvres-pbcor.fits",
-    "restore_script_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}_restore.map",
+    "restore_uvt_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.uvt",
+    "restore_cct_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.cct",
+    "restore_clean_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
+    "restore_output_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.lmv-clean",
+    "restore_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.fits",
+    "restore_pb_cube_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
+    "restore_pb_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
+    "restore_script_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
     "clean_image": "{root}/{config}/images/{source}_{config}_{lid}{suffix}.fits",
-    "line_cube": "{root}/{config}30m/{source}_{line}_{qn}_{lid}{suffix}.fits",
-    "merged_cube": "{root}/{config}30m/{source}_{line}_{qn}_{lid}{suffix}.fits",
+    "line_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
+    "merged_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
     "mask_file": "{root}/{config}/masks/{source}_{config}_{lid}{suffix}.mask",
     "uvfits_file": "{root}/{config}/uvfits/{source}_{config}_{lid}.uvfits",
 }
@@ -167,7 +167,10 @@ class FileNaming:
         context.setdefault("selfcal", "")
         context.setdefault("contsub", "")
         context.setdefault("uvsub", context.get("contsub", ""))
-        context.setdefault("lid_suffix", "")
+        context.setdefault(
+            "lid_suffix",
+            f"_{context['lid']}" if context.get("lid") else "",
+        )
         context.setdefault("suffix", "")
         context.setdefault("style", "prodige")
         try:
