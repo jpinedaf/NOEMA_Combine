@@ -311,6 +311,16 @@ class Config:
         }
 
     @property
+    def gildas_setup(self) -> str:
+        """Get the optional shell command used to initialize GILDAS."""
+        return self.config.get("gildas", "setup", fallback="").strip()
+
+    @property
+    def gildas_shell(self) -> str:
+        """Get the shell used for optional GILDAS setup commands."""
+        return self.config.get("gildas", "shell", fallback="/bin/bash").strip()
+
+    @property
     def gildas_timeout(self) -> float | None:
         """Get the optional GILDAS command timeout in seconds."""
         value = self.config.get("gildas", "timeout", fallback="").strip()
@@ -325,6 +335,8 @@ class Config:
             "workdir": self.gildas_workdir,
             "commands": self.gildas_commands,
             "timeout": self.gildas_timeout,
+            "setup": self.gildas_setup,
+            "shell": self.gildas_shell,
         }
         defaults.update(kwargs)
         return GildasRunner(**defaults)

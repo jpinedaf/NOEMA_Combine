@@ -21,6 +21,8 @@ The default can also be set in the configuration file:
     execute = false
     workdir = .
     mapping = mapping
+    # Set this when GILDAS is not already available in PATH.
+    setup = gildas_latest
 
 Continuum subtraction
 ----------------------

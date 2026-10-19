@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+import shlex
 from pathlib import Path
 import subprocess
 import tempfile
@@ -44,6 +45,8 @@ class GildasRunner:
         env: Mapping[str, str] | None = None,
         timeout: float | None = None,
         keep_scripts: bool | None = None,
+        setup: str | None = None,
+        shell: str = "/bin/bash",
     ) -> None:
         self.execute = execute
         self.workdir = Path(workdir).expanduser().resolve()
@@ -57,6 +60,8 @@ class GildasRunner:
         self.env = dict(env) if env is not None else None
         self.timeout = timeout
         self.keep_scripts = not execute if keep_scripts is None else keep_scripts
+        self.setup = (setup or "").strip()
+        self.shell = shell
 
     def run(
         self,
@@ -90,7 +95,12 @@ class GildasRunner:
             handle.write(script)
             script_path = Path(handle.name)
 
-        command = (command_program, "-nw", "@", str(script_path))
+        direct_command = (command_program, "-nw", "@", str(script_path))
+        if self.setup:
+            command_text = f"{self.setup} && exec {shlex.join(direct_command)}"
+            command = (self.shell, "-lc", command_text)
+        else:
+            command = direct_command
         result = GildasResult(
             program=program,
             script_path=script_path,

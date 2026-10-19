@@ -48,3 +48,27 @@ def test_runner_can_remove_scripts_after_execution(tmp_path: Path):
     result = runner.run_mapping("exit")
 
     assert not result.script_path.exists()
+
+
+def test_runner_runs_setup_command_before_gildas_program(tmp_path: Path):
+    setup = tmp_path / "setup.sh"
+    setup.write_text("touch setup-ran\n")
+    executable = tmp_path / "fake_mapping"
+    executable.write_text("#!/bin/sh\ntouch expected.out\n")
+    executable.chmod(0o755)
+    runner = GildasRunner(
+        execute=True,
+        workdir=tmp_path,
+        commands={"mapping": str(executable)},
+        setup=f"source {setup}",
+    )
+
+    result = runner.run_mapping(
+        "exit",
+        expected_outputs=[tmp_path / "setup-ran", tmp_path / "expected.out"],
+    )
+
+    assert result.executed is True
+    assert result.succeeded is True
+    assert result.command[0] == "/bin/bash"
+    assert (tmp_path / "setup-ran").exists()

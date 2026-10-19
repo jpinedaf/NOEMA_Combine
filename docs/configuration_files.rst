@@ -36,6 +36,9 @@ The file name is `config.ini` and an example configuration file is shown below.
     # Execution is enabled by default. Set execute = false for script-only mode.
     execute = true
     workdir = .
+    # Optional command, such as gildas_latest or gildas_jun26a.
+    setup =
+    shell = /bin/bash
     class = class
     mapping = mapping
     clic = clic
@@ -113,6 +116,9 @@ replacement is intended.
   scripts. Execution defaults to enabled. Set ``execute = false`` to retain
   generated scripts without running them. ``class``, ``mapping``, and ``clic``
   can override executable names, and ``timeout`` can set a limit in seconds.
+  ``setup`` optionally initializes GILDAS before each command, for example
+  ``gildas_latest`` or ``gildas_jun26a``. ``shell`` selects the shell used for
+  the setup command.
 - **[continuum_subtraction]**: Optional per-window wideband channel ranges.
   **[narrowband_channel_ranges]** provides the equivalent narrowband values.
   If no explicit range, range file, or configured value is available, generated
