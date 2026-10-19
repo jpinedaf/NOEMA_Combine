@@ -103,7 +103,9 @@ class GildasRunner:
         if self.setup or self.setup_file:
             setup_parts = []
             if self.setup_file:
-                setup_parts.append(f"source {shlex.quote(self.setup_file)}")
+                shell_name = Path(self.shell).name.lower()
+                source_command = "source" if shell_name in {"bash", "zsh", "ksh"} else "."
+                setup_parts.append(f"{source_command} {shlex.quote(self.setup_file)}")
             if self.setup:
                 setup_parts.append(self.setup)
             setup_parts.append(f"exec {shlex.join(direct_command)}")
