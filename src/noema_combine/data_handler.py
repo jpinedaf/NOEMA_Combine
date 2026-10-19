@@ -496,7 +496,7 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
     # Define output
     file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    os.system(f"rm {os.path.splitext(file_sd)[0]}.*")
+    os.system(f"rm -f {os.path.splitext(file_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
     fb.write(f"file out {file_sd}  single\n")
     fb.write("say [INFO] Removing old output file\n")
@@ -554,7 +554,8 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     fb.write("exit\n")
     fb.flush()
     os.system(f"rm -f {file_sd}")
-    os.system(f"class -nw @ {fb.name}")
+    fb.seek(0)
+    _cfg.make_gildas_runner().run_class(fb.read())
     fb.close()
 
 
