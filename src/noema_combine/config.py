@@ -1,6 +1,7 @@
 """Configuration loader for NOEMA Combine package."""
 
 import os
+import re
 import warnings
 import configparser
 from pathlib import Path
@@ -8,6 +9,15 @@ import yaml
 import numpy as np
 from importlib.resources import files
 from .naming import FileNaming
+
+
+def _normalize_window(value: str) -> str:
+    """Normalize a window identifier without importing workflow modules."""
+    text = "".join(str(value).strip().lower().split())
+    match = re.fullmatch(r"l(\d+)l(\d+)", text)
+    if match:
+        return f"l{int(match.group(1)):03d}l{int(match.group(2)):03d}"
+    return text
 
 
 class Config:
@@ -197,25 +207,19 @@ class Config:
         if self.config.has_section("narrowband"):
             configured_windows = self.config.get("narrowband", "windows", fallback="")
             if configured_windows.strip():
-                from .continuum import normalize_window
-
                 self.narrowband_windows = [
-                    normalize_window(value)
+                    _normalize_window(value)
                     for value in configured_windows.split(",")
                     if value.strip()
                 ]
         if self.config.has_section("continuum_subtraction"):
-            from .continuum import normalize_window
-
             for key, value in self.config.items("continuum_subtraction"):
                 if key.startswith("wideband_") and value.strip():
-                    self.continuum_wideband_ranges[normalize_window(key[9:])] = value.strip()
+                    self.continuum_wideband_ranges[_normalize_window(key[9:])] = value.strip()
         if self.config.has_section("narrowband_channel_ranges"):
-            from .continuum import normalize_window
-
             for key, value in self.config.items("narrowband_channel_ranges"):
                 if value.strip():
-                    self.continuum_narrowband_ranges[normalize_window(key)] = value.strip()
+                    self.continuum_narrowband_ranges[_normalize_window(key)] = value.strip()
 
     def _load_imaging(self):
         """Load optional dirty-imaging window settings."""

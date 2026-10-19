@@ -1,4 +1,7 @@
 from pathlib import Path
+import os
+import subprocess
+import sys
 
 import pytest
 
@@ -74,6 +77,27 @@ def test_create_line_catalogue_and_project_files(tmp_path: Path):
     region_path = tmp_path / "standalone_regions.yml"
     assert create_region_catalogue(region_path) == region_path
     assert "RA0" in region_path.read_text()
+
+
+def test_import_succeeds_with_generated_config_in_current_directory(tmp_path: Path):
+    create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "line_catalogue_prodige.csv",
+        region_catalogue_filename=tmp_path / "region_catalogue.yml",
+    )
+    source_root = Path(__file__).parents[1]
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(source_root) + os.pathsep + environment.get("PYTHONPATH", "")
+    completed = subprocess.run(
+        [sys.executable, "-c", "from noema_combine import create_project_files"],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_custom_case_and_pair_templates():
