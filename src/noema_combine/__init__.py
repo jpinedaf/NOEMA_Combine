@@ -9,7 +9,12 @@ from .data_handler import (  # type: ignore[reportUnusedImport]
 )
 from .generate_uvt import process_source  # type: ignore[reportUnusedImport]
 from .naming import FileNaming, preview_naming  # type: ignore[reportUnusedImport]
-from .project import create_config, create_line_catalogue, create_project_files
+from .project import (
+    create_config,
+    create_line_catalogue,
+    create_project_files,
+    create_region_catalogue,
+)
 from .gildas import GildasResult, GildasRunner  # type: ignore[reportUnusedImport]
 from .continuum import (
     baseline_command,

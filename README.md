@@ -33,8 +33,9 @@ create_project_files(style="prodige")
 ```
 
 Use `style="propstar"` for the ProPStar naming profile. PRODIGE defaults to
-the packaged 1 mm MIOP catalogue, while ProPStar defaults to the packaged 3 mm
-catalogue. Existing files are protected unless `overwrite=True` is supplied.
+the packaged 1 mm PRODIGE catalogue, while ProPStar defaults to the packaged 3 mm
+catalogue. The starter `region_catalogue.yml` is also copied. Existing files
+are protected unless `overwrite=True` is supplied.
 
 
 Credits

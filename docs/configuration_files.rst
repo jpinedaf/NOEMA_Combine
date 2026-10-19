@@ -18,7 +18,7 @@ The file name is `config.ini` and an example configuration file is shown below.
     inputdir = raw_data/, additional_data/, more_data/
 
     [catalogues]
-    line_catalogue = line_catalogue_3mm.csv
+    line_catalogue = line_catalogue_propstar.csv
     source_catalogue = region_catalogue.yml
 
     [file_handling]
@@ -75,17 +75,22 @@ directory instead of copying files from the package installation:
 
 The supported configuration profiles are ``"prodige"`` and ``"propstar"``.
 They provide different starter naming conventions while retaining the same
-workflow options. By default, PRODIGE uses the packaged 1 mm MIOP catalogue
-and ProPStar uses the packaged 3 mm catalogue. The line catalogue is created
-separately so it can be selected or replaced without changing the configuration
-profile:
+workflow options. By default, PRODIGE uses the packaged 1 mm PRODIGE catalogue
+and ProPStar uses the packaged 3 mm catalogue under the ``propstar`` name. The starter
+``region_catalogue.yml`` is also copied. The catalogues can be created
+separately when they need to be selected or replaced:
 
 .. code-block:: python
 
-    from noema_combine import create_config, create_line_catalogue
+    from noema_combine import (
+        create_config,
+        create_line_catalogue,
+        create_region_catalogue,
+    )
 
     create_config(style="propstar", filename="config.ini")
-    create_line_catalogue(catalogue="miop", filename="line_catalogue.csv")
+    create_line_catalogue(catalogue="prodige", filename="line_catalogue.csv")
+    create_region_catalogue(filename="region_catalogue.yml")
 
 Existing files are protected by default. Pass ``overwrite=True`` only when a
 replacement is intended.

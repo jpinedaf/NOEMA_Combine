@@ -14,7 +14,12 @@ from noema_combine.workflows import make_dirty_images
 from noema_combine.workflows import make_clean_images
 from noema_combine.workflows import restore_image
 from noema_combine.naming import FileNaming, preview_naming
-from noema_combine import create_config, create_line_catalogue, create_project_files
+from noema_combine import (
+    create_config,
+    create_line_catalogue,
+    create_project_files,
+    create_region_catalogue,
+)
 
 
 def test_default_naming_matches_package_paths():
@@ -30,7 +35,7 @@ def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path:
     assert create_config("propstar", config_path) == config_path
     content = config_path.read_text()
     assert "style = propstar" in content
-    assert "line_catalogue = line_catalogue_3mm.csv" in content
+    assert "line_catalogue = line_catalogue_propstar.csv" in content
     assert "restore_output = {root}/{config}config/" in content
     with pytest.raises(FileExistsError):
         create_config("propstar", config_path)
@@ -38,15 +43,16 @@ def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path:
 
 def test_create_line_catalogue_and_project_files(tmp_path: Path):
     catalogue_path = tmp_path / "lines.csv"
-    assert create_line_catalogue("3mm", catalogue_path) == catalogue_path
+    assert create_line_catalogue("propstar", catalogue_path) == catalogue_path
     assert "#name" in catalogue_path.read_text()
     with pytest.raises(FileExistsError):
-        create_line_catalogue("3mm", catalogue_path)
+        create_line_catalogue("propstar", catalogue_path)
 
     config_path, default_catalogue = create_project_files(
         "prodige",
         config_filename=tmp_path / "project.ini",
         catalogue_filename=tmp_path / "project_lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
     )
     assert config_path.exists()
     assert default_catalogue.exists()
@@ -57,12 +63,17 @@ def test_create_line_catalogue_and_project_files(tmp_path: Path):
 
     custom_config, custom_catalogue = create_project_files(
         "propstar",
-        catalogue="miop",
+        catalogue="prodige",
         config_filename=tmp_path / "custom.ini",
         catalogue_filename=tmp_path / "catalogues/custom.csv",
+        region_catalogue_filename=tmp_path / "catalogues/custom_regions.yml",
     )
     assert custom_config.exists() and custom_catalogue.exists()
     assert "line_catalogue = " + str(custom_catalogue) in custom_config.read_text()
+
+    region_path = tmp_path / "standalone_regions.yml"
+    assert create_region_catalogue(region_path) == region_path
+    assert "RA0" in region_path.read_text()
 
 
 def test_custom_case_and_pair_templates():

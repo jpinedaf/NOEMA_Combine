@@ -91,8 +91,9 @@ def create_config(
     style: ConfigStyle = "prodige",
     filename: str | Path = "config.ini",
     *,
-    catalogue: Literal["3mm", "miop"] | None = None,
+    catalogue: Literal["prodige", "propstar"] | None = None,
     catalogue_filename: str | Path | None = None,
+    region_catalogue_filename: str | Path | None = None,
     overwrite: bool = False,
 ) -> Path:
     """Create an editable style-specific configuration in the current folder."""
@@ -103,18 +104,18 @@ def create_config(
         "uvt_dir": "uvts", "uvt_dir_out": "merged_uvts", "dir_sd": "30m",
         "inputdir": "raw_data",
     }
-    selected_catalogue = catalogue or ("miop" if selected == "prodige" else "3mm")
-    if selected_catalogue not in {"3mm", "miop"}:
-        raise ValueError("catalogue must be '3mm' or 'miop'")
+    selected_catalogue = catalogue or selected
+    if selected_catalogue not in {"prodige", "propstar"}:
+        raise ValueError("catalogue must be 'prodige' or 'propstar'")
     parser["catalogues"] = {
         "line_catalogue": str(
             catalogue_filename
             or {
-                "3mm": "line_catalogue_3mm.csv",
-                "miop": "line_catalogue_MIOP.csv",
+            "prodige": "line_catalogue_prodige.csv",
+            "propstar": "line_catalogue_propstar.csv",
             }[selected_catalogue]
         ),
-        "source_catalogue": "region_catalogue.yml",
+        "source_catalogue": str(region_catalogue_filename or "region_catalogue.yml"),
     }
     parser["file_handling"] = {}
     parser["file_extensions"] = {"selfcal": "_sc", "uvsub": "_contsub"}
@@ -142,42 +143,70 @@ def create_config(
 
 
 def create_line_catalogue(
-    catalogue: Literal["3mm", "miop"] = "3mm",
+    catalogue: Literal["prodige", "propstar"] = "prodige",
     filename: str | Path | None = None,
     *,
     overwrite: bool = False,
 ) -> Path:
     """Copy a packaged starter line catalogue into the current folder."""
     selected = catalogue.lower()
-    names = {"3mm": "line_catalogue_3mm.csv", "miop": "line_catalogue_MIOP.csv"}
-    if selected not in names:
-        raise ValueError("catalogue must be '3mm' or 'miop'")
-    source = files("noema_combine").joinpath(names[selected])
-    target = Path(filename or names[selected]).expanduser()
+    sources = {
+        "prodige": "line_catalogue_MIOP.csv",
+        "propstar": "line_catalogue_3mm.csv",
+    }
+    targets = {
+        "prodige": "line_catalogue_prodige.csv",
+        "propstar": "line_catalogue_propstar.csv",
+    }
+    if selected not in sources:
+        raise ValueError("catalogue must be 'prodige' or 'propstar'")
+    source = files("noema_combine").joinpath(sources[selected])
+    target = Path(filename or targets[selected]).expanduser()
     return _write_new(target, source.read_text(), overwrite=overwrite)
+
+
+def create_region_catalogue(
+    filename: str | Path = "region_catalogue.yml",
+    *,
+    overwrite: bool = False,
+) -> Path:
+    """Copy the packaged starter source-region catalogue into the project."""
+    source = files("noema_combine").joinpath("region_catalogue.yml")
+    return _write_new(Path(filename).expanduser(), source.read_text(), overwrite=overwrite)
 
 
 def create_project_files(
     style: ConfigStyle = "prodige",
     *,
-    catalogue: Literal["3mm", "miop"] | None = None,
+    catalogue: Literal["prodige", "propstar"] | None = None,
     config_filename: str | Path = "config.ini",
     catalogue_filename: str | Path | None = None,
+    region_catalogue_filename: str | Path | None = None,
     overwrite: bool = False,
 ) -> tuple[Path, Path]:
-    """Create a configuration and starter line catalogue together."""
+    """Create a configuration and starter catalogues together.
+
+    The return value remains ``(config_path, line_catalogue_path)`` for
+    compatibility. The region catalogue is also copied to the configured
+    ``region_catalogue_filename`` path.
+    """
     selected_style = _check_style(style)
-    selected_catalogue = catalogue or ("miop" if selected_style == "prodige" else "3mm")
+    selected_catalogue = catalogue or selected_style
     config = create_config(
         selected_style,
         config_filename,
         catalogue=selected_catalogue,
         catalogue_filename=catalogue_filename,
+        region_catalogue_filename=region_catalogue_filename,
         overwrite=overwrite,
     )
     try:
         catalogue_path = create_line_catalogue(
             selected_catalogue, catalogue_filename, overwrite=overwrite
+        )
+        create_region_catalogue(
+            region_catalogue_filename or "region_catalogue.yml",
+            overwrite=overwrite,
         )
     except Exception:
         if not overwrite:
@@ -186,4 +215,9 @@ def create_project_files(
     return config, catalogue_path
 
 
-__all__ = ["create_config", "create_line_catalogue", "create_project_files"]
+__all__ = [
+    "create_config",
+    "create_line_catalogue",
+    "create_region_catalogue",
+    "create_project_files",
+]
