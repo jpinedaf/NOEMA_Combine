@@ -87,6 +87,39 @@ _ALLOWED_FIELDS = {
 }
 
 
+def _catalogue_key(value: object) -> str:
+    """Normalize catalogue text for tolerant preview matching."""
+    return (
+        str(value)
+        .strip()
+        .lower()
+        .replace("\\", "")
+        .replace("p", "+")
+        .replace("_", "-")
+        .replace(" ", "")
+    )
+
+
+def _infer_lid(config: object, line: str, qn: str) -> str:
+    """Infer a line window from the active catalogue when possible."""
+    if not line or not qn:
+        return ""
+    line_values = getattr(config, "line_name", ())
+    qn_values = getattr(config, "qn", ())
+    qn_display_values = getattr(config, "qn_str", ())
+    lid_values = getattr(config, "Lid", ())
+    matches: list[str] = []
+    for index, name in enumerate(line_values):
+        if _catalogue_key(name) != _catalogue_key(line):
+            continue
+        qn_match = _catalogue_key(qn_values[index]) == _catalogue_key(qn)
+        if not qn_match and index < len(qn_display_values):
+            qn_match = _catalogue_key(qn_display_values[index]) == _catalogue_key(qn)
+        if qn_match and index < len(lid_values):
+            matches.append(str(lid_values[index]))
+    return matches[0] if len(matches) == 1 else ""
+
+
 class FileNaming:
     """Render configured paths for package and project-specific products.
 
@@ -300,6 +333,7 @@ def preview_naming(
         if config_file
         else get_config()
     )
+    inferred_lid = lid or _infer_lid(cfg, line, qn)
     context: dict[str, object] = {
         "source": source,
         "source_out": source,
@@ -307,12 +341,12 @@ def preview_naming(
         "config": config,
         "line": line,
         "qn": qn,
-        "lid": lid or "",
-        "lid_pair": lid_pair or (lid.lower() if lid else ""),
+        "lid": inferred_lid,
+        "lid_pair": lid_pair or (inferred_lid.lower() if inferred_lid else ""),
         "selfcal": "_sc",
         "contsub": "_contsub",
         "uvsub": "_contsub",
-        "lid_suffix": f"_{lid}" if lid else "",
+        "lid_suffix": f"_{inferred_lid}" if inferred_lid else "",
         "suffix": "_product",
         "product": "product",
         "resolution": "natural",

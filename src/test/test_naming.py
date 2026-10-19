@@ -167,6 +167,29 @@ def test_preview_naming_defaults_style_to_prodige_for_custom_templates():
     assert naming.render("style_marker") == "prodige"
 
 
+def test_preview_naming_infers_lid_from_line_catalogue(tmp_path: Path):
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    config_file = tmp_path / "preview_prodige.ini"
+    config_file.write_text(
+        f"""[project]\nstyle = prodige\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_MIOP.csv'}\n\n[naming]\nroot = .\n"""
+    )
+
+    preview = preview_naming(
+        source="B5",
+        config="CD",
+        line="N2Dp",
+        qn="3-2",
+        config_file=str(config_file),
+    )
+
+    assert preview["outputs"]["restore_output_line"].endswith(
+        "/B5_CD_N2Dp_3-2_l034l073_sc_contsub_uvres.lmv-clean"
+    )
+    assert preview["outputs"]["merged_cube"].endswith(
+        "/B5_N2Dp_3-2_l034l073_product.fits"
+    )
+
+
 def test_explicit_config_resolves_relative_paths_from_base_dir(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "project.ini"
