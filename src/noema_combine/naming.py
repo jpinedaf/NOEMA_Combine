@@ -384,6 +384,10 @@ def preview_naming(
         "style": style or cfg.config.get("project", "style", fallback="prodige"),
     }
     context.update(values)
+    if context.get("lid_pair"):
+        pair_values = _lid_pair_values(context["lid_pair"])
+        for key in ("lid_pair_folder", "lid_pair_filename"):
+            context.setdefault(key, pair_values[key])
 
     outputs: dict[str, str] = {}
     search_patterns: dict[str, str] = {}
