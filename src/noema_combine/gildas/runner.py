@@ -125,15 +125,25 @@ class GildasRunner:
         )
         try:
             if run_enabled:
-                completed = subprocess.run(
-                    command,
-                    cwd=self.workdir,
-                    env=self.env,
-                    capture_output=True,
-                    text=True,
-                    timeout=self.timeout,
-                    check=False,
-                )
+                try:
+                    completed = subprocess.run(
+                        command,
+                        cwd=self.workdir,
+                        env=self.env,
+                        capture_output=True,
+                        text=True,
+                        input="exit\n" if not self.interactive else None,
+                        timeout=self.timeout,
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise RuntimeError(
+                        f"GILDAS {program} timed out after {self.timeout} seconds"
+                    ) from exc
+                except OSError as exc:
+                    raise RuntimeError(
+                        f"Could not start GILDAS {program}: {exc}"
+                    ) from exc
                 result = GildasResult(
                     program=program,
                     script_path=script_path,
@@ -144,9 +154,10 @@ class GildasRunner:
                     stderr=completed.stderr,
                 )
                 if completed.returncode != 0:
+                    details = completed.stderr.strip() or completed.stdout.strip()
                     raise RuntimeError(
                         f"GILDAS {program} failed with exit code {completed.returncode}: "
-                        f"{completed.stderr.strip()}"
+                        f"{details}"
                     )
 
             if run_enabled:

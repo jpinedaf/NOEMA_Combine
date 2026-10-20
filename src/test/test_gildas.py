@@ -96,3 +96,22 @@ def test_runner_can_source_a_file_defining_a_setup_function(tmp_path: Path):
 
     assert result.succeeded is True
     assert (tmp_path / "function-setup-ran").exists()
+
+
+def test_runner_sends_exit_to_noninteractive_gildas(tmp_path: Path):
+    executable = tmp_path / "fake_gildas"
+    executable.write_text(
+        "#!/bin/sh\n"
+        "read command\n"
+        "[ \"$command\" = exit ]\n"
+    )
+    executable.chmod(0o755)
+    runner = GildasRunner(
+        execute=True,
+        workdir=tmp_path,
+        commands={"class": str(executable)},
+    )
+
+    result = runner.run_class("say 'hello'")
+
+    assert result.succeeded is True
