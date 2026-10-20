@@ -71,8 +71,7 @@ def build_continuum_subtraction_script(
     *,
     channel_range: str | None = None,
     filter_channels: str | None = None,
-    frequency_line: str | None = None,
-    rest_frequency: float | None = None,
+    include_modify: bool = True,
 ) -> str:
     """Build a MAPPING script for continuum subtraction.
 
@@ -80,19 +79,15 @@ def build_continuum_subtraction_script(
     ``filter_channels`` is optional and adds the channel filter used by the
     wideband raw-script workflow.
     """
-    lines = [
-        "sic message mapping s-i",
-        f'modify "{input_file}"',
+    lines = ["sic message mapping s-i"]
+    if include_modify:
+        lines.append(f'modify "{input_file}"')
+    lines.extend([
         f'let name "{input_file.removesuffix(".uvt")}"',
         "let type uvt",
         "go setup",
-        *(
-            [f'modify "{input_file}" /frequency {frequency_line} {rest_frequency:g}']
-            if frequency_line is not None and rest_frequency is not None
-            else []
-        ),
         baseline_command(channel_range),
-    ]
+    ])
     if filter_channels:
         lines.append(f"uv_filter /channels {filter_channels} /zero")
     lines.extend(
@@ -110,14 +105,11 @@ def build_narrowband_continuum_subtraction_script(
     output_file: str,
     *,
     channel_range: str | None = None,
-    frequency_line: str | None = None,
-    rest_frequency: float | None = None,
 ) -> str:
     """Build a MAPPING script for one narrowband spectral window."""
     return build_continuum_subtraction_script(
         input_file,
         output_file,
         channel_range=channel_range,
-        frequency_line=frequency_line,
-        rest_frequency=rest_frequency,
+        include_modify=False,
     )

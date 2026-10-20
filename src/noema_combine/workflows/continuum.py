@@ -233,8 +233,6 @@ def make_narrowband_continuum_subtraction(
     spectral_windows: list[str] | tuple[str, ...] | None = None,
     *,
     channel_ranges: dict[str, str] | None = None,
-    line: str | None = None,
-    qn: str | None = None,
     execute: bool | None = None,
     config_file: str | None = None,
 ) -> list[NarrowbandSubtractionResult]:
@@ -253,29 +251,6 @@ def make_narrowband_continuum_subtraction(
     runner = cfg.make_gildas_runner(**runner_kwargs)
     results: list[NarrowbandSubtractionResult] = []
     for window in windows:
-        candidates = [
-            index for index, lid_value in enumerate(cfg.Lid)
-            if normalize_window(lid_value) == window
-        ]
-        if line is not None:
-            candidates = [
-                index for index in candidates
-                if str(cfg.line_name[index]).lower() == line.lower()
-                and (
-                    qn is None
-                    or str(cfg.qn[index]).lower() == qn.lower()
-                    or str(cfg.qn_str[index]).lower() == qn.lower()
-                )
-            ]
-        if len(candidates) > 1:
-            raise ValueError(
-                f"Multiple catalogue lines found for {window}; provide line= and qn="
-            )
-        frequency_line = rest_frequency = None
-        if candidates:
-            index = candidates[0]
-            frequency_line = str(cfg.name_str[index])
-            rest_frequency = float(cfg.freq[index]) * 1e3
         pair_context = lid_pair_values(window)
         folder = _render(
             naming,
@@ -311,8 +286,6 @@ def make_narrowband_continuum_subtraction(
             str(input_file),
             str(output_file),
             channel_range=selected_range,
-            frequency_line=frequency_line,
-            rest_frequency=rest_frequency,
         )
         execution = runner.run_mapping(
             script,
