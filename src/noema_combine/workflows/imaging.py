@@ -73,6 +73,10 @@ def _render(naming, product: str, **values: object) -> Path:
     return Path(naming.render(product, **values)).expanduser()
 
 
+def _source_out(cfg: Config, source: str) -> str:
+    return cfg.region_catalogue.get(source, {}).get("source_out", source)
+
+
 def make_dirty_images(
     source: str,
     configuration: str,
@@ -85,6 +89,7 @@ def make_dirty_images(
 ) -> list[DirtyImageResult]:
     """Generate and optionally execute dirty images for selected windows."""
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    source_out = _source_out(cfg, source)
     wideband = {normalize_window(value) for value in cfg.imaging_wideband_windows}
     narrowband_windows = list(cfg.narrowband_windows) if cfg.imaging_include_narrowband else []
     narrowband = set(narrowband_windows)
@@ -109,6 +114,7 @@ def make_dirty_images(
         folder_name = "wideband" if is_wideband else pair
         values = {
             "source": source,
+            "source_out": source_out,
             "config": configuration,
             "window": window,
             "window_upper": window.upper(),
@@ -168,6 +174,7 @@ def make_clean_images(
     mixed list of wideband and narrowband windows.
     """
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    source_out = _source_out(cfg, source)
     wideband = {normalize_window(value) for value in cfg.imaging_wideband_windows}
     narrowband = set(cfg.narrowband_windows) if cfg.imaging_include_narrowband else set()
     allowed = wideband | narrowband
@@ -195,6 +202,7 @@ def make_clean_images(
         pair_context = lid_pair_values(pair) if pair else {}
         values = {
             "source": source,
+            "source_out": source_out,
             "config": configuration,
             "window": window,
             "window_upper": window.upper(),
@@ -291,6 +299,7 @@ def restore_image(
         selected = list(windows) if windows is not None else None
 
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    source_out = _source_out(cfg, source)
     wideband = {normalize_window(value) for value in cfg.imaging_wideband_windows}
     narrowband = (
         {normalize_window(value) for value in cfg.narrowband_windows}
@@ -328,6 +337,7 @@ def restore_image(
         pair_context = lid_pair_values(pair) if pair else {}
         values = {
             "source": source,
+            "source_out": source_out,
             "config": configuration,
             "window": window,
             "window_upper": window.upper(),

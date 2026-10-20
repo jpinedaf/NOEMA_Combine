@@ -238,6 +238,7 @@ def make_narrowband_continuum_subtraction(
 ) -> list[NarrowbandSubtractionResult]:
     """Generate and optionally execute narrowband subtraction scripts."""
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    source_out = cfg.region_catalogue.get(source, {}).get("source_out", source)
     requested = spectral_windows or cfg.narrowband_windows
     windows = [normalize_window(window) for window in requested]
     configured = {normalize_window(key): value for key, value in (channel_ranges or {}).items()}
@@ -261,6 +262,7 @@ def make_narrowband_continuum_subtraction(
         )
         values = {
             "source": source,
+            "source_out": source_out,
             "config": configuration,
             "lid": window,
             "lid_pair": window,
