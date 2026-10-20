@@ -111,7 +111,11 @@ def make_dirty_images(
         is_wideband = window in wideband
         pair = window if not is_wideband else ""
         pair_context = lid_pair_values(pair) if pair else {}
-        folder_name = "wideband" if is_wideband else pair
+        folder_name = (
+            "wideband"
+            if is_wideband
+            else pair_context.get("lid_pair_folder", pair)
+        )
         values = {
             "source": source,
             "source_out": source_out,
