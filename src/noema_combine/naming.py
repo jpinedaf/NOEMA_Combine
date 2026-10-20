@@ -116,7 +116,7 @@ def _lid_pair_values(value: object) -> dict[str, str]:
     return {
         "lid_pair": f"l{first:03d}l{second:03d}",
         "lid_pair_folder": f"l{first}l{second}",
-        "lid_pair_filename": f"{first:03d}l{second:03d}",
+        "lid_pair_filename": f"l{first:03d}l{second:03d}",
     }
 
 
