@@ -213,7 +213,11 @@ def make_clean_images(
             "lid": window,
             "lid_pair": pair,
             **pair_context,
-            "window_folder": "wideband" if is_wideband else pair,
+            "window_folder": (
+                "wideband"
+                if is_wideband
+                else pair_context.get("lid_pair_folder", pair)
+            ),
             **suffix_values,
         }
         input_file = _render(cfg.naming, f"clean_input{suffix}", **values)
@@ -345,7 +349,11 @@ def restore_image(
             "config": configuration,
             "window": window,
             "window_upper": window.upper(),
-            "window_folder": "wideband" if is_wideband else pair,
+            "window_folder": (
+                "wideband"
+                if is_wideband
+                else pair_context.get("lid_pair_folder", pair)
+            ),
             "lid": window,
             "lid_pair": pair,
             **pair_context,
