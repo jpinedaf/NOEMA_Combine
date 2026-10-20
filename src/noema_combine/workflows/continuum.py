@@ -13,6 +13,7 @@ from ..continuum import (
     resolve_channel_range,
 )
 from ..gildas import GildasResult
+from ..naming import lid_pair_values
 
 
 @dataclass
@@ -249,19 +250,21 @@ def make_narrowband_continuum_subtraction(
     runner = cfg.make_gildas_runner(**runner_kwargs)
     results: list[NarrowbandSubtractionResult] = []
     for window in windows:
+        pair_context = lid_pair_values(window)
         folder = _render(
             naming,
             "narrowband_folder",
             source=source,
             config=configuration,
             lid=window,
-            lid_pair=window,
+            **pair_context,
         )
         values = {
             "source": source,
             "config": configuration,
             "lid": window,
             "lid_pair": window,
+            **pair_context,
             "narrowband_folder": str(folder),
         }
         input_file = _render(naming, "narrowband_input", **values)

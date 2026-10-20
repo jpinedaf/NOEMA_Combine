@@ -328,7 +328,7 @@ def test_clean_image_workflow_script_only(tmp_path: Path):
         contsub=True, execute=False, config_file=str(config_file)
     )
     assert [item.window_kind for item in mixed] == ["wideband", "narrowband"]
-    assert mixed[1].input_file.name == "B5_CD_l009l048_sc_contsub.uvt"
+    assert mixed[1].input_file.name == "B5_CD_009l048_sc_contsub.uvt"
 
 
 def _restoration_config(tmp_path: Path, *, include_narrowband: bool = True) -> Path:
@@ -383,7 +383,7 @@ def test_restore_image_supports_wideband_and_narrowband_script_only(tmp_path: Pa
     assert [result.window_kind for result in results] == ["wideband", "narrowband"]
     assert results[0].input_uv == tmp_path / "CD/wideband/B5_CD_li_sc_contsub.uvt"
     assert results[1].input_uv == (
-        tmp_path / "CD/l009l048/B5_CD_l009l048_sc_contsub.uvt"
+        tmp_path / "CD/l9l48/B5_CD_009l048_sc_contsub.uvt"
     )
     assert results[0].restored_cube.name == "B5_CD_li_sc_contsub_uvres.lmv-clean"
     assert results[0].script_path.exists()

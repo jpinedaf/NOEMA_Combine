@@ -168,9 +168,14 @@ Naming templates
 The optional **[naming]** section controls folder and filename templates. Existing
   configurations need no changes. Templates may use ``root``, ``source``, ``config``,
   ``line``, ``qn``, ``lid``, ``lid_lower``, ``lid_upper``, ``lid_folder``, ``lid_pair``,
+  ``lid_pair_folder``, and ``lid_pair_filename``,
   ``window``, ``window_upper``, ``window_folder``, ``selfcal``, ``contsub``, and
   ``product_type``. Output templates should describe exact filenames;
   ``search_*`` templates may contain wildcards for locating files made by older scripts.
+
+For narrowband products, ``lid_pair_folder`` and ``lid_pair_filename`` can be
+used to separate the folder and filename representations. If only ``lid_pair``
+is supplied, both values default to it. Explicit values take precedence.
 The active templates can be inspected with ``get_config().naming.describe()`` and
 representative paths can be previewed with ``get_config().naming.preview(...)``.
 

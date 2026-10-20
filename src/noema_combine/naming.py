@@ -8,6 +8,7 @@ projects that need conditional rules can subclass :class:`FileNaming`.
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Mapping
 from string import Formatter
 
@@ -18,7 +19,7 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "uvt_window": "{uvt_root}/{lid}/{source}_{lid}{selfcal}{uvsub}.uvt",
     "sd_file": "{sd_root}/{source}_{line}_{qn}{lid_suffix}{sd_ext}",
     "sd_file_merge": "{sd_root}/{source}_{line}_{qn}_{lid}{sd_ext}",
-    "narrowband_folder": "{root}/{config}/{lid_folder}",
+    "narrowband_folder": "{root}/{config}/{lid_pair_folder}",
     "search_uvt": "{uvt_root}/{lid}/*{source}*{line}*{qn}*{lid}*.uvt",
     "continuum_file": "{root}/{config}/wideband/{source}_{config}_{lid}_continuum.uvt",
     "continuum_input": "{uvt_root}/{lid}/{source}_{lid}.uvt",
@@ -27,9 +28,9 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "continuum_filter_file": "{root}/{config}/{source}_{config}_{lid}_filter.txt",
     "continuum_plot": "{root}/{config}/wideband/{source}_{config}_{lid}.png",
     "continuum_cube": "{root}/{config}/wideband/{source}_{config}_{lid}.lmv-clean",
-    "narrowband_input": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}_sc.uvt",
-    "narrowband_output": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}_sc{contsub}.uvt",
-    "narrowband_script": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}_contsub.map",
+    "narrowband_input": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}_sc.uvt",
+    "narrowband_output": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}_sc{contsub}.uvt",
+    "narrowband_script": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}_contsub.map",
     "dirty_folder": "{root}/{config}/{window_folder}",
     "dirty_input": "{dirty_folder}/{source}_{config}_{window}{selfcal}{contsub}.uvt",
     "dirty_script": "{dirty_folder}/{source}_{config}_{window}{selfcal}{contsub}_dirty.map",
@@ -40,12 +41,12 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "clean_fits": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}.fits",
     "clean_pb_cube": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}-pbcor.lmv-sky",
     "clean_pb_fits": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}-pbcor.fits",
-    "clean_input_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.uvt",
-    "clean_script_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_clean.map",
-    "clean_cube_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.lmv-clean",
-    "clean_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.fits",
-    "clean_pb_cube_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}-pbcor.lmv-sky",
-    "clean_pb_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}-pbcor.fits",
+    "clean_input_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}.uvt",
+    "clean_script_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}_clean.map",
+    "clean_cube_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}.lmv-clean",
+    "clean_fits_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}.fits",
+    "clean_pb_cube_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}-pbcor.lmv-sky",
+    "clean_pb_fits_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}-pbcor.fits",
     "restore_uvt": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}.uvt",
     "restore_cct": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}.cct",
     "restore_clean": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}.lmv-clean",
@@ -54,22 +55,22 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "restore_pb_cube": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
     "restore_pb_fits": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}_uvres-pbcor.fits",
     "restore_script": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}_restore.map",
-    "restore_uvt_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.uvt",
-    "restore_cct_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.cct",
-    "restore_clean_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.lmv-clean",
-    "restore_output_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres.lmv-clean",
-    "restore_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres.fits",
-    "restore_pb_cube_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
-    "restore_pb_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.fits",
-    "restore_script_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_restore.map",
-    "restore_uvt_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.uvt",
-    "restore_cct_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.cct",
-    "restore_clean_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
-    "restore_output_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.lmv-clean",
-    "restore_fits_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.fits",
-    "restore_pb_cube_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
-    "restore_pb_fits_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
-    "restore_script_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
+    "restore_uvt_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}.uvt",
+    "restore_cct_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}.cct",
+    "restore_clean_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}.lmv-clean",
+    "restore_output_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}_uvres.lmv-clean",
+    "restore_fits_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}_uvres.fits",
+    "restore_pb_cube_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
+    "restore_pb_fits_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}_uvres-pbcor.fits",
+    "restore_script_narrowband": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{lid_pair_filename}{selfcal}{contsub}_restore.map",
+    "restore_uvt_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.uvt",
+    "restore_cct_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.cct",
+    "restore_clean_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
+    "restore_output_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.lmv-clean",
+    "restore_fits_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.fits",
+    "restore_pb_cube_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
+    "restore_pb_fits_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
+    "restore_script_line": "{root}/{config}/{lid_pair_folder}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
     "clean_image": "{root}/{config}/images/{source}_{config}_{lid}{suffix}.fits",
     "line_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
     "merged_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
@@ -81,6 +82,7 @@ _ALLOWED_FIELDS = {
     "root", "uvt_root", "uvt_out_root", "sd_root", "sd_ext",
     "source", "source_out", "source_sd", "config", "line", "qn",
     "lid", "lid_lower", "lid_upper", "lid_folder", "lid_pair",
+    "lid_pair_folder", "lid_pair_filename",
     "narrowband_folder", "window", "window_upper", "window_folder", "dirty_folder",
     "selfcal", "contsub", "uvsub", "lid_suffix", "suffix", "product",
     "resolution", "weighting", "beam", "smoothing", "extension", "product_type", "style",
@@ -98,6 +100,29 @@ def _catalogue_key(value: object) -> str:
         .replace("_", "-")
         .replace(" ", "")
     )
+
+
+def _lid_pair_values(value: object) -> dict[str, str]:
+    """Return canonical, folder, and filename forms of a window pair."""
+    text = str(value).strip().lower()
+    match = re.fullmatch(r"l?(\d+)l(\d+)", text)
+    if not match:
+        return {
+            "lid_pair": text,
+            "lid_pair_folder": text,
+            "lid_pair_filename": text,
+        }
+    first, second = (int(part) for part in match.groups())
+    return {
+        "lid_pair": f"l{first:03d}l{second:03d}",
+        "lid_pair_folder": f"l{first}l{second}",
+        "lid_pair_filename": f"{first:03d}l{second:03d}",
+    }
+
+
+def lid_pair_values(value: object) -> dict[str, str]:
+    """Return canonical, folder, and filename values for a window pair."""
+    return _lid_pair_values(value)
 
 
 def _infer_lid(config: object, line: str, qn: str) -> str:
@@ -193,6 +218,8 @@ class FileNaming:
         context.update(values)
         if "lid" in context:
             context.update(self._lid_values(str(context["lid"]), context.get("lid_pair")))
+        context.setdefault("lid_pair_folder", context.get("lid_pair", ""))
+        context.setdefault("lid_pair_filename", context.get("lid_pair", ""))
         context.setdefault("window", context.get("lid", ""))
         context.setdefault("window_upper", str(context["window"]).upper())
         context.setdefault("window_folder", context.get("lid_folder", context["window"]))

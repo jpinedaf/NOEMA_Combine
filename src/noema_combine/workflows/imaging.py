@@ -9,6 +9,7 @@ from typing import Iterable, Literal
 from ..config import Config, get_config
 from ..continuum import normalize_window
 from ..gildas import GildasResult
+from ..naming import lid_pair_values
 from ..imaging import (
     build_clean_image_script,
     build_dirty_image_script,
@@ -104,6 +105,7 @@ def make_dirty_images(
     for window in canonical:
         is_wideband = window in wideband
         pair = window if not is_wideband else ""
+        pair_context = lid_pair_values(pair) if pair else {}
         folder_name = "wideband" if is_wideband else pair
         values = {
             "source": source,
@@ -113,6 +115,7 @@ def make_dirty_images(
             "window_folder": folder_name,
             "lid": window,
             "lid_pair": pair,
+            **pair_context,
             "selfcal": cfg.selfcal_ext if selfcal else "",
             "contsub": cfg.uvsub_ext if contsub else "",
         }
@@ -189,6 +192,7 @@ def make_clean_images(
         window_kind = "wideband" if is_wideband else "narrowband"
         suffix = "" if is_wideband else "_narrowband"
         pair = "" if is_wideband else window
+        pair_context = lid_pair_values(pair) if pair else {}
         values = {
             "source": source,
             "config": configuration,
@@ -196,6 +200,7 @@ def make_clean_images(
             "window_upper": window.upper(),
             "lid": window,
             "lid_pair": pair,
+            **pair_context,
             "window_folder": "wideband" if is_wideband else pair,
             **suffix_values,
         }
@@ -320,6 +325,7 @@ def restore_image(
         else:
             template_suffix = "_narrowband"
         pair = "" if is_wideband else window
+        pair_context = lid_pair_values(pair) if pair else {}
         values = {
             "source": source,
             "config": configuration,
@@ -328,6 +334,7 @@ def restore_image(
             "window_folder": "wideband" if is_wideband else pair,
             "lid": window,
             "lid_pair": pair,
+            **pair_context,
             "line": line or "",
             "qn": qn or "",
             "product_type": product_type,
