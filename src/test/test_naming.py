@@ -150,6 +150,43 @@ def test_preview_naming_returns_outputs_and_search_patterns():
     assert "search_uvt" in preview["search_patterns"]
 
 
+def test_naming_uses_catalogue_source_out_for_wideband_and_narrowband(tmp_path: Path):
+    """Output names use the catalogue output identifier for both clean products."""
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    region_file = tmp_path / "region_catalogue.yml"
+    region_file.write_text(
+        "B5-IRS1:\n"
+        '  RA0: "03h47m41.591s"\n'
+        '  Dec0: "32d51m43.672s"\n'
+        '  height: "40 arcsec"\n'
+        '  width: "40 arcsec"\n'
+        "  fig_width: 6.0\n"
+        "  fig_height: 6.0\n"
+        "  Vlsr: 9.0\n"
+        '  source_sd: "B5*"\n'
+        '  source_out: "B5-IRS1"\n'
+    )
+    config_file = tmp_path / "naming.ini"
+    config_file.write_text(
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged_uvts\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {region_file}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[file_extensions]\nselfcal = _sc\nuvsub = _contsub\n\n[naming]\nroot = .\nclean_input = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\n"""
+    )
+
+    preview = preview_naming(
+        source="B5-IRS1",
+        config="CD",
+        lid="l10",
+        lid_pair="l10l49",
+        config_file=str(config_file),
+    )
+
+    assert preview["outputs"]["clean_input"] == (
+        str(tmp_path / "CD/wideband/B5-IRS1_CD_l10_sc_contsub.uvt")
+    )
+    assert preview["outputs"]["clean_input_narrowband"] == (
+        str(tmp_path / "CD/l10l49/B5-IRS1_CD_010l049_sc_contsub.uvt")
+    )
+
+
 def test_preview_naming_allows_single_dish_only_context():
     preview = preview_naming(source="B5", config="CD", line="N2Dp", qn="3-2")
 
