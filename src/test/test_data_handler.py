@@ -364,7 +364,7 @@ def test_line_reduce_sd_runs_through_configured_gildas_runner(
     line_reduce_sd("B5", "CO", "1-0")
 
     runner.run_class.assert_called_once()
-    assert "file out /tmp/B5_CO_1-0.30m" in runner.run_class.call_args.args[0]
+    assert 'file out "/tmp/B5_CO_1-0.30m"' in runner.run_class.call_args.args[0]
     assert all("class -nw" not in call.args[0] for call in mock_os.call_args_list)
 
 

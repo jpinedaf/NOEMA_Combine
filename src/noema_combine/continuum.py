@@ -80,8 +80,8 @@ def build_continuum_subtraction_script(
     """
     lines = [
         "sic message mapping s-i",
-        f"modify {input_file}",
-        f"let name {input_file.removesuffix('.uvt')}",
+        f'modify "{input_file}"',
+        f'let name "{input_file.removesuffix(".uvt")}"',
         "let type uvt",
         "go setup",
         baseline_command(channel_range),
@@ -90,7 +90,7 @@ def build_continuum_subtraction_script(
         lines.append(f"uv_filter /channels {filter_channels} /zero")
     lines.extend(
         [
-            f"write uv {output_file} new",
+            f'write uv "{output_file}" new',
             "sic message mapping s+i",
             "exit",
         ]

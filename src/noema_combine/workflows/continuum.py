@@ -67,7 +67,7 @@ def _build_continuum_table_script(
 ) -> str:
     lines = [
         "sic message mapping s-i",
-        f"let name {input_file.removesuffix('.uvt')}",
+        f'let name "{input_file.removesuffix(".uvt")}"',
         "let type uvt",
         "go setup",
     ]
@@ -76,7 +76,7 @@ def _build_continuum_table_script(
     lines.extend(
         [
             "uv_cont",
-            f"write uv {output_file} new",
+            f'write uv "{output_file}" new',
             "sic message mapping s+i",
             "exit",
         ]
@@ -94,7 +94,7 @@ def _build_plot_script(
         [
             "sic message class s-i",
             "file out continuum_plot.30m single /over",
-            f"lmv {cube_file}",
+            f'lmv "{cube_file}"',
             "file in continuum_plot.30m",
             "set match 0",
             "set range -0.5 0.5 -0.5 0.5",
@@ -104,7 +104,7 @@ def _build_plot_script(
             f"set window {window}",
             "plot",
             "draw window /pen 1",
-            f"hardcopy {plot_file} /geometry 1000p 0.8r /device PNG COLOR /FITPAGE /over",
+            f'hardcopy "{plot_file}" /geometry 1000p 0.8r /device PNG COLOR /FITPAGE /over',
             "sic message class s+i",
             "exit",
         ]
@@ -115,13 +115,13 @@ def _build_cube_script(input_file: str, cube_file: str) -> str:
     cube_name = cube_file.removesuffix(".lmv-clean")
     return "\n".join(
         [
-            f"modify {input_file}",
-            f"let name {cube_name}",
+            f'modify "{input_file}"',
+            f'let name "{cube_name}"',
             "let type uvt",
             "go setup",
             "go uvmap",
             "go view",
-            "define header H " + cube_name + ".lmv read",
+            f'define header H "{cube_name}.lmv" read',
             "let ares 4*'H%noise'",
             "let nmajor 5000",
             "go clean",

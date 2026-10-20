@@ -17,8 +17,8 @@ def build_dirty_image_script(
     return "\n".join(
         [
             "sic message mapping s-i",
-            f"modify {input_file}",
-            f"let name {output_name}",
+            f'modify "{input_file}"',
+            f'let name "{output_name}"',
             "let type uvt",
             "go setup",
             *beam_lines,
@@ -48,8 +48,8 @@ def build_clean_image_script(
         beam_lines = ["let map_beam_step -1", "let map_size 0 0"]
     lines = [
         "sic message mapping s-i",
-        f"modify {input_file}",
-        f"let name {output_name}",
+        f'modify "{input_file}"',
+        f'let name "{output_name}"',
         "let type uvt",
         "go setup",
         f"define header H '{output_name}'.uvt Write",
@@ -104,10 +104,10 @@ def build_restore_image_script(
         "delete /VARIABLE H",
         "let map_weight robust",
         "let map_robust 1",
-        f"read uv {uv_input}",
-        f"read cct {components}",
+        f'read uv "{uv_input}"',
+        f'read cct "{components}"',
         "uv_restore",
-        f"write * {output_name}",
+        f'write * "{output_name}"',
         f"fits '{output_name}.fits' from '{output_name}.lmv-clean' /overwrite",
     ]
     if primary_beam_correction:

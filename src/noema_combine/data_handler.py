@@ -498,7 +498,7 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     os.system(f"rm -f {os.path.splitext(file_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
-    fb.write(f"file out {file_sd}  single\n")
+    fb.write(f'file out "{file_sd}"  single\n')
     fb.write("say [INFO] Removing old output file\n")
     fb.write(f'say "[INFO] Making new output file: {file_sd}"\n')
     ####
@@ -546,11 +546,11 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     # Now process the whole dataset available
     # Regrid and output to fits file
     print(file_sd)
-    fb.write(f"file in {file_sd}\n")
+    fb.write(f'file in "{file_sd}"\n')
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
-    fb.write(f"table {os.path.splitext(file_sd)[0]} new /nocheck\n")
-    fb.write(f"xy_map {os.path.splitext(file_sd)[0]}\n")
+    fb.write(f'table "{os.path.splitext(file_sd)[0]}" new /nocheck\n')
+    fb.write(f'xy_map "{os.path.splitext(file_sd)[0]}"\n')
     fb.write("exit\n")
     fb.flush()
     os.system(f"rm -f {file_sd}")
