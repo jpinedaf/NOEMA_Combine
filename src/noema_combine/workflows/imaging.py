@@ -104,7 +104,7 @@ def make_dirty_images(
     for window in canonical:
         is_wideband = window in wideband
         pair = window if not is_wideband else ""
-        folder_name = "wideband" if is_wideband else f"narrowband/{pair}"
+        folder_name = "wideband" if is_wideband else pair
         values = {
             "source": source,
             "config": configuration,
@@ -196,7 +196,7 @@ def make_clean_images(
             "window_upper": window.upper(),
             "lid": window,
             "lid_pair": pair,
-            "window_folder": "wideband" if is_wideband else f"narrowband/{pair}",
+            "window_folder": "wideband" if is_wideband else pair,
             **suffix_values,
         }
         input_file = _render(cfg.naming, f"clean_input{suffix}", **values)
@@ -325,7 +325,7 @@ def restore_image(
             "config": configuration,
             "window": window,
             "window_upper": window.upper(),
-            "window_folder": "wideband" if is_wideband else f"narrowband/{pair}",
+            "window_folder": "wideband" if is_wideband else pair,
             "lid": window,
             "lid_pair": pair,
             "line": line or "",

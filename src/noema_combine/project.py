@@ -25,12 +25,12 @@ _WIDEBAND = {
 }
 
 _NARROWBAND = {
-    "clean_input_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.uvt",
-    "clean_script_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_clean.map",
-    "clean_cube_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.lmv-clean",
-    "clean_fits_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.fits",
-    "clean_pb_cube_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}-pbcor.lmv-sky",
-    "clean_pb_fits_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}-pbcor.fits",
+    "clean_input_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.uvt",
+    "clean_script_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_clean.map",
+    "clean_cube_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.lmv-clean",
+    "clean_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.fits",
+    "clean_pb_cube_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}-pbcor.lmv-sky",
+    "clean_pb_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}-pbcor.fits",
 }
 
 _RESTORE = {
@@ -42,28 +42,28 @@ _RESTORE = {
     "restore_pb_cube": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
     "restore_pb_fits": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}_uvres-pbcor.fits",
     "restore_script": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}_restore.map",
-    "restore_uvt_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.uvt",
-    "restore_cct_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.cct",
-    "restore_clean_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.lmv-clean",
-    "restore_output_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres.lmv-clean",
-    "restore_fits_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres.fits",
-    "restore_pb_cube_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
-    "restore_pb_fits_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.fits",
-    "restore_script_narrowband": "{root}/{config}/narrowband/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_restore.map",
-    "restore_uvt_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.uvt",
-    "restore_cct_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.cct",
-    "restore_clean_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
-    "restore_output_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.lmv-clean",
-    "restore_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.fits",
-    "restore_pb_cube_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
-    "restore_pb_fits_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
-    "restore_script_line": "{root}/{config}/lines/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
+    "restore_uvt_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.uvt",
+    "restore_cct_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.cct",
+    "restore_clean_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}.lmv-clean",
+    "restore_output_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres.lmv-clean",
+    "restore_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres.fits",
+    "restore_pb_cube_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
+    "restore_pb_fits_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_uvres-pbcor.fits",
+    "restore_script_narrowband": "{root}/{config}/{lid_pair}/{source}_{config}_{lid_pair}{selfcal}{contsub}_restore.map",
+    "restore_uvt_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.uvt",
+    "restore_cct_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.cct",
+    "restore_clean_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
+    "restore_output_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.lmv-clean",
+    "restore_fits_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres.fits",
+    "restore_pb_cube_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
+    "restore_pb_fits_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
+    "restore_script_line": "{root}/{config}/{lid_pair}/{source}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
 }
 
 
 def _profile_naming(style: str) -> dict[str, str]:
     naming = {**_WIDEBAND, **_NARROWBAND, **_RESTORE}
-    naming["narrowband_folder"] = "{root}/{config}/narrowband/{lid_pair}"
+    naming["narrowband_folder"] = "{root}/{config}/{lid_pair}"
     if style == "propstar":
         naming = {
             key: value.replace("{root}/{config}/", "{root}/{config}config/")

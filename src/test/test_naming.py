@@ -383,7 +383,7 @@ def test_restore_image_supports_wideband_and_narrowband_script_only(tmp_path: Pa
     assert [result.window_kind for result in results] == ["wideband", "narrowband"]
     assert results[0].input_uv == tmp_path / "CD/wideband/B5_CD_li_sc_contsub.uvt"
     assert results[1].input_uv == (
-        tmp_path / "CD/narrowband/l009l048/B5_CD_l009l048_sc_contsub.uvt"
+        tmp_path / "CD/l009l048/B5_CD_l009l048_sc_contsub.uvt"
     )
     assert results[0].restored_cube.name == "B5_CD_li_sc_contsub_uvres.lmv-clean"
     assert results[0].script_path.exists()
@@ -413,7 +413,7 @@ def test_restore_image_supports_individual_line_with_custom_lid(tmp_path: Path):
     assert result.line == "CO"
     assert result.qn == "1-0"
     assert result.window == "l123l162"
-    assert result.input_uv == tmp_path / "CD/lines/B5_CD_CO_1-0_l123l162.uvt"
+    assert result.input_uv == tmp_path / "CD/l123l162/B5_CD_CO_1-0_l123l162.uvt"
     assert result.restored_fits.name == "B5_CD_CO_1-0_l123l162_uvres.fits"
     assert "B5_CD_CO_1-0_l123l162" in result.script_path.read_text()
 

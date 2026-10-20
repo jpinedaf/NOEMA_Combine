@@ -54,7 +54,7 @@ The file name is `config.ini` and an example configuration file is shown below.
     # Optional: override folder and filename conventions.  If omitted,
     # existing NOEMA_Combine filenames are used.
     uvt_file = {root}/{config}/wideband/{source}_{config}_{lid}_{line}_{selfcal}{contsub}.uvt
-    narrowband_folder = {root}/{config}/narrowband/{lid_pair}
+    narrowband_folder = {root}/{config}/{lid_pair}
     search_uvt = {root}/{config}/**/{source}*{lid}*{line}*.uvt
 
 The different sections of the configuration file are described below:
