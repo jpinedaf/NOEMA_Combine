@@ -42,7 +42,7 @@ def test_build_line_extraction_script_uses_frequency_and_velocity_range():
         velocity_range=(4.0, 14.0),
     )
 
-    assert 'modify "/data/input.uvt" /frequency N\\d2D\\u+ 231322' in script
+    assert 'modify "/data/input.uvt" /frequency N\\d2D\\u+ 231321.8283' in script
     assert "uv_extract /range 4.00 14.00 velocity" in script
     assert 'write uv "/data/output.uvt" new' in script
 
