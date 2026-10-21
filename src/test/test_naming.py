@@ -44,6 +44,20 @@ def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path:
         create_config("propstar", config_path)
 
 
+def test_prodige_config_contains_raw_script_narrowband_ranges(tmp_path: Path):
+    prodige = tmp_path / "prodige.ini"
+    propstar = tmp_path / "propstar.ini"
+    create_config("prodige", prodige)
+    create_config("propstar", propstar)
+
+    prodige_text = prodige.read_text()
+    propstar_text = propstar.read_text()
+    assert "l034l073 = 0 20 3200 3280 4800 4900 8172 8192" in prodige_text
+    assert "l010l049 = 0 20 1004 1024" in prodige_text
+    assert "[narrowband_channel_ranges]" in propstar_text
+    assert "l034l073 =" not in propstar_text
+
+
 def test_create_line_catalogue_and_project_files(tmp_path: Path):
     catalogue_path = tmp_path / "lines.csv"
     assert create_line_catalogue("propstar", catalogue_path) == catalogue_path

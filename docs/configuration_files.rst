@@ -94,6 +94,10 @@ and ProPStar uses the packaged 3 mm catalogue under the ``propstar`` name. The s
 ``region_catalogue.yml`` is also copied. The catalogues can be created
 separately when they need to be selected or replaced:
 
+The PRODIGE starter configuration also includes the per-window narrowband
+continuum ranges inherited from the raw-script workflow. ProPStar starts with
+those ranges empty so they can be supplied for its observing setup.
+
 .. code-block:: python
 
     from noema_combine import (

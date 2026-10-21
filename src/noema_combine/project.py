@@ -11,6 +11,35 @@ from typing import Literal
 ConfigStyle = Literal["prodige", "propstar"]
 
 
+_PRODIGE_NARROWBAND_RANGES = {
+    "l009l048": "0 20 100 260 1004 1024",
+    "l012l051": "0 20 80 170 1004 1024",
+    "l013l052": "0 20 680 790 1004 1024",
+    "l014l053": "0 20 2028 2048",
+    "l015l054": "0 20 2028 2048",
+    "l017l056": "0 20 690 770 1004 1024",
+    "l019l058": "0 20 800 890 1004 1024",
+    "l020l059": "0 20 650 720 2028 2048",
+    "l021l060": "0 20 40 120 2028 2048",
+    "l025l064": "0 20 910 1090 2028 2048",
+    "l026l065": "0 20 30 120 3052 3072",
+    "l027l066": "0 20 1005 1190 2028 2048",
+    "l028l067": "0 20 4076 4096",
+    "l032l071": "0 20 250 720 1004 1024",
+    "l034l073": "0 20 3200 3280 4800 4900 8172 8192",
+    "l039l078": "0 20 2028 2048",
+    "l041l080": "0 20 5100 5120",
+    "l043l082": "0 20 3052 3072",
+    "l044l083": "0 20 2028 2048",
+    "l045l084": "0 20 1160 1280 2028 2048",
+}
+for _window_start in range(9, 48):
+    _PRODIGE_NARROWBAND_RANGES.setdefault(
+        f"l{_window_start:03d}l{_window_start + 39:03d}",
+        "0 20 1004 1024",
+    )
+
+
 _WIDEBAND = {
     "dirty_folder": "{root}/{config}/{window_folder}",
     "dirty_input": "{dirty_folder}/{source}_{config}_{window}{selfcal}{contsub}.uvt",
@@ -138,7 +167,9 @@ def create_config(
     parser["continuum_subtraction"] = {
         "wideband_lo": "", "wideband_li": "", "wideband_ui": "", "wideband_uo": "",
     }
-    parser["narrowband_channel_ranges"] = {}
+    parser["narrowband_channel_ranges"] = (
+        _PRODIGE_NARROWBAND_RANGES.copy() if selected == "prodige" else {}
+    )
     parser["narrowband"] = {"windows": "l009l048, l010l049"}
     parser["spectral_windows"] = {
         "narrowband_start": "l009",
