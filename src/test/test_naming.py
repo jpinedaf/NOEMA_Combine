@@ -341,6 +341,27 @@ def test_narrowband_continuum_single_channel_range(tmp_path: Path):
     assert results[0].channel_range == "0 20 100 260 1004 1024"
 
 
+def test_narrowband_continuum_accepts_single_window_string(tmp_path: Path):
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    config_file = tmp_path / "narrowband-string.ini"
+    config_file.write_text(
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l034l073\n"""
+    )
+
+    results = make_narrowband_continuum_subtraction(
+        "B5",
+        "CD",
+        "l034l073",
+        channel_range="0 50 95 96 160 190",
+        execute=False,
+        config_file=str(config_file),
+    )
+
+    assert len(results) == 1
+    assert results[0].window == "l034l073"
+    assert results[0].channel_range == "0 50 95 96 160 190"
+
+
 def test_narrowband_continuum_single_channel_range_rejects_multiple_windows(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "narrowband-range.ini"

@@ -230,7 +230,7 @@ def make_continuum_subtraction(
 def make_narrowband_continuum_subtraction(
     source: str,
     configuration: str,
-    spectral_windows: list[str] | tuple[str, ...] | None = None,
+    spectral_windows: str | list[str] | tuple[str, ...] | None = None,
     *,
     channel_range: str | None = None,
     channel_ranges: dict[str, str] | None = None,
@@ -240,7 +240,10 @@ def make_narrowband_continuum_subtraction(
     """Generate and optionally execute narrowband subtraction scripts."""
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
     source_out = cfg.region_catalogue.get(source, {}).get("source_out", source)
-    requested = spectral_windows or cfg.narrowband_windows
+    if isinstance(spectral_windows, str):
+        requested = [spectral_windows]
+    else:
+        requested = spectral_windows or cfg.narrowband_windows
     windows = [normalize_window(window) for window in requested]
     if channel_range is not None and len(windows) != 1:
         raise ValueError(
