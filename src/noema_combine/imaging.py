@@ -3,6 +3,14 @@
 from __future__ import annotations
 
 
+def normalize_clean_method(method: str) -> str:
+    """Validate and normalize the supported GILDAS CLEAN methods."""
+    normalized = str(method).strip().upper()
+    if normalized not in {"HOGBOM", "SDI"}:
+        raise ValueError("method must be 'HOGBOM' or 'SDI'")
+    return normalized
+
+
 def build_dirty_image_script(
     input_file: str,
     output_name: str,
@@ -43,8 +51,10 @@ def build_clean_image_script(
     frequency_line: str | None = None,
     rest_frequency: float | None = None,
     header_line: str | None = None,
+    method: str = "HOGBOM",
 ) -> str:
     """Build a MAPPING script for a cleaned wideband UVT."""
+    clean_method = normalize_clean_method(method)
     if configuration.upper() in {"A", "ACD"}:
         beam_lines = ["let map_beam_step 2032", "let map_size 0 0"]
     else:
@@ -71,6 +81,7 @@ def build_clean_image_script(
         f'define header H "{output_name}.lmv" read /global',
         f"let ares {threshold_factor}*'H%noise'",
         "delete /VARIABLE H",
+        f"let method {clean_method}",
         "go clean",
         f'fits "{output_name}.fits" from "{output_name}.lmv-clean" /overwrite',
     ])

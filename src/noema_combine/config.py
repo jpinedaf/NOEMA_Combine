@@ -300,6 +300,11 @@ class Config:
                 "imaging", "include_narrowband", fallback=True
             )
         self.cleaning_weighting = self.config.get("cleaning", "weighting", fallback="natural")
+        self.cleaning_method = self.config.get(
+            "cleaning", "method", fallback="HOGBOM"
+        ).strip().upper()
+        if self.cleaning_method not in {"HOGBOM", "SDI"}:
+            raise ValueError("cleaning method must be 'HOGBOM' or 'SDI'")
         self.cleaning_threshold_factor = self.config.getfloat(
             "cleaning", "threshold_factor", fallback=5.0
         )

@@ -115,8 +115,15 @@ Clean-image scripts are retained by default, including when GILDAS reports an
 error. Use ``keep_script=False`` only when the generated ``.map`` files should
 be removed.
 
-Weighting, cleaning threshold, iteration count, and primary-beam correction
-are configured in ``[cleaning]``. The workflow returns the CLEAN image, FITS
+The CLEAN method, weighting, threshold, iteration count, and primary-beam
+correction are configured in ``[cleaning]``. The supported methods are
+``HOGBOM`` (the default) and ``SDI``. A method can also be selected per call:
+
+.. code-block:: python
+
+    results = make_clean_images(..., method="SDI")
+
+The workflow returns the CLEAN image, FITS
 export, primary-beam products, generated script, and GILDAS execution result.
 
 UV restoration

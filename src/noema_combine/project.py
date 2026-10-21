@@ -181,7 +181,7 @@ def create_config(
     }
     parser["imaging"] = {"wideband_windows": "lo, li, ui, uo", "include_narrowband": "true"}
     parser["cleaning"] = {
-        "weighting": "natural", "threshold_factor": "5", "niter": "0",
+        "method": "HOGBOM", "weighting": "natural", "threshold_factor": "5", "niter": "0",
         "primary_beam_correction": "true", "primary_beam_truncate": "20",
     }
     parser["naming"] = {"root": ".", **_profile_naming(selected)}

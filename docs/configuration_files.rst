@@ -148,8 +148,9 @@ replacement is intended.
   end, and ``narrowband_end`` determines the end of the final broadband window.
 - **[imaging]**: Controls dirty-image window selection. The default includes
   all four wideband windows and the configured narrowband windows.
-- **[cleaning]**: Controls clean-image weighting, threshold, iteration count,
-  and primary-beam correction. The raw-script-compatible defaults use natural
+- **[cleaning]**: Controls the CLEAN method, weighting, threshold, iteration count,
+  and primary-beam correction. ``method`` accepts ``HOGBOM`` (the default) or
+  ``SDI``. The raw-script-compatible defaults use natural
   weighting, a five-times-noise threshold, and 20 percent beam truncation.
   Wideband and narrowband cleaning use the same Python workflow; their paths
   can be customized independently with the ``clean_*`` and

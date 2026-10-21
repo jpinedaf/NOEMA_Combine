@@ -16,6 +16,7 @@ from ..imaging import (
     build_clean_image_script,
     build_dirty_image_script,
     build_restore_image_script,
+    normalize_clean_method,
 )
 
 
@@ -192,6 +193,7 @@ def make_clean_images(
     selfcal: bool = False,
     contsub: bool = False,
     keep_script: bool = True,
+    method: str | None = None,
     execute: bool | None = None,
     config_file: str | None = None,
 ) -> list[CleanImageResult]:
@@ -201,6 +203,7 @@ def make_clean_images(
     mixed list of wideband and narrowband windows.
     """
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    clean_method = normalize_clean_method(method or cfg.cleaning_method)
     source_out = _source_out(cfg, source)
     wideband = {normalize_window(value) for value in cfg.imaging_wideband_windows}
     narrowband = set(cfg.narrowband_windows) if cfg.imaging_include_narrowband else set()
@@ -270,6 +273,7 @@ def make_clean_images(
             niter=cfg.cleaning_niter,
             primary_beam_correction=cfg.cleaning_primary_beam,
             primary_beam_truncate=cfg.cleaning_pb_truncate,
+            method=clean_method,
         )
         expected = [cleaned_fits]
         if primary_beam_fits is not None:
@@ -318,6 +322,7 @@ def make_line_images(
     selfcal: bool = False,
     contsub: bool = False,
     keep_script: bool = True,
+    method: str | None = None,
     execute: bool | None = None,
     config_file: str | None = None,
 ) -> LineImageResult:
@@ -325,6 +330,7 @@ def make_line_images(
     if not dirty and not clean:
         raise ValueError("At least one of dirty or clean must be True")
     cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    clean_method = normalize_clean_method(method or cfg.cleaning_method)
     index = _find_line(cfg, line, qn)
     requested = normalize_window(window)
     matches = lines_in_window(requested, config=cfg)
@@ -417,6 +423,7 @@ def make_line_images(
             primary_beam_correction=cfg.cleaning_primary_beam,
             primary_beam_truncate=cfg.cleaning_pb_truncate,
             header_line=str(cfg.name_str[index]),
+            method=clean_method,
         )
         clean_script.parent.mkdir(parents=True, exist_ok=True)
         clean_script.write_text(clean_script_text)

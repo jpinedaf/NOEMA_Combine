@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from noema_combine import make_line_images
+from noema_combine.imaging import build_clean_image_script
 
 
 HEADER = (
@@ -61,6 +62,7 @@ def test_make_line_images_can_generate_only_clean_products(tmp_path):
         "l034",
         dirty=False,
         clean=True,
+        method="SDI",
         execute=False,
         config_file=str(_config(tmp_path)),
     )
@@ -69,3 +71,33 @@ def test_make_line_images_can_generate_only_clean_products(tmp_path):
     assert result.dirty_script is None
     assert result.clean_cube is not None
     assert len(result.executions) == 1
+    assert "let method SDI\ngo clean" in result.clean_script.read_text()
+
+
+def test_clean_builder_emits_explicit_method():
+    hogbom = build_clean_image_script(
+        "/data/input.uvt", "/data/output", baseband="ui", configuration="CD"
+    )
+    sdi = build_clean_image_script(
+        "/data/input.uvt",
+        "/data/output",
+        baseband="ui",
+        configuration="CD",
+        method="sdi",
+    )
+
+    assert "let method HOGBOM\ngo clean" in hogbom
+    assert "let method SDI\ngo clean" in sdi
+
+
+def test_clean_builder_rejects_unknown_method():
+    import pytest
+
+    with pytest.raises(ValueError, match="method must be 'HOGBOM' or 'SDI'"):
+        build_clean_image_script(
+            "/data/input.uvt",
+            "/data/output",
+            baseband="ui",
+            configuration="CD",
+            method="clark",
+        )
