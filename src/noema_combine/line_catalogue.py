@@ -16,6 +16,37 @@ def _lid_number(value: str) -> int:
     return int(match.group(1))
 
 
+def _window_bounds(value: str, configured: list[str]) -> tuple[int, int] | None:
+    """Return the numeric bounds represented by a narrowband identifier."""
+    normalized = "".join(str(value).strip().lower().split())
+    pair = re.fullmatch(r"l0*(\d+)l0*(\d+)", normalized)
+    if pair:
+        start, end = int(pair.group(1)), int(pair.group(2))
+        if start > end:
+            raise ValueError(f"Invalid narrowband window: {value!r}")
+        return start, end
+    single = re.fullmatch(r"l0*(\d+)", normalized)
+    if not single:
+        return None
+    start = int(single.group(1))
+    for window in configured:
+        match = re.fullmatch(r"l(\d+)l(\d+)", window)
+        if match and int(match.group(1)) == start:
+            return start, int(match.group(2))
+    return start, start
+
+
+def _catalogue_window(value: str, configured: list[str]) -> tuple[int, str | None]:
+    """Return a catalogue row's start identifier and normalized window."""
+    normalized = "".join(str(value).strip().lower().split())
+    pair = re.fullmatch(r"l0*(\d+)l0*(\d+)", normalized)
+    if pair:
+        start, end = int(pair.group(1)), int(pair.group(2))
+        return start, f"l{start:03d}l{end:03d}"
+    start = _lid_number(normalized)
+    return start, _narrowband_window(start, configured) or f"l{start:03d}"
+
+
 def _narrowband_window(number: int, configured: list[str]) -> str | None:
     for window in configured:
         match = re.fullmatch(r"l(\d+)l(\d+)", window)
@@ -62,11 +93,15 @@ def lines_in_window(
         else get_config()
     )
     normalized = "".join(str(window).strip().lower().split())
-    pair = re.fullmatch(r"l0*(\d+)l0*(\d+)", normalized)
-    if pair:
-        start, end = int(pair.group(1)), int(pair.group(2))
-        if start > end:
-            raise ValueError(f"Invalid narrowband window: {window!r}")
+    narrow_bounds = _window_bounds(normalized, cfg.narrowband_windows)
+    requested_pair = re.fullmatch(r"l0*(\d+)l0*(\d+)", normalized)
+    requested_pair_name = (
+        f"l{int(requested_pair.group(1)):03d}l{int(requested_pair.group(2)):03d}"
+        if requested_pair
+        else None
+    )
+    if narrow_bounds is not None:
+        start, end = narrow_bounds
     else:
         start, end = _broadband_bounds(cfg, normalized)
 
@@ -82,20 +117,27 @@ def lines_in_window(
     ):
         lid_text = str(lid).strip().lower()
         try:
-            lid_number = _lid_number(lid_text)
+            lid_number, catalogue_window = _catalogue_window(
+                lid_text, cfg.narrowband_windows
+            )
         except ValueError:
-            if pair or lid_text != normalized:
+            if narrow_bounds is not None or lid_text != normalized:
                 continue
             lid_number = None
-        if lid_number is not None and not start <= lid_number <= end:
-            continue
+            catalogue_window = None
+        if lid_number is not None:
+            if narrow_bounds is None:
+                if not start <= lid_number <= end:
+                    continue
+            elif requested_pair_name is not None:
+                if catalogue_window != requested_pair_name and not re.fullmatch(
+                    r"l0*\d+", lid_text
+                ):
+                    continue
+            elif lid_number != start:
+                continue
         if lid_number is None and str(baseband).strip().lower() != normalized:
             continue
-        narrowband = (
-            _narrowband_window(lid_number, cfg.narrowband_windows)
-            if lid_number is not None
-            else None
-        )
         rows.append(
             {
                 "line": str(name),
@@ -103,8 +145,7 @@ def lines_in_window(
                 "frequency_ghz": float(frequency),
                 "molecule": str(molecule),
                 "quantum_number": str(qn_plot),
-                "narrowband_window": narrowband
-                or (f"l{lid_number:03d}" if lid_number is not None else None),
+                "narrowband_window": catalogue_window,
                 "window": normalized,
             }
         )

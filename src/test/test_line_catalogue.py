@@ -60,3 +60,22 @@ def test_lines_in_window_includes_catalogue_rows_tagged_by_broadband(tmp_path):
     lines = lines_in_window("uo", config_file=str(config))
 
     assert [line["line"] for line in lines] == ["HIGH", "BROAD"]
+
+
+def test_lines_in_window_matches_pair_valued_catalogue_units(tmp_path):
+    config = _write_config(tmp_path)
+    catalogue = tmp_path / "lines.csv"
+    catalogue.write_text(
+        HEADER
+        + "OCS,19_18,231.061,OCS,19-18,-4,5,CDMS,ui,l034l073,10,Setup,UI,20,3\n"
+        + "N2D+,3_2,231.322,N2D+,3-2,-2,22,CDMS,ui,l034l073,10,Setup,UI,20,5\n"
+    )
+
+    assert [line["line"] for line in lines_in_window("l034l073", config_file=str(config))] == [
+        "OCS",
+        "N2D+",
+    ]
+    assert [line["line"] for line in lines_in_window("l034", config_file=str(config))] == [
+        "OCS",
+        "N2D+",
+    ]
