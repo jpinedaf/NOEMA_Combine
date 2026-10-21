@@ -169,6 +169,7 @@ def make_clean_images(
     windows: Iterable[str] | None = None,
     selfcal: bool = False,
     contsub: bool = False,
+    keep_script: bool = True,
     execute: bool | None = None,
     config_file: str | None = None,
 ) -> list[CleanImageResult]:
@@ -251,9 +252,20 @@ def make_clean_images(
         expected = [cleaned_fits]
         if primary_beam_fits is not None:
             expected.append(primary_beam_fits)
-        execution = runner.run_mapping(script, expected_outputs=expected, keep_script=True)
         script_path.parent.mkdir(parents=True, exist_ok=True)
         script_path.write_text(script)
+        try:
+            execution = runner.run_mapping(
+                script,
+                expected_outputs=expected,
+                keep_script=keep_script,
+            )
+        except Exception:
+            if not keep_script:
+                script_path.unlink(missing_ok=True)
+            raise
+        if not keep_script:
+            script_path.unlink(missing_ok=True)
         results.append(
             CleanImageResult(
                 source=source,
