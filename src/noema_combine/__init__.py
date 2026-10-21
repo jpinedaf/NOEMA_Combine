@@ -23,6 +23,7 @@ from .continuum import (
     normalize_window,
     resolve_channel_range,
 )
+from .line_catalogue import lines_in_window
 from .workflows import (
     ContinuumSubtractionResult,
     NarrowbandSubtractionResult,

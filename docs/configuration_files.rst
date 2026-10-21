@@ -29,6 +29,14 @@ The file name is `config.ini` and an example configuration file is shown below.
     selfcal = _sc
     uvsub = _contsub
 
+    [spectral_windows]
+    narrowband_start = l009
+    narrowband_end = l047
+    lo_start = l009
+    li_start = l023
+    ui_start = l032
+    uo_start = l040
+
     [single_dish]
     telescope = iram30m
 
@@ -131,6 +139,9 @@ replacement is intended.
 - **[narrowband]**: The optional ``windows`` value selects the narrowband
   windows processed by the workflow. If omitted, the standard l009l048 through
   l047l086 window list is used.
+- **[spectral_windows]**: Defines the starting narrowband window for each
+  broadband window. The next broadband start determines the preceding window's
+  end, and ``narrowband_end`` determines the end of the final broadband window.
 - **[imaging]**: Controls dirty-image window selection. The default includes
   all four wideband windows and the configured narrowband windows.
 - **[cleaning]**: Controls clean-image weighting, threshold, iteration count,
@@ -333,3 +344,14 @@ An example of a line catalogue entry in CSV format is shown below:
 - The ``30mwidth(km/s)`` and ``30mline(km/s)`` columns provide parameters specific to 30m data processing. 
     - ``30mwidth(km/s)`` is the with of the cube to be made around the line in ``km/s`` (cubes covers ``Vlsr - 30mwidth(km/s)`` until ``Vlsr + 30mwidth(km/s)``).
     - ``30mline(km/s)`` is the velocity width used to define the window in ``CLASS`` to avoid the line for baseline fitting. The baseline is using the following range of velocities: from ``Vlsr - 30mwidth(km/s)`` until ``Vlsr - 30mline(km/s)``  and ``Vlsr + 30mline(km/s)`` until ``Vlsr + 30mwidth(km/s)``.
+
+Lines covered by a configured spectral window can be queried with
+``lines_in_window()``. Narrowband identifiers are normalized automatically;
+the broadband-to-narrowband relationship comes from ``[spectral_windows]``.
+
+.. code-block:: python
+
+    from noema_combine import lines_in_window
+
+    lines_in_window("l034l073")
+    lines_in_window("ui")

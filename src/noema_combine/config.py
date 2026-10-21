@@ -50,6 +50,7 @@ class Config:
         self._load_file_handling()
         self._load_naming()
         self._load_continuum_ranges()
+        self._load_spectral_windows()
         self._load_imaging()
         self._initialized = True
 
@@ -164,6 +165,16 @@ class Config:
             usecols=(0, 1, 2, 3, 4, 9, 10, 13, 14),
             unpack=True,
         )
+        self.line_baseband = np.loadtxt(
+            self.file_line_catalogue,
+            dtype="U",
+            delimiter=",",
+            quotechar='"',
+            comments="#",
+            skiprows=1,
+            usecols=(8,),
+            unpack=True,
+        )
 
     def _load_file_handling(self):
         """Load file handling configuration."""
@@ -221,6 +232,56 @@ class Config:
                 if value.strip():
                     self.continuum_narrowband_ranges[_normalize_window(key)] = value.strip()
 
+    def _load_spectral_windows(self):
+        """Load the user-defined broadband to narrowband window mapping."""
+        self.spectral_window_starts: dict[str, int] = {
+            "lo": 9,
+            "li": 23,
+            "ui": 32,
+            "uo": 40,
+        }
+        self.spectral_narrowband_start = 9
+        self.spectral_narrowband_end = 47
+        if not self.config.has_section("spectral_windows"):
+            return
+
+        section = self.config["spectral_windows"]
+
+        def parse_lid(value: str, option: str) -> int:
+            match = re.fullmatch(r"l0*(\d+)", value.strip().lower())
+            if match is None:
+                raise ValueError(
+                    f"Invalid narrowband window identifier for {option}: {value!r}"
+                )
+            return int(match.group(1))
+
+        self.spectral_narrowband_start = parse_lid(
+            section.get("narrowband_start", "l009"), "narrowband_start"
+        )
+        self.spectral_narrowband_end = parse_lid(
+            section.get("narrowband_end", "l047"), "narrowband_end"
+        )
+        if self.spectral_narrowband_start > self.spectral_narrowband_end:
+            raise ValueError("narrowband_start must not be greater than narrowband_end")
+
+        self.spectral_window_starts = {}
+        for key, value in section.items():
+            if not key.endswith("_start") or key.startswith("narrowband_"):
+                continue
+            window = key.removesuffix("_start").strip().lower()
+            start = parse_lid(value, key)
+            if not self.spectral_narrowband_start <= start <= self.spectral_narrowband_end:
+                raise ValueError(
+                    f"{key}={value!r} is outside the configured narrowband range"
+                )
+            if window in self.spectral_window_starts:
+                raise ValueError(f"Duplicate broadband window: {window}")
+            self.spectral_window_starts[window] = start
+
+        starts = list(self.spectral_window_starts.values())
+        if len(starts) != len(set(starts)):
+            raise ValueError("Broadband window start values must be unique")
+
     def _load_imaging(self):
         """Load optional dirty-imaging window settings."""
         self.imaging_wideband_windows = ["lo", "li", "ui", "uo"]
@@ -256,6 +317,7 @@ class Config:
         self._load_file_handling()
         self._load_naming()
         self._load_continuum_ranges()
+        self._load_spectral_windows()
         self._load_imaging()
 
     @property
