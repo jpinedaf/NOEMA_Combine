@@ -40,15 +40,20 @@ def build_clean_image_script(
     niter: int = 0,
     primary_beam_correction: bool = True,
     primary_beam_truncate: int = 20,
+    frequency_line: str | None = None,
+    rest_frequency: float | None = None,
 ) -> str:
     """Build a MAPPING script for a cleaned wideband UVT."""
     if configuration.upper() in {"A", "ACD"}:
         beam_lines = ["let map_beam_step 2032", "let map_size 0 0"]
     else:
         beam_lines = ["let map_beam_step -1", "let map_size 0 0"]
-    lines = [
-        "sic message mapping s-i",
-        f'modify "{input_file}"',
+    lines = ["sic message mapping s-i"]
+    if frequency_line is not None and rest_frequency is not None:
+        lines.append(
+            f'modify "{input_file}" /frequency {frequency_line} {rest_frequency:g}'
+        )
+    lines.extend([
         f'let name "{output_name}"',
         "let type uvt",
         "go setup",
@@ -66,15 +71,15 @@ def build_clean_image_script(
         f"let ares {threshold_factor}*'H%noise'",
         "delete /VARIABLE H",
         "go clean",
-        f"fits '{output_name}.fits' from '{output_name}.lmv-clean' /overwrite",
-    ]
+        f'fits "{output_name}.fits" from "{output_name}.lmv-clean" /overwrite',
+    ])
     if primary_beam_correction:
         lines.extend(
             [
-                f"read clean '{output_name}'",
+                f'read clean "{output_name}"',
                 f"primary /truncate {primary_beam_truncate}",
-                f"write sky '{output_name}-pbcor'",
-                f"fits '{output_name}-pbcor.fits' from '{output_name}-pbcor.lmv-sky' /bit -32 /overwrite",
+                f'write sky "{output_name}-pbcor"',
+                f'fits "{output_name}-pbcor.fits" from "{output_name}-pbcor.lmv-sky" /bit -32 /overwrite',
             ]
         )
     lines.extend(["sic message mapping s+i", "exit"])
@@ -108,15 +113,15 @@ def build_restore_image_script(
         f'read cct "{components}"',
         "uv_restore",
         f'write * "{output_name}"',
-        f"fits '{output_name}.fits' from '{output_name}.lmv-clean' /overwrite",
+        f'fits "{output_name}.fits" from "{output_name}.lmv-clean" /overwrite',
     ]
     if primary_beam_correction:
         lines.extend(
             [
-                f"read clean '{output_name}'",
+                f'read clean "{output_name}"',
                 f"primary /truncate {primary_beam_truncate}",
-                f"write sky '{output_name}-pbcor'",
-                f"fits '{output_name}-pbcor.fits' from '{output_name}-pbcor.lmv-sky' /bit -32 /overwrite",
+                f'write sky "{output_name}-pbcor"',
+                f'fits "{output_name}-pbcor.fits" from "{output_name}-pbcor.lmv-sky" /bit -32 /overwrite',
             ]
         )
     lines.extend(["sic message mapping s+i", "exit"])
