@@ -66,6 +66,10 @@ Channel ranges are optional. The precedence is:
    ``[narrowband_channel_ranges]``.
 4. ``uv_baseline 0`` when no range is available.
 
+The narrowband subtraction script operates on the existing UVT metadata and
+does not emit a ``modify`` command. Its generated script therefore contains
+the input name, ``go setup``, the baseline command, and the output write.
+
 Dirty images
 ------------
 
@@ -106,6 +110,10 @@ and narrowband windows together:
         selfcal=True,
         execute=False,
     )
+
+Clean-image scripts are retained by default, including when GILDAS reports an
+error. Use ``keep_script=False`` only when the generated ``.map`` files should
+be removed.
 
 Weighting, cleaning threshold, iteration count, and primary-beam correction
 are configured in ``[cleaning]``. The workflow returns the CLEAN image, FITS
@@ -152,6 +160,9 @@ Naming and configuration
 All imaging workflows use the configured naming templates. Wideband,
 narrowband, and line restoration can be customized independently with
 ``restore_*``, ``restore_*_narrowband``, and ``restore_*_line`` templates.
+Narrowband folders use ``{lid_pair_folder}`` and filenames use
+``{lid_pair_filename}``. Output names use the catalogue ``source_out`` value
+when it is available.
 See :doc:`configuration_files` and
 ``examples/config_raw_scripts.ini`` for a complete example.
 

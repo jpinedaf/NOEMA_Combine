@@ -54,7 +54,7 @@ The file name is `config.ini` and an example configuration file is shown below.
     # Optional: override folder and filename conventions.  If omitted,
     # existing NOEMA_Combine filenames are used.
     uvt_file = {root}/{config}/wideband/{source}_{config}_{lid}_{line}_{selfcal}{contsub}.uvt
-    narrowband_folder = {root}/{config}/{lid_pair}
+    narrowband_folder = {root}/{config}/{lid_pair_folder}
     search_uvt = {root}/{config}/**/{source}*{lid}*{line}*.uvt
 
 The different sections of the configuration file are described below:
@@ -169,6 +169,7 @@ The optional **[naming]** section controls folder and filename templates. Existi
   configurations need no changes. Templates may use ``root``, ``source``, ``config``,
   ``line``, ``qn``, ``lid``, ``lid_lower``, ``lid_upper``, ``lid_folder``, ``lid_pair``,
   ``lid_pair_folder``, and ``lid_pair_filename``,
+  ``source_out`` and ``source_sd``,
   ``window``, ``window_upper``, ``window_folder``, ``selfcal``, ``contsub``, and
   ``product_type``. Output templates should describe exact filenames;
   ``search_*`` templates may contain wildcards for locating files made by older scripts.
@@ -278,25 +279,25 @@ an example of a source catalogue entry in YAML format is shown below:
 .. code-block:: yaml
 
     L1448N:
-    RA0: "3h25m36.44s"
-    Dec0: "30d45m18.3s"
-    height: "33 arcsec"
-    width: "30 arcsec"
-    fig_width: 6.0
-    fig_height: 6.0
-    Vlsr: 9.0
-    source_sd: "L1448N"
-    source_out: "L1448N"
+      RA0: "3h25m36.44s"
+      Dec0: "30d45m18.3s"
+      height: "33 arcsec"
+      width: "30 arcsec"
+      fig_width: 6.0
+      fig_height: 6.0
+      Vlsr: 9.0
+      source_sd: "L1448N"
+      source_out: "L1448N"
     B5-IRS1:
-    RA0: "03h47m41.591s"
-    Dec0: "32d51m43.672s"
-    height: "40 arcsec"
-    width: "40 arcsec"
-    fig_width: 6.0
-    fig_height: 6.0
-    Vlsr: 9.0
-    source_sd: "B5-IRS1 B5-Cond*"
-    source_out: "B5-IRS1"
+      RA0: "03h47m41.591s"
+      Dec0: "32d51m43.672s"
+      height: "40 arcsec"
+      width: "40 arcsec"
+      fig_width: 6.0
+      fig_height: 6.0
+      Vlsr: 9.0
+      source_sd: "B5-IRS1 B5-Cond*"
+      source_out: "B5-IRS1"
 
 - The ``RA0`` and ``Dec0`` fields specify the coordinates of the source to be used for the single dish cubes.
 - The ``Vlsr`` is also used for the single dish gridding, and it is in ``km/s``, it is also used to extract uv-tables around the systemic velocity of the source.

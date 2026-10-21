@@ -12,6 +12,13 @@ description = "Package to be used for 30-m and NOEMA data processing and combina
 readme = "README.md"
 license = { text = "MIT License" }
 
+[project.optional-dependencies]
+docs = [
+  "sphinx>=7",
+  "myst-parser>0.18",
+  "sphinx-copybutton>=0.5",
+]
+
 dynamic = ["version"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",

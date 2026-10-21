@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx_copybutton",
 ]
+autosectionlabel_prefix_document = True
 # 'sphinx_toolbox.shields',
 source_suffix = {
     ".rst": "restructuredtext",
