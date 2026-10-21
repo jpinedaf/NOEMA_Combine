@@ -11,14 +11,6 @@ maintainers = [{ name = "Jaime E. Pineda", email = "jpineda@mpe.mpg.de" }]
 description = "Package to be used for 30-m and NOEMA data processing and combination."
 readme = "README.md"
 license = { text = "MIT License" }
-
-[project.optional-dependencies]
-docs = [
-  "sphinx>=7",
-  "myst-parser>0.18",
-  "sphinx-copybutton>=0.5",
-]
-
 dynamic = ["version"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -32,6 +24,10 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
+
+
+[project.optional-dependencies]
+docs = ["sphinx>=7", "myst-parser>0.18", "sphinx-copybutton>=0.5"]
 
 [tool.setuptools_scm]
 version_file = "src/noema_combine/_version.py"
