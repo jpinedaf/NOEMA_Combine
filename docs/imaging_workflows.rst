@@ -66,6 +66,21 @@ Channel ranges are optional. The precedence is:
    ``[narrowband_channel_ranges]``.
 4. ``uv_baseline 0`` when no range is available.
 
+When exactly one narrowband window is requested, a single ``channel_range``
+can be supplied directly:
+
+.. code-block:: python
+
+    make_narrowband_continuum_subtraction(
+        "B5",
+        "CD",
+        ["l034l073"],
+        channel_range="0 20 3200 3280 4800 4900 8172 8192",
+        execute=False,
+    )
+
+Use ``channel_ranges`` with a dictionary when processing multiple windows.
+
 The narrowband subtraction script operates on the existing UVT metadata and
 does not emit a ``modify`` command. Its generated script therefore contains
 the input name, ``go setup``, the baseline command, and the output write.

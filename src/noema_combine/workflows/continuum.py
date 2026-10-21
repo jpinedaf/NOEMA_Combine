@@ -232,6 +232,7 @@ def make_narrowband_continuum_subtraction(
     configuration: str,
     spectral_windows: list[str] | tuple[str, ...] | None = None,
     *,
+    channel_range: str | None = None,
     channel_ranges: dict[str, str] | None = None,
     execute: bool | None = None,
     config_file: str | None = None,
@@ -241,6 +242,12 @@ def make_narrowband_continuum_subtraction(
     source_out = cfg.region_catalogue.get(source, {}).get("source_out", source)
     requested = spectral_windows or cfg.narrowband_windows
     windows = [normalize_window(window) for window in requested]
+    if channel_range is not None and len(windows) != 1:
+        raise ValueError(
+            "channel_range can only be used when one narrowband window is requested"
+        )
+    if channel_range is not None and channel_ranges:
+        raise ValueError("Use either channel_range or channel_ranges, not both")
     configured = {normalize_window(key): value for key, value in (channel_ranges or {}).items()}
     unknown = sorted(set(windows) - set(cfg.narrowband_windows))
     if unknown:
@@ -276,7 +283,7 @@ def make_narrowband_continuum_subtraction(
         script_target = _render(naming, "narrowband_script", **values)
         selected_range = resolve_channel_range(
             window,
-            channel_range=configured.get(window),
+            channel_range=channel_range if channel_range is not None else configured.get(window),
             narrowband=True,
             config=cfg,
         )

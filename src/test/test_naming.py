@@ -322,6 +322,43 @@ def test_narrowband_continuum_workflow_script_only(tmp_path: Path):
     assert "uv_baseline 0\n" in result.script_path.read_text()
 
 
+def test_narrowband_continuum_single_channel_range(tmp_path: Path):
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    config_file = tmp_path / "narrowband-range.ini"
+    config_file.write_text(
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n"""
+    )
+
+    results = make_narrowband_continuum_subtraction(
+        "B5",
+        "CD",
+        ["l009l048"],
+        channel_range="0 20 100 260 1004 1024",
+        execute=False,
+        config_file=str(config_file),
+    )
+
+    assert results[0].channel_range == "0 20 100 260 1004 1024"
+
+
+def test_narrowband_continuum_single_channel_range_rejects_multiple_windows(tmp_path: Path):
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    config_file = tmp_path / "narrowband-range.ini"
+    config_file.write_text(
+        f"""[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[narrowband]\nwindows = l009l048, l010l049\n"""
+    )
+
+    with pytest.raises(ValueError, match="only be used when one"):
+        make_narrowband_continuum_subtraction(
+            "B5",
+            "CD",
+            ["l009l048", "l010l049"],
+            channel_range="0 20",
+            execute=False,
+            config_file=str(config_file),
+        )
+
+
 def test_dirty_image_workflow_script_only(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "imaging.ini"
