@@ -170,7 +170,7 @@ def create_config(
     parser["narrowband_channel_ranges"] = (
         _PRODIGE_NARROWBAND_RANGES.copy() if selected == "prodige" else {}
     )
-    parser["narrowband"] = {"windows": "l009l048, l010l049"}
+    parser["narrowband"] = {"windows": ""}
     parser["spectral_windows"] = {
         "narrowband_start": "l009",
         "narrowband_end": "l047",

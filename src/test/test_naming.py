@@ -40,6 +40,8 @@ def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path:
     assert "style = propstar" in content
     assert "line_catalogue = line_catalogue_propstar.csv" in content
     assert "restore_output = {root}/{config}config/" in content
+    assert "[narrowband]" in content
+    assert "windows =" in content
     with pytest.raises(FileExistsError):
         create_config("propstar", config_path)
 
