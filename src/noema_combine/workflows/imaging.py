@@ -10,6 +10,8 @@ from ..config import Config, get_config
 from ..continuum import normalize_window
 from ..gildas import GildasResult
 from ..naming import lid_pair_values
+from .line import _find_line, _narrow_pair
+from ..line_catalogue import lines_in_window
 from ..imaging import (
     build_clean_image_script,
     build_dirty_image_script,
@@ -45,6 +47,26 @@ class CleanImageResult:
     primary_beam_fits: Path | None
     script_path: Path
     execution: GildasResult
+
+
+@dataclass
+class LineImageResult:
+    """Paths and execution results for one extracted-line image workflow."""
+
+    source: str
+    configuration: str
+    line: str
+    qn: str
+    window: str
+    input_file: Path
+    dirty_map: Path | None
+    clean_cube: Path | None
+    clean_fits: Path | None
+    primary_beam_cube: Path | None
+    primary_beam_fits: Path | None
+    dirty_script: Path | None
+    clean_script: Path | None
+    executions: list[GildasResult]
 
 
 @dataclass
@@ -282,6 +304,156 @@ def make_clean_images(
             )
         )
     return results
+
+
+def make_line_images(
+    source: str,
+    configuration: str,
+    line: str,
+    qn: str,
+    window: str,
+    *,
+    dirty: bool = True,
+    clean: bool = True,
+    selfcal: bool = False,
+    contsub: bool = False,
+    keep_script: bool = True,
+    execute: bool | None = None,
+    config_file: str | None = None,
+) -> LineImageResult:
+    """Create dirty and/or CLEAN images for one extracted spectral line."""
+    if not dirty and not clean:
+        raise ValueError("At least one of dirty or clean must be True")
+    cfg = Config(config_file=config_file, isolated=True) if config_file else get_config()
+    index = _find_line(cfg, line, qn)
+    requested = normalize_window(window)
+    matches = lines_in_window(requested, config=cfg)
+    matching = [
+        row for row in matches
+        if str(row["line"]) == str(cfg.line_name[index])
+        and str(row["qn"]) == str(cfg.qn[index])
+    ]
+    if not matching:
+        raise ValueError(f"Line {line} ({qn}) is not covered by window {window}")
+
+    wideband = {normalize_window(value) for value in cfg.imaging_wideband_windows}
+    is_wideband = requested in wideband
+    canonical_window = requested if is_wideband else _narrow_pair(
+        matching[0]["narrowband_window"], cfg
+    )
+    pair_context = {} if is_wideband else lid_pair_values(canonical_window)
+    source_out = _source_out(cfg, source)
+    values = {
+        "source": source,
+        "source_out": source_out,
+        "config": configuration,
+        "window": canonical_window,
+        "window_upper": canonical_window.upper(),
+        "window_folder": "wideband"
+        if is_wideband
+        else pair_context["lid_pair_folder"],
+        "lid": canonical_window,
+        "lid_pair": "" if is_wideband else canonical_window,
+        "line": str(cfg.line_name[index]),
+        "qn": str(cfg.qn[index]),
+        **pair_context,
+        "selfcal": cfg.selfcal_ext if selfcal else "",
+        "contsub": cfg.uvsub_ext if contsub else "",
+    }
+    input_file = _render(cfg.naming, "line_uvt", **values)
+    dirty_map = _render(cfg.naming, "line_dirty_map", **values) if dirty else None
+    clean_cube = _render(cfg.naming, "line_clean_cube", **values) if clean else None
+    clean_fits = _render(cfg.naming, "line_clean_fits", **values) if clean else None
+    primary_beam_cube = (
+        _render(cfg.naming, "line_clean_pb_cube", **values)
+        if clean and cfg.cleaning_primary_beam
+        else None
+    )
+    primary_beam_fits = (
+        _render(cfg.naming, "line_clean_pb_fits", **values)
+        if clean and cfg.cleaning_primary_beam
+        else None
+    )
+    dirty_script = _render(cfg.naming, "line_dirty_script", **values) if dirty else None
+    clean_script = _render(cfg.naming, "line_clean_script", **values) if clean else None
+    if execute is not False and not input_file.is_file():
+        raise FileNotFoundError(f"Line-image input UVT not found: {input_file}")
+
+    runner_kwargs = {} if execute is None else {"execute": execute}
+    runner = cfg.make_gildas_runner(**runner_kwargs)
+    executions: list[GildasResult] = []
+
+    if dirty and dirty_map is not None and dirty_script is not None:
+        dirty_script_text = build_dirty_image_script(
+            str(input_file), str(dirty_map).removesuffix(".lmv"), configuration=configuration
+        )
+        dirty_script.parent.mkdir(parents=True, exist_ok=True)
+        dirty_script.write_text(dirty_script_text)
+        try:
+            executions.append(
+                runner.run_mapping(
+                    dirty_script_text,
+                    expected_outputs=[dirty_map],
+                    keep_script=keep_script,
+                )
+            )
+        except Exception:
+            if not keep_script:
+                dirty_script.unlink(missing_ok=True)
+            raise
+        if not keep_script:
+            dirty_script.unlink(missing_ok=True)
+
+    if clean and clean_cube is not None and clean_fits is not None and clean_script is not None:
+        output_name = str(clean_cube).removesuffix(".lmv-clean")
+        clean_script_text = build_clean_image_script(
+            str(input_file),
+            output_name,
+            baseband=canonical_window,
+            configuration=configuration,
+            weighting=cfg.cleaning_weighting,
+            threshold_factor=cfg.cleaning_threshold_factor,
+            niter=cfg.cleaning_niter,
+            primary_beam_correction=cfg.cleaning_primary_beam,
+            primary_beam_truncate=cfg.cleaning_pb_truncate,
+            header_line=str(cfg.name_str[index]),
+        )
+        clean_script.parent.mkdir(parents=True, exist_ok=True)
+        clean_script.write_text(clean_script_text)
+        expected = [clean_fits]
+        if primary_beam_fits is not None:
+            expected.append(primary_beam_fits)
+        try:
+            executions.append(
+                runner.run_mapping(
+                    clean_script_text,
+                    expected_outputs=expected,
+                    keep_script=keep_script,
+                )
+            )
+        except Exception:
+            if not keep_script:
+                clean_script.unlink(missing_ok=True)
+            raise
+        if not keep_script:
+            clean_script.unlink(missing_ok=True)
+
+    return LineImageResult(
+        source=source,
+        configuration=configuration,
+        line=str(cfg.line_name[index]),
+        qn=str(cfg.qn[index]),
+        window=canonical_window,
+        input_file=input_file,
+        dirty_map=dirty_map,
+        clean_cube=clean_cube,
+        clean_fits=clean_fits,
+        primary_beam_cube=primary_beam_cube,
+        primary_beam_fits=primary_beam_fits,
+        dirty_script=dirty_script,
+        clean_script=clean_script,
+        executions=executions,
+    )
 
 
 def restore_image(

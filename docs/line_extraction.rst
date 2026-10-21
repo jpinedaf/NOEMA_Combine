@@ -39,3 +39,27 @@ explicit absolute range:
 Set ``execute=False`` to generate the script without running GILDAS. Scripts
 are retained by default and are written using the configured ``line_uvt`` and
 ``line_script`` naming templates.
+
+Imaging an extracted line
+-------------------------
+
+The extracted UV table can be imaged with the same dirty and CLEAN stages used
+for full spectral windows:
+
+.. code-block:: python
+
+    from noema_combine import make_line_images
+
+    images = make_line_images(
+        source="B5-IRS1",
+        configuration="CD",
+        line="N2D+",
+        qn="3-2",
+        window="l034l073",
+        selfcal=True,
+        contsub=True,
+        execute=False,
+    )
+
+Set ``dirty=False`` or ``clean=False`` to run only one imaging stage. The
+result contains the generated paths and execution records for both stages.

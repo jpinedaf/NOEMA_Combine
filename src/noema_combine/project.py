@@ -60,6 +60,13 @@ _RESTORE = {
     "restore_script_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
     "line_uvt": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}_{window}{selfcal}{contsub}.uvt",
     "line_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}_{window}{selfcal}{contsub}_extract.map",
+    "line_dirty_map": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv",
+    "line_dirty_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_dirty.map",
+    "line_clean_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_clean.map",
+    "line_clean_cube": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.lmv-clean",
+    "line_clean_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.fits",
+    "line_clean_pb_cube": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.lmv-sky",
+    "line_clean_pb_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.fits",
 }
 
 

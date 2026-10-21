@@ -145,6 +145,16 @@ class Config:
 
     def _load_line_data(self):
         """Load line catalogue data."""
+        line_columns = np.loadtxt(
+            self.file_line_catalogue,
+            dtype="U",
+            delimiter=",",
+            quotechar='"',
+            comments="#",
+            skiprows=1,
+            usecols=(0, 1, 2, 3, 4, 9, 10, 13, 14),
+            unpack=True,
+        )
         (
             self.line_name,
             self.qn,
@@ -155,17 +165,8 @@ class Config:
             self.vel_width,
             self.vel_width_sd,
             self.vel_width_base_sd,
-        ) = np.loadtxt(
-            self.file_line_catalogue,
-            dtype="U",
-            delimiter=",",
-            quotechar='"',
-            comments="#",
-            skiprows=1,
-            usecols=(0, 1, 2, 3, 4, 9, 10, 13, 14),
-            unpack=True,
-        )
-        self.line_baseband = np.loadtxt(
+        ) = (np.atleast_1d(column) for column in line_columns)
+        self.line_baseband = np.atleast_1d(np.loadtxt(
             self.file_line_catalogue,
             dtype="U",
             delimiter=",",
@@ -173,8 +174,9 @@ class Config:
             comments="#",
             skiprows=1,
             usecols=(8,),
+            ndmin=1,
             unpack=True,
-        )
+        ))
 
     def _load_file_handling(self):
         """Load file handling configuration."""

@@ -34,6 +34,8 @@ from .workflows import (
     make_dirty_images,
     CleanImageResult,
     make_clean_images,
+    LineImageResult,
+    make_line_images,
     RestoreImageResult,
     restore_image,
     LineExtractionResult,

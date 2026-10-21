@@ -42,6 +42,7 @@ def build_clean_image_script(
     primary_beam_truncate: int = 20,
     frequency_line: str | None = None,
     rest_frequency: float | None = None,
+    header_line: str | None = None,
 ) -> str:
     """Build a MAPPING script for a cleaned wideband UVT."""
     if configuration.upper() in {"A", "ACD"}:
@@ -58,7 +59,7 @@ def build_clean_image_script(
         "let type uvt",
         "go setup",
         f'define header H "{output_name}.uvt" Write',
-        f"let H%line {baseband}",
+        f"let H%line {header_line or baseband}",
         "delete /VARIABLE H",
         "let map_cell 0 0",
         *beam_lines,

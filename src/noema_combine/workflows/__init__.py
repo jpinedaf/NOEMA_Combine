@@ -11,6 +11,8 @@ from .imaging import (
     DirtyImageResult,
     RestoreImageResult,
     make_clean_images,
+    LineImageResult,
+    make_line_images,
     make_dirty_images,
     restore_image,
 )
@@ -25,6 +27,8 @@ __all__ = [
     "make_dirty_images",
     "CleanImageResult",
     "make_clean_images",
+    "LineImageResult",
+    "make_line_images",
     "RestoreImageResult",
     "restore_image",
     "LineExtractionResult",
