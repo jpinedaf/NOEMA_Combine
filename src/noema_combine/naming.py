@@ -71,6 +71,8 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "restore_pb_cube_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
     "restore_pb_fits_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
     "restore_script_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
+    "line_uvt": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}_{window}{selfcal}{contsub}.uvt",
+    "line_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}_{window}{selfcal}{contsub}_extract.map",
     "clean_image": "{root}/{config}/images/{source}_{config}_{lid}{suffix}.fits",
     "line_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
     "merged_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",

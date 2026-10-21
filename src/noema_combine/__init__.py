@@ -24,6 +24,7 @@ from .continuum import (
     resolve_channel_range,
 )
 from .line_catalogue import lines_in_window
+from .line_extraction import build_line_extraction_script
 from .workflows import (
     ContinuumSubtractionResult,
     NarrowbandSubtractionResult,
@@ -35,4 +36,6 @@ from .workflows import (
     make_clean_images,
     RestoreImageResult,
     restore_image,
+    LineExtractionResult,
+    extract_line,
 )

@@ -58,6 +58,8 @@ _RESTORE = {
     "restore_pb_cube_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.lmv-sky",
     "restore_pb_fits_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_uvres-pbcor.fits",
     "restore_script_line": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}_restore.map",
+    "line_uvt": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}_{window}{selfcal}{contsub}.uvt",
+    "line_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}_{window}{selfcal}{contsub}_extract.map",
 }
 
 
@@ -131,6 +133,14 @@ def create_config(
     }
     parser["narrowband_channel_ranges"] = {}
     parser["narrowband"] = {"windows": "l009l048, l010l049"}
+    parser["spectral_windows"] = {
+        "narrowband_start": "l009",
+        "narrowband_end": "l047",
+        "lo_start": "l009",
+        "li_start": "l023",
+        "ui_start": "l032",
+        "uo_start": "l040",
+    }
     parser["imaging"] = {"wideband_windows": "lo, li, ui, uo", "include_narrowband": "true"}
     parser["cleaning"] = {
         "weighting": "natural", "threshold_factor": "5", "niter": "0",

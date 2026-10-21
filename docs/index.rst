@@ -45,6 +45,13 @@ Imaging workflows
      :maxdepth: 2
 
      imaging_workflows.rst
+
+Line extraction
+^^^^^^^^^^^^^^^
+.. toctree::
+     :maxdepth: 2
+
+     line_extraction.rst
      
 
 Reduce single dish data

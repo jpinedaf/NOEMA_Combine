@@ -14,6 +14,7 @@ from .imaging import (
     make_dirty_images,
     restore_image,
 )
+from .line import LineExtractionResult, extract_line
 
 __all__ = [
     "ContinuumSubtractionResult",
@@ -26,4 +27,6 @@ __all__ = [
     "make_clean_images",
     "RestoreImageResult",
     "restore_image",
+    "LineExtractionResult",
+    "extract_line",
 ]
