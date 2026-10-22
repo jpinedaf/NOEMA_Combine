@@ -71,7 +71,7 @@ def test_make_line_images_can_generate_only_clean_products(tmp_path):
     assert result.dirty_script is None
     assert result.clean_cube is not None
     assert len(result.executions) == 1
-    assert "let method SDI\ngo clean" in result.clean_script.read_text()
+    assert "let method SDI\nlet MYCLEAN%SUPPORT NO\ngo clean" in result.clean_script.read_text()
 
 
 def test_clean_builder_emits_explicit_method():
@@ -86,8 +86,32 @@ def test_clean_builder_emits_explicit_method():
         method="sdi",
     )
 
-    assert "let method HOGBOM\ngo clean" in hogbom
-    assert "let method SDI\ngo clean" in sdi
+    assert "let method HOGBOM\nlet MYCLEAN%SUPPORT NO\ngo clean" in hogbom
+    assert "let method SDI\nlet MYCLEAN%SUPPORT NO\ngo clean" in sdi
+
+
+def test_clean_builder_uses_support_mask_settings():
+    masked = build_clean_image_script(
+        "/data/input.uvt",
+        "/data/output",
+        baseband="l034l073",
+        configuration="CD",
+        threshold_factor=2.0,
+        support_mask=True,
+    )
+    unmasked = build_clean_image_script(
+        "/data/input.uvt",
+        "/data/output",
+        baseband="l034l073",
+        configuration="CD",
+        threshold_factor=3.0,
+        support_mask=False,
+    )
+
+    assert "let ares 2.0*'H%noise'" in masked
+    assert "let MYCLEAN%SUPPORT YES\ngo clean" in masked
+    assert "let ares 3.0*'H%noise'" in unmasked
+    assert "let MYCLEAN%SUPPORT NO\ngo clean" in unmasked
 
 
 def test_clean_builder_rejects_unknown_method():

@@ -141,6 +141,13 @@ correction are configured in ``[cleaning]``. The supported methods are
 The workflow returns the CLEAN image, FITS
 export, primary-beam products, generated script, and GILDAS execution result.
 
+If a support mask with the same output stem and the ``.msk`` extension is
+already present, the generated script enables ``MYCLEAN%SUPPORT`` and cleans
+to ``2.0*'H%noise'``. Without that mask it cleans to
+``3.0*'H%noise'`` and explicitly sets ``MYCLEAN%SUPPORT NO``.
+The same defaults are used when ``make_continuum_subtraction`` creates its
+continuum cube.
+
 UV restoration
 --------------
 

@@ -52,6 +52,7 @@ def build_clean_image_script(
     rest_frequency: float | None = None,
     header_line: str | None = None,
     method: str = "HOGBOM",
+    support_mask: bool = False,
 ) -> str:
     """Build a MAPPING script for a cleaned wideband UVT."""
     clean_method = normalize_clean_method(method)
@@ -82,6 +83,9 @@ def build_clean_image_script(
         f"let ares {threshold_factor}*'H%noise'",
         "delete /VARIABLE H",
         f"let method {clean_method}",
+    ])
+    lines.append(f"let MYCLEAN%SUPPORT {'YES' if support_mask else 'NO'}")
+    lines.extend([
         "go clean",
         f'fits "{output_name}.fits" from "{output_name}.lmv-clean" /overwrite',
     ])

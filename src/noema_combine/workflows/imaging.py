@@ -263,17 +263,21 @@ def make_clean_images(
         if execute is not False and not input_file.is_file():
             raise FileNotFoundError(f"Clean-image input UVT not found: {input_file}")
         output_name = str(cleaned_cube).removesuffix(".lmv-clean")
+        support_mask = Path(f"{output_name}.msk").is_file()
+        if support_mask:
+            print("Support mask found, cleaning with support")
         script = build_clean_image_script(
             str(input_file),
             output_name,
             baseband=window,
             configuration=configuration,
             weighting=cfg.cleaning_weighting,
-            threshold_factor=cfg.cleaning_threshold_factor,
+            threshold_factor=2.0 if support_mask else 3.0,
             niter=cfg.cleaning_niter,
             primary_beam_correction=cfg.cleaning_primary_beam,
             primary_beam_truncate=cfg.cleaning_pb_truncate,
             method=clean_method,
+            support_mask=support_mask,
         )
         expected = [cleaned_fits]
         if primary_beam_fits is not None:
@@ -412,18 +416,22 @@ def make_line_images(
 
     if clean and clean_cube is not None and clean_fits is not None and clean_script is not None:
         output_name = str(clean_cube).removesuffix(".lmv-clean")
+        support_mask = Path(f"{output_name}.msk").is_file()
+        if support_mask:
+            print("Support mask found, cleaning with support")
         clean_script_text = build_clean_image_script(
             str(input_file),
             output_name,
             baseband=canonical_window,
             configuration=configuration,
             weighting=cfg.cleaning_weighting,
-            threshold_factor=cfg.cleaning_threshold_factor,
+            threshold_factor=2.0 if support_mask else 3.0,
             niter=cfg.cleaning_niter,
             primary_beam_correction=cfg.cleaning_primary_beam,
             primary_beam_truncate=cfg.cleaning_pb_truncate,
             header_line=str(cfg.name_str[index]),
             method=clean_method,
+            support_mask=support_mask,
         )
         clean_script.parent.mkdir(parents=True, exist_ok=True)
         clean_script.write_text(clean_script_text)

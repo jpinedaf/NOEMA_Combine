@@ -112,7 +112,12 @@ def _build_plot_script(
     ) + "\n"
 
 
-def _build_cube_script(input_file: str, cube_file: str) -> str:
+def _build_cube_script(
+    input_file: str,
+    cube_file: str,
+    *,
+    support_mask: bool = False,
+) -> str:
     cube_name = cube_file.removesuffix(".lmv-clean")
     return "\n".join(
         [
@@ -123,8 +128,9 @@ def _build_cube_script(input_file: str, cube_file: str) -> str:
             "go uvmap",
             "go view",
             f'define header H "{cube_name}.lmv" read',
-            "let ares 4*'H%noise'",
+            f"let ares {2.0 if support_mask else 3.0}*'H%noise'",
             "let nmajor 5000",
+            f"let MYCLEAN%SUPPORT {'YES' if support_mask else 'NO'}",
             "go clean",
             "exit",
         ]
@@ -197,8 +203,14 @@ def make_continuum_subtraction(
 
     if not no_cube:
         cube_file = _render(naming, "continuum_cube", **values)
+        cube_stem = str(cube_file).removesuffix(".lmv-clean")
+        support_mask = Path(f"{cube_stem}.msk").is_file()
+        if support_mask:
+            print("Support mask found, cleaning with support")
         cube_result = runner.run_mapping(
-            _build_cube_script(str(output_file), str(cube_file)),
+            _build_cube_script(
+                str(output_file), str(cube_file), support_mask=support_mask
+            ),
             expected_outputs=[cube_file],
         )
         scripts.append(cube_result.script_path)

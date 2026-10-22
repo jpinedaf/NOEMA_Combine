@@ -342,6 +342,34 @@ def test_wideband_continuum_workflow_script_only(tmp_path: Path):
     assert "uv_baseline 0\n" in result.scripts[0].read_text()
 
 
+def test_continuum_cube_clean_uses_support_mask_defaults(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    config_file = tmp_path / "continuum-mask.ini"
+    config_file.write_text(
+        f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
+    )
+
+    unmasked = make_continuum_subtraction(
+        "B5", "CD", "li", execute=False, config_file=str(config_file)
+    )
+    unmasked_script = unmasked.scripts[-1].read_text()
+    assert "let ares 3.0*'H%noise'" in unmasked_script
+    assert "let MYCLEAN%SUPPORT NO\ngo clean" in unmasked_script
+
+    mask = tmp_path / "output/B5_CD_li.msk"
+    mask.parent.mkdir(parents=True, exist_ok=True)
+    mask.touch()
+    masked = make_continuum_subtraction(
+        "B5", "CD", "li", execute=False, config_file=str(config_file)
+    )
+    masked_script = masked.scripts[-1].read_text()
+    assert "let ares 2.0*'H%noise'" in masked_script
+    assert "let MYCLEAN%SUPPORT YES\ngo clean" in masked_script
+    assert "Support mask found, cleaning with support" in capsys.readouterr().out
+
+
 def test_narrowband_continuum_workflow_script_only(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "narrowband.ini"
