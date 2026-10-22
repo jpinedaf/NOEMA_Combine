@@ -94,7 +94,7 @@ def calibration_type(
         file.write("set amplitude baseline relative\n")
     file.write("set drop 0.00000001 0.00000001\n")
     file.write("!\n")
-    file.write(f"file in {file_name}\n")
+    file.write(f'file in "{file_name}"\n')
     return
 
 

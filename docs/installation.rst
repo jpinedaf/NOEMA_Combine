@@ -27,3 +27,14 @@ can do so from the git repository::
     cd NOEMA_Combine
     pip install .
 
+Documentation dependencies
+---------------------------
+To build the documentation locally, install the optional documentation
+dependencies with::
+
+    pip install .[docs]
+
+Then build the HTML documentation with::
+
+    sphinx-build -W -b html docs /tmp/noema-combine-docs
+

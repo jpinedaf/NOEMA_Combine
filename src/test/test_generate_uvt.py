@@ -216,7 +216,7 @@ def test_calibration_type_basic():
 
     output = mock_file.getvalue()
     assert "set receiver 1mm" in output
-    assert "file in test.30m" in output
+    assert 'file in "test.30m"' in output
     assert "set default" in output
 
 
