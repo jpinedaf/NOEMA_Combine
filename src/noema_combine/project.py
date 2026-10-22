@@ -5,6 +5,7 @@ from __future__ import annotations
 from configparser import ConfigParser
 from importlib.resources import files
 from pathlib import Path
+import socket
 from typing import Literal
 
 
@@ -117,6 +118,27 @@ def _check_style(style: str) -> str:
     return selected
 
 
+def _default_gildas_setup() -> tuple[str, str]:
+    """Return the GILDAS setup defaults for the current host.
+
+    The CasAlma machines provide the ``gildas_latest`` shell function from
+    ``/etc/profile.d/gildas.sh``.  Other machines keep the setup disabled so
+    generated project files remain portable.
+    """
+    casalma_hosts = {
+        "cas-alma.mpe.mpg.de",
+        "cas2alma.mpe.mpg.de",
+        "cas3alma.mpe.mpg.de",
+    }
+    hostnames = {
+        socket.gethostname().strip().lower().rstrip("."),
+        socket.getfqdn().strip().lower().rstrip("."),
+    }
+    if hostnames & casalma_hosts:
+        return "gildas_latest", "/etc/profile.d/gildas.sh"
+    return "", ""
+
+
 def _write_new(path: Path, content: str, *, overwrite: bool) -> Path:
     if path.exists() and not overwrite:
         raise FileExistsError(f"File already exists: {path}")
@@ -138,9 +160,14 @@ def create_config(
     selected = _check_style(style)
     parser = ConfigParser()
     parser["project"] = {"style": selected, "base_dir": "."}
+    inputdir = (
+        "/projects/MIOP/30mDATA/164-23/, /projects/MIOP/30mDATA/162-24/"
+        if selected == "prodige"
+        else "raw_data"
+    )
     parser["folders"] = {
         "uvt_dir": "uvts", "uvt_dir_out": "merged_uvts", "dir_sd": "30m",
-        "inputdir": "raw_data",
+        "inputdir": inputdir,
     }
     selected_catalogue = catalogue or selected
     if selected_catalogue not in {"prodige", "propstar"}:
@@ -158,8 +185,9 @@ def create_config(
     parser["file_handling"] = {}
     parser["file_extensions"] = {"selfcal": "_sc", "uvsub": "_contsub"}
     parser["single_dish"] = {"telescope": "iram30m"}
+    setup, setup_file = _default_gildas_setup()
     parser["gildas"] = {
-        "execute": "true", "workdir": ".", "setup": "", "setup_file": "",
+        "execute": "true", "workdir": ".", "setup": setup, "setup_file": setup_file,
         "shell": "/bin/bash", "interactive": "false",
         "class": "class",
         "mapping": "mapping", "clic": "clic",

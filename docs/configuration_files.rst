@@ -135,7 +135,10 @@ replacement is intended.
   ``gildas_latest`` or ``gildas_jun26a``. If the setup is a shell function,
   ``setup_file`` can point to the file defining it and ``interactive = true``
   loads interactive shell startup files. ``shell`` selects the shell used for
-  setup.
+  setup. When ``create_config`` runs on ``cas-alma.mpe.mpg.de``,
+  ``cas2alma.mpe.mpg.de``, or ``cas3alma.mpe.mpg.de``, it writes
+  ``setup = gildas_latest`` and ``setup_file = /etc/profile.d/gildas.sh``
+  automatically. Other hosts keep both values empty.
 - **[continuum_subtraction]**: Optional per-window wideband channel ranges.
   **[narrowband_channel_ranges]** provides the equivalent narrowband values.
   If no explicit range, range file, or configured value is available, generated

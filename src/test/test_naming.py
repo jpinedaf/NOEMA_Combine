@@ -5,6 +5,7 @@ import sys
 
 import pytest
 
+import noema_combine.project as project_module
 from noema_combine.config import get_config, reload_config
 from noema_combine.continuum import (
     baseline_command,
@@ -39,11 +40,44 @@ def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path:
     content = config_path.read_text()
     assert "style = propstar" in content
     assert "line_catalogue = line_catalogue_propstar.csv" in content
+    assert "inputdir = raw_data" in content
     assert "restore_output = {root}/{config}config/" in content
     assert "[narrowband]" in content
     assert "windows =" in content
     with pytest.raises(FileExistsError):
         create_config("propstar", config_path)
+
+
+@pytest.mark.parametrize(
+    "hostname",
+    ["cas-alma.mpe.mpg.de", "cas2alma.mpe.mpg.de", "cas3alma.mpe.mpg.de"],
+)
+def test_create_config_enables_gildas_setup_on_casalma_hosts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, hostname: str
+):
+    monkeypatch.setattr(project_module.socket, "gethostname", lambda: hostname)
+    monkeypatch.setattr(project_module.socket, "getfqdn", lambda: hostname)
+
+    config_path = tmp_path / "casalma.ini"
+    create_config("prodige", config_path)
+    content = config_path.read_text()
+
+    assert "setup = gildas_latest" in content
+    assert "setup_file = /etc/profile.d/gildas.sh" in content
+
+
+def test_create_config_keeps_gildas_setup_empty_on_other_hosts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(project_module.socket, "gethostname", lambda: "workstation")
+    monkeypatch.setattr(project_module.socket, "getfqdn", lambda: "workstation.example")
+
+    config_path = tmp_path / "workstation.ini"
+    create_config("prodige", config_path)
+    content = config_path.read_text()
+
+    assert "setup = \n" in content
+    assert "setup_file = \n" in content
 
 
 def test_prodige_config_contains_raw_script_narrowband_ranges(tmp_path: Path):
@@ -54,6 +88,11 @@ def test_prodige_config_contains_raw_script_narrowband_ranges(tmp_path: Path):
 
     prodige_text = prodige.read_text()
     propstar_text = propstar.read_text()
+    assert (
+        "inputdir = /projects/MIOP/30mDATA/164-23/, /projects/MIOP/30mDATA/162-24/"
+        in prodige_text
+    )
+    assert "inputdir = raw_data" in propstar_text
     assert "l034l073 = 0 20 3200 3280 4800 4900 8172 8192" in prodige_text
     assert "l010l049 = 0 20 1004 1024" in prodige_text
     assert "[narrowband_channel_ranges]" in propstar_text
