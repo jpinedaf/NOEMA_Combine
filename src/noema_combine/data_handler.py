@@ -472,10 +472,9 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     for inputfile in inputfiles:
         # inputfile = os.path.join(inputdir, input_filename)
         # check everyfile to be ignored if it is the current file
-        for ignorefile in ignorefiles:
-            if ignorefile in inputfile:
-                fb.write(f'say "[INFO] Ignoring file: {inputfile}"\n')
-                continue
+        if any(ignored in inputfile for ignored in ignorefiles):
+            fb.write(f'say "[INFO] Ignoring file: {inputfile}"\n')
+            continue
         fb.write(f'say "[INFO] Processing file: {inputfile}"\n')
         # Load file and det defaults
         fb.write(f'file in "{inputfile}"\n')
