@@ -16,7 +16,9 @@ author = "Jaime E. Pineda"
 extensions = [
     "myst_parser",
     "sphinx.ext.autosectionlabel",
+    "sphinx_copybutton",
 ]
+autosectionlabel_prefix_document = True
 # 'sphinx_toolbox.shields',
 source_suffix = {
     ".rst": "restructuredtext",
@@ -33,3 +35,8 @@ exclude_patterns = ["requirements.txt"]
 
 html_theme = "alabaster"
 html_static_path = ["_static"]
+
+# Keep interactive prompts out of copied Python and shell examples.
+copybutton_prompt_text = r"\$ |>>> |\.\.\. |In \[[0-9]+\]: |\.\.\.: "
+copybutton_prompt_is_regexp = True
+copybutton_remove_prompts = True

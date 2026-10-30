@@ -175,7 +175,11 @@ def get_source_param(source_name: str) -> tuple[str, str, str, float, float, flo
 
 
 def get_uvt_window(
-    source_name: str, Lid: str, uvsub: bool = True, selfcal: bool = False
+    source_name: str,
+    Lid: str,
+    uvsub: bool = True,
+    selfcal: bool = False,
+    **naming_values: object,
 ) -> str:
     """
     Function to generate the output file name for NOEMA uvt file.
@@ -195,6 +199,11 @@ def get_uvt_window(
     selfcal: bool
         If True, the file will include '_sc' in the name.
     """
+    if getattr(_cfg, "naming_custom", False) is True:
+        return _cfg.naming.uvt_window(
+            source_name, Lid, selfcal=selfcal, uvsub=uvsub, **naming_values
+        )
+
     extension = ""
     if selfcal:
         extension += selfcal_ext
@@ -205,7 +214,12 @@ def get_uvt_window(
 
 
 def get_uvt_file(
-    source_name: str, line_name: str, qn: str, Lid: str, merge: bool = False
+    source_name: str,
+    line_name: str,
+    qn: str,
+    Lid: str,
+    merge: bool = False,
+    **naming_values: object,
 ) -> str:
     """
     Function to generate the output file name for NOEMA uvt file.
@@ -226,6 +240,11 @@ def get_uvt_file(
     merge: bool
         If True, the file will be saved in the merge folder, otherwise in the uvt folder.
     """
+    if getattr(_cfg, "naming_custom", False) is True:
+        return _cfg.naming.uvt_file(
+            source_name, line_name, qn, Lid, merge=merge, **naming_values
+        )
+
     if not merge:
         dir_out = uvt_dir
     else:
@@ -275,7 +294,12 @@ def get_30m_file(
 
 
 def get_sd_file(
-    source_name: str, molecule: str, quantum_number: str, Lid: str, merge: bool = False
+    source_name: str,
+    molecule: str,
+    quantum_number: str,
+    Lid: str,
+    merge: bool = False,
+    **naming_values: object,
 ) -> str:
     """
     Function to generate the output file name for single dish data.
@@ -301,6 +325,16 @@ def get_sd_file(
     merge: bool
         If True, the file will include the Lid information in the name.
     """
+    if getattr(_cfg, "naming_custom", False) is True:
+        return _cfg.naming.sd_file(
+            source_name,
+            molecule,
+            quantum_number,
+            Lid,
+            merge=merge,
+            **naming_values,
+        )
+
     if merge:
         name_out = (
             f"{source_name}_{molecule}_{quantum_number}_{Lid}{file_extensions_sd}"
@@ -462,9 +496,9 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
     # Define output
     file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    os.system(f"rm {os.path.splitext(file_sd)[0]}.*")
+    os.system(f"rm -f {os.path.splitext(file_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
-    fb.write(f"file out {file_sd}  single\n")
+    fb.write(f'file out "{file_sd}"  single\n')
     fb.write("say [INFO] Removing old output file\n")
     fb.write(f'say "[INFO] Making new output file: {file_sd}"\n')
     ####
@@ -511,15 +545,16 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     # Now process the whole dataset available
     # Regrid and output to fits file
     print(file_sd)
-    fb.write(f"file in {file_sd}\n")
+    fb.write(f'file in "{file_sd}"\n')
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
-    fb.write(f"table {os.path.splitext(file_sd)[0]} new /nocheck\n")
-    fb.write(f"xy_map {os.path.splitext(file_sd)[0]}\n")
+    fb.write(f'table "{os.path.splitext(file_sd)[0]}" new /nocheck\n')
+    fb.write(f'xy_map "{os.path.splitext(file_sd)[0]}"\n')
     fb.write("exit\n")
     fb.flush()
     os.system(f"rm -f {file_sd}")
-    os.system(f"class -nw @ {fb.name}")
+    fb.seek(0)
+    _cfg.make_gildas_runner().run_class(fb.read())
     fb.close()
 
 
