@@ -134,6 +134,30 @@ def test_create_line_catalogue_and_project_files(tmp_path: Path):
     assert "RA0" in region_path.read_text()
 
 
+def test_preview_naming_covers_merged_line_project_tree(tmp_path: Path):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "line_catalogue_prodige.csv",
+        region_catalogue_filename=tmp_path / "region_catalogue.yml",
+    )
+    preview = preview_naming(
+        "B5",
+        "CD",
+        line="N2D+",
+        qn="3-2",
+        lid="l034l073",
+        config_file=str(config_path),
+    )
+    outputs = preview["outputs"]
+    assert outputs["merged_line_uvt"].endswith(
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm.uvt"
+    )
+    assert outputs["merged_line_clean_cube"].endswith(
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm-merged.lmv-clean"
+    )
+
+
 def test_import_succeeds_with_generated_config_in_current_directory(tmp_path: Path):
     create_project_files(
         "prodige",
@@ -340,6 +364,25 @@ def test_wideband_continuum_workflow_script_only(tmp_path: Path):
     assert result.executions[0].executed is False
     assert result.scripts[0].exists()
     assert "uv_baseline 0\n" in result.scripts[0].read_text()
+
+
+def test_wideband_continuum_script_retention_is_explicit(tmp_path: Path):
+    package_dir = Path(__file__).parents[1] / "noema_combine"
+    config_file = tmp_path / "retention.ini"
+    config_file.write_text(
+        f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
+    )
+
+    retained = make_continuum_subtraction(
+        "B5", "CD", "li", no_cube=True, execute=False, config_file=str(config_file)
+    )
+    assert retained.scripts and all(path.exists() for path in retained.scripts)
+
+    removed = make_continuum_subtraction(
+        "B5", "CD", "li", no_cube=True, keep_script=False,
+        execute=False, config_file=str(config_file)
+    )
+    assert removed.scripts and all(not path.exists() for path in removed.scripts)
 
 
 def test_continuum_cube_clean_uses_support_mask_defaults(

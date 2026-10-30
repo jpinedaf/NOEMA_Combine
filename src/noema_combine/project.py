@@ -63,6 +63,20 @@ _NARROWBAND = {
     "clean_pb_fits_narrowband": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}{selfcal}{contsub}-pbcor.fits",
 }
 
+_MERGED_LINE = {
+    "merged_line_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm.uvt",
+    "merged_line_single_dish": "{sd_root}/{source_out}_{line}_{qn}{sd_ext}",
+    "merged_line_merged_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.uvt",
+    "merged_line_prepare_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_prepare.map",
+    "merged_line_image_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_clean.map",
+    "merged_line_dirty_map": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.lmv",
+    "merged_line_dirty_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_dirty.map",
+    "merged_line_clean_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.lmv-clean",
+    "merged_line_clean_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.fits",
+    "merged_line_clean_pb_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged-pbcor.lmv-sky",
+    "merged_line_clean_pb_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged-pbcor.fits",
+}
+
 _RESTORE = {
     "restore_uvt": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}.uvt",
     "restore_cct": "{root}/{config}/wideband/{source}_{config}_{window}{selfcal}{contsub}.cct",
@@ -101,7 +115,7 @@ _RESTORE = {
 
 
 def _profile_naming(style: str) -> dict[str, str]:
-    naming = {**_WIDEBAND, **_NARROWBAND, **_RESTORE}
+    naming = {**_WIDEBAND, **_NARROWBAND, **_RESTORE, **_MERGED_LINE}
     naming["narrowband_folder"] = "{root}/{config}/{lid_pair_folder}"
     if style == "propstar":
         naming = {

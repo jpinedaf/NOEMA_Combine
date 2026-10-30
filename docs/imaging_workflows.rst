@@ -44,6 +44,10 @@ For a wideband window, use :func:`noema_combine.make_continuum_subtraction`:
         execute=False,
     )
 
+Generated scripts are retained by default, including when execution is enabled,
+so every path in ``result.scripts`` remains available for inspection. Pass
+``keep_script=False`` to remove the temporary scripts after each stage finishes.
+
 For narrowband windows, use
 :func:`noema_combine.make_narrowband_continuum_subtraction`:
 

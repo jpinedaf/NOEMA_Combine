@@ -368,6 +368,47 @@ def test_line_reduce_sd_runs_through_configured_gildas_runner(
     assert all("class -nw" not in call.args[0] for call in mock_os.call_args_list)
 
 
+@patch("noema_combine.data_handler.get_source_param")
+@patch("noema_combine.data_handler.get_line_param")
+@patch("noema_combine.data_handler.get_sd_file")
+@patch("noema_combine.data_handler.glob")
+@patch("noema_combine.data_handler.os.system")
+@patch("noema_combine.data_handler._cfg")
+@patch.dict("noema_combine.data_handler.__dict__", {
+    "inputdir": ["/input"],
+    "file_extensions_sd": ".txt",
+    "ignorefiles": ["file2.txt"],
+    "line_name": np.array(["CO"]),
+    "qn": np.array(["1-0"]),
+    "Lid": np.array(["L09"]),
+    "freq": np.array(["115.271"]),
+    "vel_width_sd": np.array(["3.0"]),
+    "vel_width_base_sd": np.array(["5.0"]),
+    "name_str": np.array(["CO(1-0)"]),
+    "telescope_class": "APEX",
+}, clear=False)
+def test_line_reduce_sd_omits_ignored_files_from_class_script(
+    mock_cfg: MagicMock,
+    mock_os: MagicMock,
+    mock_glob: MagicMock,
+    mock_get_sd_file: MagicMock,
+    mock_get_line_param: MagicMock,
+    mock_get_source_param: MagicMock,
+):
+    """Ignored single-dish files must not be processed by the CLASS script."""
+    mock_get_source_param.return_value = ("B5", "B5", "B5_out", 50.5, 30.2, 10.0)
+    mock_get_line_param.return_value = 0
+    mock_get_sd_file.return_value = "/tmp/B5_CO_1-0.30m"
+    mock_glob.return_value = ["file1.txt", "file2.txt", "file3.txt"]
+
+    line_reduce_sd("B5", "CO", "1-0")
+
+    script = mock_cfg.make_gildas_runner.return_value.run_class.call_args.args[0]
+    assert 'say "[INFO] Processing file: file1.txt"' in script
+    assert 'say "[INFO] Processing file: file3.txt"' in script
+    assert 'say "[INFO] Processing file: file2.txt"' not in script
+
+
 # # Tests for line_reduce_sd (new generic single-dish function)
 # @patch("noema_combine.data_handler.glob")
 # @patch("noema_combine.data_handler.tempfile.NamedTemporaryFile")

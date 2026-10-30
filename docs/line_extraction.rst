@@ -63,3 +63,26 @@ for full spectral windows:
 
 Set ``dirty=False`` or ``clean=False`` to run only one imaging stage. The
 result contains the generated paths and execution records for both stages.
+
+Merged NOEMA and single-dish line cubes
+---------------------------------------
+
+Use ``make_merged_line_images`` to prepare a line UV table on a common
+velocity grid, combine it with the configured single-dish table, and create
+merged dirty and CLEAN products:
+
+.. code-block:: python
+
+    from noema_combine import make_merged_line_images
+
+    merged = make_merged_line_images(
+        "B5", "CD", "N2D+", "3-2", "l034l073",
+        selfcal=True,
+        contsub=True,
+        execute=False,
+    )
+
+Narrowband windows use ``0.1 km/s`` and wideband windows use ``3 km/s`` by
+default. ``velocity_range`` and ``velocity_resolution`` can override these
+values. CD and ACD configurations are supported; the result contains the
+preparation and imaging scripts as well as the merged products.

@@ -148,10 +148,15 @@ def make_continuum_subtraction(
     no_cube: bool = False,
     make_continuum: bool = False,
     make_plot: bool = False,
+    keep_script: bool = True,
     execute: bool | None = None,
     config_file: str | None = None,
 ) -> ContinuumSubtractionResult:
-    """Generate and optionally execute a wideband subtraction workflow."""
+    """Generate and optionally execute a wideband subtraction workflow.
+
+    Generated scripts are retained by default. Set ``keep_script=False`` to
+    remove each temporary script after its stage completes.
+    """
     window = normalize_window(lid)
     if window not in {"lo", "li", "ui", "uo"}:
         raise ValueError("lid must be one of: lo, li, ui, uo")
@@ -189,6 +194,7 @@ def make_continuum_subtraction(
     main_result = runner.run_mapping(
         main_script,
         expected_outputs=[output_file],
+        keep_script=keep_script,
     )
     scripts.append(main_result.script_path)
     executions.append(main_result)
@@ -197,6 +203,7 @@ def make_continuum_subtraction(
         table_result = runner.run_mapping(
             _build_continuum_table_script(str(input_file), str(continuum_file), selected_range),
             expected_outputs=[continuum_file],
+            keep_script=keep_script,
         )
         scripts.append(table_result.script_path)
         executions.append(table_result)
@@ -212,6 +219,7 @@ def make_continuum_subtraction(
                 str(output_file), str(cube_file), support_mask=support_mask
             ),
             expected_outputs=[cube_file],
+            keep_script=keep_script,
         )
         scripts.append(cube_result.script_path)
         executions.append(cube_result)
@@ -221,6 +229,7 @@ def make_continuum_subtraction(
         plot_result = runner.run_class(
             _build_plot_script(str(_render(naming, "continuum_cube", **values)), str(plot_file), selected_range),
             expected_outputs=[plot_file],
+            keep_script=keep_script,
         )
         scripts.append(plot_result.script_path)
         executions.append(plot_result)

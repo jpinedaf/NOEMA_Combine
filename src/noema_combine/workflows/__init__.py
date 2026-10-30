@@ -17,6 +17,7 @@ from .imaging import (
     restore_image,
 )
 from .line import LineExtractionResult, extract_line
+from .merged import MergedLineImageResult, make_merged_line_images
 
 __all__ = [
     "ContinuumSubtractionResult",
@@ -33,4 +34,6 @@ __all__ = [
     "restore_image",
     "LineExtractionResult",
     "extract_line",
+    "MergedLineImageResult",
+    "make_merged_line_images",
 ]

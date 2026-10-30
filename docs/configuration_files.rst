@@ -180,6 +180,8 @@ Generated scripts can also be run directly from Python:
 
 ``GildasRunner`` defaults to execution enabled. Passing ``execute=False``
 selects script-only mode and retains the generated script for inspection.
+The high-level wideband continuum workflow also retains all generated scripts
+by default; pass ``keep_script=False`` to remove them after execution.
 
 Naming templates
 ----------------
@@ -190,7 +192,8 @@ The optional **[naming]** section controls folder and filename templates. Existi
   ``lid_pair_folder``, and ``lid_pair_filename``,
   ``source_out`` and ``source_sd``,
   ``window``, ``window_upper``, ``window_folder``, ``selfcal``, ``contsub``, and
-  ``product_type``. Output templates should describe exact filenames;
+  ``product_type``. Merged line-cube products use the ``merged_line_*``
+  templates. Output templates should describe exact filenames;
   ``search_*`` templates may contain wildcards for locating files made by older scripts.
 
 For narrowband products, ``lid_pair_folder`` and ``lid_pair_filename`` can be

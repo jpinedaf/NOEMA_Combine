@@ -25,6 +25,10 @@ from .continuum import (
 )
 from .line_catalogue import lines_in_window
 from .line_extraction import build_line_extraction_script
+from .merged_line import (
+    build_merged_line_image_script,
+    build_merged_line_prepare_script,
+)
 from .workflows import (
     ContinuumSubtractionResult,
     NarrowbandSubtractionResult,
@@ -40,4 +44,6 @@ from .workflows import (
     restore_image,
     LineExtractionResult,
     extract_line,
+    MergedLineImageResult,
+    make_merged_line_images,
 )
