@@ -91,6 +91,27 @@ def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Pat
     assert "/narrowband/" not in str(paths["narrowband"])
 
 
+def test_new_merge_selfcal_and_uvfits_templates_render(tmp_path: Path):
+    naming = FileNaming(root=tmp_path)
+    values = {
+        "source": "B5", "source_out": "B5-IRS1", "config": "ACD",
+        "config_a": "A", "config_b": "CD", "config_out": "ACD",
+        "window": "l034l073", "lid": "l034l073",
+        "lid_pair_folder": "l34l73", "lid_pair_filename": "l034l073",
+        "selfcal": "_sc", "contsub": "_contsub", "suffix": "_sc_contsub",
+        "window_folder": "l34l73",
+    }
+    assert naming.render("merge_input_a_narrowband", **values).endswith(
+        "/A/l34l73/B5-IRS1_A_l034l073_sc_contsub.uvt"
+    )
+    assert naming.render("merge_output_narrowband", **values).endswith(
+        "/ACD/l34l73/B5-IRS1_ACD_l034l073_sc_contsub.uvt"
+    )
+    assert naming.render("uvfits_output_narrowband", **values).endswith(
+        "/ACD/l34l73/B5-IRS1_ACD_l034l073_sc_contsub.uvfits"
+    )
+
+
 def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path: Path):
     config_path = tmp_path / "config.ini"
     assert create_config("propstar", config_path) == config_path
