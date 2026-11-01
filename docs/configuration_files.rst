@@ -199,6 +199,8 @@ The optional **[naming]** section controls folder and filename templates. Existi
   ``product_type``. Merged line-cube products use the ``merged_line_*``
   templates. Self-calibration uses ``selfcal_*`` templates, while support-mask
   propagation uses ``support_mask`` and ``support_mask_selfcal``.
+  A+CD merging uses ``merge_*`` templates and UVFITS export uses
+  ``uvfits_*`` templates.
   Output templates should describe exact filenames;
   ``search_*`` templates may contain wildcards for locating files made by older scripts.
 

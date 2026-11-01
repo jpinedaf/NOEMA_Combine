@@ -19,6 +19,8 @@ from .imaging import (
 from .line import LineExtractionResult, extract_line
 from .merged import MergedLineImageResult, make_merged_line_images
 from .selfcal import SelfcalResult, apply_selfcal_solutions
+from .merge import UVMergeResult, merge_uv_tables
+from .uvfits import UVFITSExportResult, export_uvfits
 
 __all__ = [
     "ContinuumSubtractionResult",
@@ -39,4 +41,8 @@ __all__ = [
     "make_merged_line_images",
     "SelfcalResult",
     "apply_selfcal_solutions",
+    "UVMergeResult",
+    "merge_uv_tables",
+    "UVFITSExportResult",
+    "export_uvfits",
 ]

@@ -227,3 +227,13 @@ templates.  Support masks can be propagated without GILDAS using::
 
 This creates the standard and self-calibration-stage mask names.  Existing
 files are protected by default; pass ``overwrite=True`` to replace them.
+
+The remaining raw-script utilities are available as structured workflows::
+
+    from noema_combine import merge_uv_tables, export_uvfits
+
+    merged = merge_uv_tables("B5", baseband="li", execute=False)
+    exported = export_uvfits("B5", "ACD", basebands="li", execute=False)
+
+``merge_uv_tables`` reproduces the A+CD ``UV_MERGE`` products and
+``export_uvfits`` converts narrowband UVTs with the CASA UVFITS style.

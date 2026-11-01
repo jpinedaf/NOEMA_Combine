@@ -104,11 +104,22 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "selfcal_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{window}{selfcal}_selfcal.map",
     "support_mask": "{root}/{config}/{source_out}_{config}_{window}_cont_rob1.msk",
     "support_mask_selfcal": "{root}/{config}/selfcal/{source_out}_{config}_{window}_cont_rob1-ave{mask_iteration}.msk",
+    "merge_input_a_wideband": "{root}/{config_a}/wideband/{source_out}_{config_a}_{window}{suffix}.uvt",
+    "merge_input_b_wideband": "{root}/{config_b}/wideband/{source_out}_{config_b}_{window}{suffix}.uvt",
+    "merge_output_wideband": "{root}/{config_out}/wideband/{source_out}_{config_out}_{window}{suffix}.uvt",
+    "merge_input_a_narrowband": "{root}/{config_a}/{lid_pair_folder}/{source_out}_{config_a}_{lid_pair_filename}{suffix}.uvt",
+    "merge_input_b_narrowband": "{root}/{config_b}/{lid_pair_folder}/{source_out}_{config_b}_{lid_pair_filename}{suffix}.uvt",
+    "merge_output_narrowband": "{root}/{config_out}/{lid_pair_folder}/{source_out}_{config_out}_{lid_pair_filename}{suffix}.uvt",
+    "merge_script": "{root}/{config_out}/{window_folder}/{source_out}_{config_out}_{window}{suffix}_merge.map",
+    "uvfits_input_narrowband": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}{selfcal}{contsub}.uvt",
+    "uvfits_output_narrowband": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}{selfcal}{contsub}.uvfits",
+    "uvfits_script": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}{selfcal}{contsub}_export.map",
 }
 
 _ALLOWED_FIELDS = {
     "root", "uvt_root", "uvt_out_root", "sd_root", "sd_ext",
     "source", "source_out", "source_sd", "config", "line", "qn",
+    "config_a", "config_b", "config_out",
     "lid", "lid_lower", "lid_upper", "lid_folder", "lid_pair",
     "lid_pair_folder", "lid_pair_filename",
     "narrowband_folder", "window", "window_upper", "window_folder", "dirty_folder",
@@ -247,6 +258,9 @@ class FileNaming:
         context.update(values)
         context.setdefault("source_out", context.get("source", ""))
         context.setdefault("source_sd", context.get("source", ""))
+        context.setdefault("config_a", context.get("config", ""))
+        context.setdefault("config_b", context.get("config", ""))
+        context.setdefault("config_out", context.get("config", ""))
         if "lid" in context:
             context.update(self._lid_values(str(context["lid"]), context.get("lid_pair")))
         context.setdefault("lid_pair_folder", context.get("lid_pair", ""))

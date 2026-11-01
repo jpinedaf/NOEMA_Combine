@@ -27,6 +27,8 @@ from .line_catalogue import lines_in_window
 from .line_extraction import build_line_extraction_script
 from .selfcal import build_selfcal_init, build_selfcal_script
 from .masking import MaskCopy, copy_support_masks
+from .merge import build_uv_merge_init, build_uv_merge_script
+from .uvfits import build_uvfits_export_script
 from .merged_line import (
     build_merged_line_image_script,
     build_merged_line_prepare_script,
@@ -50,4 +52,8 @@ from .workflows import (
     make_merged_line_images,
     SelfcalResult,
     apply_selfcal_solutions,
+    UVMergeResult,
+    merge_uv_tables,
+    UVFITSExportResult,
+    export_uvfits,
 )
