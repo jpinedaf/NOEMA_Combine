@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
 import shlex
-from pathlib import Path
 import subprocess
 import tempfile
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -104,7 +104,9 @@ class GildasRunner:
             setup_parts = []
             if self.setup_file:
                 shell_name = Path(self.shell).name.lower()
-                source_command = "source" if shell_name in {"bash", "zsh", "ksh"} else "."
+                source_command = (
+                    "source" if shell_name in {"bash", "zsh", "ksh"} else "."
+                )
                 setup_parts.append(f"{source_command} {shlex.quote(self.setup_file)}")
             if self.setup:
                 setup_parts.append(self.setup)

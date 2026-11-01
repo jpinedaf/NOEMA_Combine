@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import socket
 from configparser import ConfigParser
 from importlib.resources import files
 from pathlib import Path
-import socket
 from typing import Literal
-
 
 ConfigStyle = Literal["prodige", "propstar"]
 
@@ -180,7 +179,9 @@ def create_config(
         else "raw_data"
     )
     parser["folders"] = {
-        "uvt_dir": "uvts", "uvt_dir_out": "merged_uvts", "dir_sd": "30m",
+        "uvt_dir": "uvts",
+        "uvt_dir_out": "merged_uvts",
+        "dir_sd": "30m",
         "inputdir": inputdir,
     }
     selected_catalogue = catalogue or selected
@@ -190,8 +191,8 @@ def create_config(
         "line_catalogue": str(
             catalogue_filename
             or {
-            "prodige": "line_catalogue_prodige.csv",
-            "propstar": "line_catalogue_propstar.csv",
+                "prodige": "line_catalogue_prodige.csv",
+                "propstar": "line_catalogue_propstar.csv",
             }[selected_catalogue]
         ),
         "source_catalogue": str(region_catalogue_filename or "region_catalogue.yml"),
@@ -201,13 +202,21 @@ def create_config(
     parser["single_dish"] = {"telescope": "iram30m"}
     setup, setup_file = _default_gildas_setup()
     parser["gildas"] = {
-        "execute": "true", "workdir": ".", "setup": setup, "setup_file": setup_file,
-        "shell": "/bin/bash", "interactive": "false",
+        "execute": "true",
+        "workdir": ".",
+        "setup": setup,
+        "setup_file": setup_file,
+        "shell": "/bin/bash",
+        "interactive": "false",
         "class": "class",
-        "mapping": "mapping", "clic": "clic",
+        "mapping": "mapping",
+        "clic": "clic",
     }
     parser["continuum_subtraction"] = {
-        "wideband_lo": "", "wideband_li": "", "wideband_ui": "", "wideband_uo": "",
+        "wideband_lo": "",
+        "wideband_li": "",
+        "wideband_ui": "",
+        "wideband_uo": "",
     }
     parser["narrowband_channel_ranges"] = (
         _PRODIGE_NARROWBAND_RANGES.copy() if selected == "prodige" else {}
@@ -221,17 +230,28 @@ def create_config(
         "ui_start": "l032",
         "uo_start": "l040",
     }
-    parser["imaging"] = {"wideband_windows": "lo, li, ui, uo", "include_narrowband": "true"}
+    parser["imaging"] = {
+        "wideband_windows": "lo, li, ui, uo",
+        "include_narrowband": "true",
+    }
     parser["cleaning"] = {
-        "method": "HOGBOM", "weighting": "natural", "threshold_factor": "5", "niter": "0",
-        "primary_beam_correction": "true", "primary_beam_truncate": "20",
+        "method": "HOGBOM",
+        "weighting": "natural",
+        "threshold_factor": "5",
+        "niter": "0",
+        "primary_beam_correction": "true",
+        "primary_beam_truncate": "20",
     }
     parser["naming"] = {"root": ".", **_profile_naming(selected)}
     from io import StringIO
 
     output = StringIO()
     parser.write(output)
-    return _write_new(Path(filename).expanduser(), f"# Generated profile: {selected}\n\n{output.getvalue()}", overwrite=overwrite)
+    return _write_new(
+        Path(filename).expanduser(),
+        f"# Generated profile: {selected}\n\n{output.getvalue()}",
+        overwrite=overwrite,
+    )
 
 
 def create_line_catalogue(
@@ -264,7 +284,9 @@ def create_region_catalogue(
 ) -> Path:
     """Copy the packaged starter source-region catalogue into the project."""
     source = files("noema_combine").joinpath("region_catalogue.yml")
-    return _write_new(Path(filename).expanduser(), source.read_text(), overwrite=overwrite)
+    return _write_new(
+        Path(filename).expanduser(), source.read_text(), overwrite=overwrite
+    )
 
 
 def create_project_files(
