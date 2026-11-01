@@ -1,28 +1,30 @@
-from pathlib import Path
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 import noema_combine.project as project_module
+from noema_combine import (
+    create_config,
+    create_line_catalogue,
+    create_project_files,
+    create_region_catalogue,
+)
 from noema_combine.config import get_config, reload_config
 from noema_combine.continuum import (
     baseline_command,
     build_continuum_subtraction_script,
     resolve_channel_range,
 )
-from noema_combine.workflows import make_continuum_subtraction
-from noema_combine.workflows import make_narrowband_continuum_subtraction
-from noema_combine.workflows import make_dirty_images
-from noema_combine.workflows import make_clean_images
-from noema_combine.workflows import restore_image
 from noema_combine.naming import FileNaming, preview_naming
-from noema_combine import (
-    create_config,
-    create_line_catalogue,
-    create_project_files,
-    create_region_catalogue,
+from noema_combine.workflows import (
+    make_clean_images,
+    make_continuum_subtraction,
+    make_dirty_images,
+    make_narrowband_continuum_subtraction,
+    restore_image,
 )
 
 
@@ -48,9 +50,7 @@ def test_default_narrowband_naming_uses_prodige_pair_forms():
         contsub="_contsub",
     )
 
-    assert path == (
-        "/project/CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
-    )
+    assert path == ("/project/CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt")
 
 
 def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path: Path):
@@ -134,9 +134,12 @@ def test_create_line_catalogue_and_project_files(tmp_path: Path):
     assert config_path.exists()
     assert default_catalogue.exists()
     assert "line_catalogue = " + str(default_catalogue) in config_path.read_text()
-    assert default_catalogue.read_text() == (
-        Path(__file__).parents[1] / "noema_combine/line_catalogue_MIOP.csv"
-    ).read_text()
+    assert (
+        default_catalogue.read_text()
+        == (
+            Path(__file__).parents[1] / "noema_combine/line_catalogue_MIOP.csv"
+        ).read_text()
+    )
 
     custom_config, custom_catalogue = create_project_files(
         "propstar",
@@ -186,7 +189,9 @@ def test_import_succeeds_with_generated_config_in_current_directory(tmp_path: Pa
     )
     source_root = Path(__file__).parents[1]
     environment = os.environ.copy()
-    environment["PYTHONPATH"] = str(source_root) + os.pathsep + environment.get("PYTHONPATH", "")
+    environment["PYTHONPATH"] = (
+        str(source_root) + os.pathsep + environment.get("PYTHONPATH", "")
+    )
     completed = subprocess.run(
         [sys.executable, "-c", "from noema_combine import create_project_files"],
         cwd=tmp_path,
@@ -207,18 +212,22 @@ def test_custom_case_and_pair_templates():
         root="/data/project",
     )
 
-    assert naming.uvt_file(
-        "B5",
-        "CO",
-        "1-0",
-        "l10",
-        config="CD",
-        selfcal="_sc",
-        contsub="_contsub",
-    ) == "/data/project/CD/wideband/B5_CD_L10_CO__sc_contsub.uvt"
-    assert naming.narrowband_folder(
-        "B5", "CD", "L10", lid_pair="l10l49"
-    ) == "/data/project/CD/narrowband/l10l49"
+    assert (
+        naming.uvt_file(
+            "B5",
+            "CO",
+            "1-0",
+            "l10",
+            config="CD",
+            selfcal="_sc",
+            contsub="_contsub",
+        )
+        == "/data/project/CD/wideband/B5_CD_L10_CO__sc_contsub.uvt"
+    )
+    assert (
+        naming.narrowband_folder("B5", "CD", "L10", lid_pair="l10l49")
+        == "/data/project/CD/narrowband/l10l49"
+    )
 
 
 def test_search_patterns_allow_wildcards():
@@ -226,9 +235,10 @@ def test_search_patterns_allow_wildcards():
         {"search_uvt": "{root}/{config}/**/{source}*{lid}*{line}*.uvt"},
         root="/data/project",
     )
-    assert naming.search_pattern(
-        source="B5", config="CD", lid="L10", line="CO"
-    ) == "/data/project/CD/**/B5*L10*CO*.uvt"
+    assert (
+        naming.search_pattern(source="B5", config="CD", lid="L10", line="CO")
+        == "/data/project/CD/**/B5*L10*CO*.uvt"
+    )
 
 
 def test_output_templates_reject_wildcards():
@@ -266,7 +276,7 @@ def test_naming_uses_catalogue_source_out_for_wideband_and_narrowband(tmp_path: 
     )
     config_file = tmp_path / "naming.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged_uvts\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {region_file}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[file_extensions]\nselfcal = _sc\nuvsub = _contsub\n\n[naming]\nroot = .\nclean_input = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged_uvts\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {region_file}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[file_extensions]\nselfcal = _sc\nuvsub = _contsub\n\n[naming]\nroot = .\nclean_input = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\n"""
     )
 
     preview = preview_naming(
@@ -292,9 +302,7 @@ def test_preview_naming_allows_single_dish_only_context():
     assert preview["outputs"]["restore_output_line"].endswith(
         "/B5_CD_N2Dp_3-2_sc_contsub_uvres.lmv-clean"
     )
-    assert preview["outputs"]["merged_cube"].endswith(
-        "/B5_N2Dp_3-2_product.fits"
-    )
+    assert preview["outputs"]["merged_cube"].endswith("/B5_N2Dp_3-2_product.fits")
 
 
 def test_preview_naming_defaults_style_to_prodige_for_custom_templates():
@@ -306,7 +314,7 @@ def test_preview_naming_infers_lid_from_line_catalogue(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "preview_prodige.ini"
     config_file.write_text(
-        f"""[project]\nstyle = prodige\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_MIOP.csv'}\n\n[naming]\nroot = .\n"""
+        f"""[project]\nstyle = prodige\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_MIOP.csv"}\n\n[naming]\nroot = .\n"""
     )
 
     preview = preview_naming(
@@ -329,7 +337,7 @@ def test_explicit_config_resolves_relative_paths_from_base_dir(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "project.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data, extra\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[naming]\nroot = .\nnarrowband_folder = {{root}}/{{config}}/narrowband/{{lid_pair}}\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data, extra\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[naming]\nroot = .\nnarrowband_folder = {{root}}/{{config}}/narrowband/{{lid_pair}}\n"""
     )
 
     cfg = reload_config(str(config_file))
@@ -351,7 +359,7 @@ def test_preview_with_explicit_config_does_not_replace_global_config(tmp_path: P
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "preview.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[naming]\nroot = .\nuvt_file = {{root}}/{{config}}/{{source}}_{{lid_upper}}.uvt\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[naming]\nroot = .\nuvt_file = {{root}}/{{config}}/{{source}}_{{lid_upper}}.uvt\n"""
     )
     before = str(get_config().config_file)
     result = preview_naming(
@@ -372,7 +380,7 @@ def test_wideband_continuum_workflow_script_only(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "workflow.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_plot = {{root}}/output/{{source}}_{{config}}_{{lid}}.png\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_plot = {{root}}/output/{{source}}_{{config}}_{{lid}}.png\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
     )
 
     result = make_continuum_subtraction(
@@ -389,7 +397,7 @@ def test_wideband_continuum_script_retention_is_explicit(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "retention.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
+        f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
     )
 
     retained = make_continuum_subtraction(
@@ -398,8 +406,13 @@ def test_wideband_continuum_script_retention_is_explicit(tmp_path: Path):
     assert retained.scripts and all(path.exists() for path in retained.scripts)
 
     removed = make_continuum_subtraction(
-        "B5", "CD", "li", no_cube=True, keep_script=False,
-        execute=False, config_file=str(config_file)
+        "B5",
+        "CD",
+        "li",
+        no_cube=True,
+        keep_script=False,
+        execute=False,
+        config_file=str(config_file),
     )
     assert removed.scripts and all(not path.exists() for path in removed.scripts)
 
@@ -410,7 +423,7 @@ def test_continuum_cube_clean_uses_support_mask_defaults(
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "continuum-mask.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
+        f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
     )
 
     unmasked = make_continuum_subtraction(
@@ -436,7 +449,7 @@ def test_narrowband_continuum_workflow_script_only(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "narrowband.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n\n[naming]\nroot = .\nnarrowband_folder = {{root}}/{{config}}/narrowband/{{lid_pair}}\nnarrowband_input = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_sc.uvt\nnarrowband_output = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_sc{{contsub}}.uvt\nnarrowband_script = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_contsub.map\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n\n[naming]\nroot = .\nnarrowband_folder = {{root}}/{{config}}/narrowband/{{lid_pair}}\nnarrowband_input = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_sc.uvt\nnarrowband_output = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_sc{{contsub}}.uvt\nnarrowband_script = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_contsub.map\n"""
     )
 
     results = make_narrowband_continuum_subtraction(
@@ -447,7 +460,10 @@ def test_narrowband_continuum_workflow_script_only(tmp_path: Path):
     result = results[0]
     assert result.window == "l009l048"
     assert result.channel_range is None
-    assert result.script_path == tmp_path / "CD/narrowband/l009l048/B5_CD_l009l048_contsub.map"
+    assert (
+        result.script_path
+        == tmp_path / "CD/narrowband/l009l048/B5_CD_l009l048_contsub.map"
+    )
     assert "uv_baseline 0\n" in result.script_path.read_text()
 
 
@@ -455,7 +471,7 @@ def test_narrowband_continuum_single_channel_range(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "narrowband-range.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n"""
     )
 
     results = make_narrowband_continuum_subtraction(
@@ -474,7 +490,7 @@ def test_narrowband_continuum_accepts_single_window_string(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "narrowband-string.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l034l073\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l034l073\n"""
     )
 
     results = make_narrowband_continuum_subtraction(
@@ -491,11 +507,13 @@ def test_narrowband_continuum_accepts_single_window_string(tmp_path: Path):
     assert results[0].channel_range == "0 50 95 96 160 190"
 
 
-def test_narrowband_continuum_single_channel_range_rejects_multiple_windows(tmp_path: Path):
+def test_narrowband_continuum_single_channel_range_rejects_multiple_windows(
+    tmp_path: Path,
+):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "narrowband-range.ini"
     config_file.write_text(
-        f"""[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[narrowband]\nwindows = l009l048, l010l049\n"""
+        f"""[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[narrowband]\nwindows = l009l048, l010l049\n"""
     )
 
     with pytest.raises(ValueError, match="only be used when one"):
@@ -513,7 +531,7 @@ def test_dirty_image_workflow_script_only(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "imaging.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[imaging]\nwideband_windows = li\ninclude_narrowband = false\n\n[naming]\nroot = .\ndirty_folder = {{root}}/{{config}}/{{window_folder}}\ndirty_input = {{dirty_folder}}/{{source}}_{{config}}_{{window}}.uvt\ndirty_script = {{dirty_folder}}/{{source}}_{{config}}_{{window}}_dirty.map\ndirty_map = {{dirty_folder}}/{{source}}_{{config}}_{{window}}.lmv\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[imaging]\nwideband_windows = li\ninclude_narrowband = false\n\n[naming]\nroot = .\ndirty_folder = {{root}}/{{config}}/{{window_folder}}\ndirty_input = {{dirty_folder}}/{{source}}_{{config}}_{{window}}.uvt\ndirty_script = {{dirty_folder}}/{{source}}_{{config}}_{{window}}_dirty.map\ndirty_map = {{dirty_folder}}/{{source}}_{{config}}_{{window}}.lmv\n"""
     )
 
     results = make_dirty_images("B5", "CD", execute=False, config_file=str(config_file))
@@ -529,16 +547,20 @@ def test_dirty_images_support_selfcal_and_contsub_for_both_window_types(tmp_path
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "suffixes.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n\n[imaging]\nwideband_windows = li\ninclude_narrowband = true\n\n[naming]\nroot = .\ndirty_folder = {{root}}/{{config}}/{{window_folder}}\ndirty_input = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\ndirty_script = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}_dirty.map\ndirty_map = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.lmv\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n\n[imaging]\nwideband_windows = li\ninclude_narrowband = true\n\n[naming]\nroot = .\ndirty_folder = {{root}}/{{config}}/{{window_folder}}\ndirty_input = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\ndirty_script = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}_dirty.map\ndirty_map = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.lmv\n"""
     )
 
     wideband = make_dirty_images(
-        "B5", "CD", ["li"], selfcal=True, contsub=True,
-        execute=False, config_file=str(config_file)
+        "B5",
+        "CD",
+        ["li"],
+        selfcal=True,
+        contsub=True,
+        execute=False,
+        config_file=str(config_file),
     )[0]
     narrowband = make_dirty_images(
-        "B5", "CD", ["L9L48"], selfcal=True,
-        execute=False, config_file=str(config_file)
+        "B5", "CD", ["L9L48"], selfcal=True, execute=False, config_file=str(config_file)
     )[0]
 
     assert wideband.input_file.name == "B5_CD_li_sc_contsub.uvt"
@@ -549,12 +571,17 @@ def test_clean_image_workflow_script_only(tmp_path: Path):
     package_dir = Path(__file__).parents[1] / "noema_combine"
     config_file = tmp_path / "cleaning.ini"
     config_file.write_text(
-        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / 'region_catalogue.yml'}\nline_catalogue = {package_dir / 'line_catalogue_3mm.csv'}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[imaging]\nwideband_windows = li\n\n[cleaning]\nweighting = natural\nthreshold_factor = 5\nniter = 0\nprimary_beam_correction = true\nprimary_beam_truncate = 20\n\n[naming]\nroot = .\nclean_input = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\nclean_script = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}_clean.map\nclean_cube = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.lmv-clean\nclean_fits = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.fits\nclean_pb_cube = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}-pbcor.lmv-sky\nclean_pb_fits = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}-pbcor.fits\n"""
+        f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[imaging]\nwideband_windows = li\n\n[cleaning]\nweighting = natural\nthreshold_factor = 5\nniter = 0\nprimary_beam_correction = true\nprimary_beam_truncate = 20\n\n[naming]\nroot = .\nclean_input = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\nclean_script = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}_clean.map\nclean_cube = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.lmv-clean\nclean_fits = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.fits\nclean_pb_cube = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}-pbcor.lmv-sky\nclean_pb_fits = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}-pbcor.fits\n"""
     )
 
     result = make_clean_images(
-        "B5", "CD", "li", selfcal=True, contsub=True,
-        execute=False, config_file=str(config_file)
+        "B5",
+        "CD",
+        "li",
+        selfcal=True,
+        contsub=True,
+        execute=False,
+        config_file=str(config_file),
     )[0]
 
     assert result.input_file.name == "B5_CD_li_sc_contsub.uvt"
@@ -564,8 +591,13 @@ def test_clean_image_workflow_script_only(tmp_path: Path):
     assert "primary /truncate 20" in script
 
     mixed = make_clean_images(
-        "B5", "CD", windows=["li", "L9L48"], selfcal=True,
-        contsub=True, execute=False, config_file=str(config_file)
+        "B5",
+        "CD",
+        windows=["li", "L9L48"],
+        selfcal=True,
+        contsub=True,
+        execute=False,
+        config_file=str(config_file),
     )
     assert [item.window_kind for item in mixed] == ["wideband", "narrowband"]
     assert mixed[1].input_file.name == "B5_CD_l009l048_sc_contsub.uvt"
@@ -585,8 +617,8 @@ dir_sd = single_dish
 inputdir = raw_data
 
 [catalogues]
-source_catalogue = {package_dir / 'region_catalogue.yml'}
-line_catalogue = {package_dir / 'line_catalogue_3mm.csv'}
+source_catalogue = {package_dir / "region_catalogue.yml"}
+line_catalogue = {package_dir / "line_catalogue_3mm.csv"}
 
 [gildas]
 execute = false
@@ -622,9 +654,7 @@ def test_restore_image_supports_wideband_and_narrowband_script_only(tmp_path: Pa
 
     assert [result.window_kind for result in results] == ["wideband", "narrowband"]
     assert results[0].input_uv == tmp_path / "CD/wideband/B5_CD_li_sc_contsub.uvt"
-    assert results[1].input_uv == (
-        tmp_path / "CD/l9l48/B5_CD_l009l048_sc_contsub.uvt"
-    )
+    assert results[1].input_uv == (tmp_path / "CD/l9l48/B5_CD_l009l048_sc_contsub.uvt")
     assert results[0].restored_cube.name == "B5_CD_li_sc_contsub_uvres.lmv-clean"
     assert results[0].script_path.exists()
     script = results[0].script_path.read_text()
@@ -663,16 +693,23 @@ def test_restore_image_supports_individual_line_with_custom_lid(tmp_path: Path):
     [
         ({"product_type": "invalid"}, "product_type"),
         ({"product_type": "line", "line": "CO", "qn": "1-0"}, "requires line"),
-        ({"product_type": "line", "line": "CO", "qn": "1-0", "lid": "l9", "windows": ["li"]}, "combined"),
+        (
+            {
+                "product_type": "line",
+                "line": "CO",
+                "qn": "1-0",
+                "lid": "l9",
+                "windows": ["li"],
+            },
+            "combined",
+        ),
         ({"product_type": "cube", "line": "CO"}, "only valid"),
     ],
 )
 def test_restore_image_validates_product_selection(tmp_path: Path, kwargs, message):
     config_file = _restoration_config(tmp_path)
     with pytest.raises(ValueError, match=message):
-        restore_image(
-            "B5", "CD", execute=False, config_file=str(config_file), **kwargs
-        )
+        restore_image("B5", "CD", execute=False, config_file=str(config_file), **kwargs)
 
 
 def test_channel_range_precedence_and_no_range_command(tmp_path: Path):
@@ -686,11 +723,20 @@ def test_channel_range_precedence_and_no_range_command(tmp_path: Path):
     try:
         assert resolve_channel_range("li", config=cfg) == "0 20 100 200"
         assert resolve_channel_range("li", channel_range="0 5", config=cfg) == "0 5"
-        assert resolve_channel_range("li", range_file=range_file, config=cfg) == "0 30 500 600"
-        assert resolve_channel_range("l009l048", narrowband=True, config=cfg) == "0 10 900 1000"
+        assert (
+            resolve_channel_range("li", range_file=range_file, config=cfg)
+            == "0 30 500 600"
+        )
+        assert (
+            resolve_channel_range("l009l048", narrowband=True, config=cfg)
+            == "0 10 900 1000"
+        )
         assert resolve_channel_range("uo", config=cfg) is None
         assert baseline_command() == "uv_baseline 0"
-        assert baseline_command("0 20 100 200") == "uv_baseline 0 /range 0 20 100 200 channel"
+        assert (
+            baseline_command("0 20 100 200")
+            == "uv_baseline 0 /range 0 20 100 200 channel"
+        )
         script = build_continuum_subtraction_script("input.uvt", "output.uvt")
         assert "uv_baseline 0\n" in script
         assert "/range" not in script

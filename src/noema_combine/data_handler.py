@@ -1,14 +1,15 @@
-import tempfile
 import os
-from glob import glob
-import numpy as np
-from numpy.typing import NDArray
+import tempfile
 import warnings
-from astropy.coordinates import SkyCoord  # type: ignore
+from glob import glob
+
 import astropy.units as u  # type: ignore
+import numpy as np
+from astropy.coordinates import SkyCoord  # type: ignore
+from numpy.typing import NDArray
 
 # Import configuration
-from .config import get_config, Config
+from .config import Config, get_config
 
 # Initialize configuration (loaded once)
 _cfg = get_config()
@@ -534,7 +535,7 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
         fb.write(f"  modify freq {freq_i}\n")
         fb.write(f"  modify source {source_out}\n")
         # RA and Dec centers are in hrs and degrees, respectively
-        fb.write(f"  modify projection = {ra0/15.0} {dec0} =\n")
+        fb.write(f"  modify projection = {ra0 / 15.0} {dec0} =\n")
         fb.write(f"  modify telescope {telescope_class}\n")
         fb.write(f"  extract {vel_ext} velocity\n")  # cut out spectra
         fb.write(f"  set window {vel_win}\n")  # define baseline window

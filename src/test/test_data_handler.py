@@ -1,19 +1,20 @@
-import pytest
-from unittest.mock import patch, MagicMock  # , mock_open, call
-import numpy as np
 import warnings
+from unittest.mock import MagicMock, patch  # , mock_open, call
+
+import numpy as np
+import pytest
 
 from noema_combine.data_handler import (
-    get_line_param,
-    get_source_param,
-    get_uvt_window,
-    get_uvt_file,
     get_30m_file,
+    get_line_param,
     get_sd_file,
+    get_source_param,
+    get_uvt_file,
+    get_uvt_window,
+    line_make_uvt,
     # line_prepare_merge,
     line_reduce_30m,
     line_reduce_sd,
-    line_make_uvt,
 )
 
 
@@ -333,20 +334,24 @@ def test_line_reduce_30m_deprecated(
 @patch("noema_combine.data_handler.glob")
 @patch("noema_combine.data_handler.os.system")
 @patch("noema_combine.data_handler._cfg")
-@patch.dict("noema_combine.data_handler.__dict__", {
-    "inputdir": ["/input"],
-    "file_extensions_sd": ".30m",
-    "ignorefiles": [],
-    "line_name": np.array(["CO"]),
-    "qn": np.array(["1-0"]),
-    "Lid": np.array(["L09"]),
-    "freq": np.array(["115.271"]),
-    "freq_mhz": np.array(["115271"]),
-    "vel_width_sd": np.array(["3.0"]),
-    "vel_width_base_sd": np.array(["5.0"]),
-    "name_str": np.array(["CO(1-0)"]),
-    "telescope_class": "APEX",
-}, clear=False)
+@patch.dict(
+    "noema_combine.data_handler.__dict__",
+    {
+        "inputdir": ["/input"],
+        "file_extensions_sd": ".30m",
+        "ignorefiles": [],
+        "line_name": np.array(["CO"]),
+        "qn": np.array(["1-0"]),
+        "Lid": np.array(["L09"]),
+        "freq": np.array(["115.271"]),
+        "freq_mhz": np.array(["115271"]),
+        "vel_width_sd": np.array(["3.0"]),
+        "vel_width_base_sd": np.array(["5.0"]),
+        "name_str": np.array(["CO(1-0)"]),
+        "telescope_class": "APEX",
+    },
+    clear=False,
+)
 def test_line_reduce_sd_runs_through_configured_gildas_runner(
     mock_cfg: MagicMock,
     mock_os: MagicMock,
@@ -375,20 +380,24 @@ def test_line_reduce_sd_runs_through_configured_gildas_runner(
 @patch("noema_combine.data_handler.glob")
 @patch("noema_combine.data_handler.os.system")
 @patch("noema_combine.data_handler._cfg")
-@patch.dict("noema_combine.data_handler.__dict__", {
-    "inputdir": ["/input"],
-    "file_extensions_sd": ".txt",
-    "ignorefiles": ["file2.txt"],
-    "line_name": np.array(["CO"]),
-    "qn": np.array(["1-0"]),
-    "Lid": np.array(["L09"]),
-    "freq": np.array(["115.271"]),
-    "freq_mhz": np.array(["115271"]),
-    "vel_width_sd": np.array(["3.0"]),
-    "vel_width_base_sd": np.array(["5.0"]),
-    "name_str": np.array(["CO(1-0)"]),
-    "telescope_class": "APEX",
-}, clear=False)
+@patch.dict(
+    "noema_combine.data_handler.__dict__",
+    {
+        "inputdir": ["/input"],
+        "file_extensions_sd": ".txt",
+        "ignorefiles": ["file2.txt"],
+        "line_name": np.array(["CO"]),
+        "qn": np.array(["1-0"]),
+        "Lid": np.array(["L09"]),
+        "freq": np.array(["115.271"]),
+        "freq_mhz": np.array(["115271"]),
+        "vel_width_sd": np.array(["3.0"]),
+        "vel_width_base_sd": np.array(["5.0"]),
+        "name_str": np.array(["CO(1-0)"]),
+        "telescope_class": "APEX",
+    },
+    clear=False,
+)
 def test_line_reduce_sd_omits_ignored_files_from_class_script(
     mock_cfg: MagicMock,
     mock_os: MagicMock,

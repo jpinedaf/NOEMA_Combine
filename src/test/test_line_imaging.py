@@ -3,7 +3,6 @@ from pathlib import Path
 from noema_combine import make_line_images, make_merged_line_images
 from noema_combine.imaging import build_clean_image_script
 
-
 HEADER = (
     "#name,QN(filename),freq(GHz),mol(plot),QN(plot),Aul(logs^-1),Eul(K),"
     "cat,NOEMAbb,unit,width(km/s),30msetup,30mbb,30mwidth(km/s),30mline(km/s)\n"
@@ -36,9 +35,7 @@ def _merged_config(tmp_path: Path) -> Path:
         HEADER
         + "N2D+,3_2,231.3218283,N\\d2D\\u+,3-2,-2,22,CDMS,ui,l034l073,10,Setup,UI,20,5\n"
     )
-    (tmp_path / "regions.yml").write_text(
-        "B5:\n  Vlsr: 9.0\n  source_out: B5-IRS1\n"
-    )
+    (tmp_path / "regions.yml").write_text("B5:\n  Vlsr: 9.0\n  source_out: B5-IRS1\n")
     config = tmp_path / "merged.ini"
     config.write_text(
         "[project]\nbase_dir = .\n\n"
@@ -79,17 +76,24 @@ def test_make_line_images_generates_narrowband_dirty_and_clean_scripts(tmp_path)
     assert result.clean_cube is not None
     assert result.dirty_script is not None and result.dirty_script.is_file()
     assert result.clean_script is not None and result.clean_script.is_file()
-    assert 'let H%line N\\d2D\\u+' in result.clean_script.read_text()
+    assert "let H%line N\\d2D\\u+" in result.clean_script.read_text()
 
 
 def test_make_merged_line_images_generates_prepare_and_merge_scripts(tmp_path):
     result = make_merged_line_images(
-        "B5", "CD", "N2D+", "3-2", "l034l073",
-        execute=False, config_file=str(_merged_config(tmp_path)),
+        "B5",
+        "CD",
+        "N2D+",
+        "3-2",
+        "l034l073",
+        execute=False,
+        config_file=str(_merged_config(tmp_path)),
     )
 
     assert result.window == "l034l073"
-    assert result.input_file == tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
+    assert (
+        result.input_file == tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
+    )
     assert result.prepared_uvt.name == "B5-IRS1_CD_N2D+_3_2_sc_contsub_sm.uvt"
     assert result.single_dish_table == tmp_path / "30m/B5-IRS1_N2D+_3_2.30m"
     assert len(result.executions) == 2
@@ -98,7 +102,7 @@ def test_make_merged_line_images_generates_prepare_and_merge_scripts(tmp_path):
     assert 'modify "' in prepare
     assert "231321.8283" in prepare
     assert "uv_resample" in prepare
-    assert "sic copy \"" in image
+    assert 'sic copy "' in image
     assert "go uvshort" in image
     assert "let method SDI" in image
     assert "let MYCLEAN%SUPPORT NO" in image
@@ -122,7 +126,10 @@ def test_make_line_images_can_generate_only_clean_products(tmp_path):
     assert result.dirty_script is None
     assert result.clean_cube is not None
     assert len(result.executions) == 1
-    assert "let method SDI\nlet MYCLEAN%SUPPORT NO\ngo clean" in result.clean_script.read_text()
+    assert (
+        "let method SDI\nlet MYCLEAN%SUPPORT NO\ngo clean"
+        in result.clean_script.read_text()
+    )
 
 
 def test_clean_builder_emits_explicit_method():
