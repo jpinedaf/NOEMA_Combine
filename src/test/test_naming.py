@@ -34,6 +34,25 @@ def test_default_naming_matches_package_paths():
     assert naming.sd_file("B5", "CO", "1-0", "L09") == "30m/B5_CO_1-0.30m"
 
 
+def test_default_narrowband_naming_uses_prodige_pair_forms():
+    naming = FileNaming(root="/project")
+
+    path = naming.render(
+        "clean_input_narrowband",
+        source="B5",
+        source_out="B5-IRS1",
+        config="CD",
+        lid="l034l073",
+        lid_pair_folder="l34l73",
+        selfcal="_sc",
+        contsub="_contsub",
+    )
+
+    assert path == (
+        "/project/CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
+    )
+
+
 def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path: Path):
     config_path = tmp_path / "config.ini"
     assert create_config("propstar", config_path) == config_path
@@ -151,10 +170,10 @@ def test_preview_naming_covers_merged_line_project_tree(tmp_path: Path):
     )
     outputs = preview["outputs"]
     assert outputs["merged_line_uvt"].endswith(
-        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm.uvt"
+        "/CD30m/l034l073/B5_CD_N2D+_3-2_sc_contsub_sm.uvt"
     )
     assert outputs["merged_line_clean_cube"].endswith(
-        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm-merged.lmv-clean"
+        "/CD30m/l034l073/B5_CD_N2D+_3-2_sc_contsub_sm-merged.lmv-clean"
     )
 
 

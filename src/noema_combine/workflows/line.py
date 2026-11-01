@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
 from pathlib import Path
 import re
 
@@ -152,7 +151,7 @@ def extract_line(
         str(input_file),
         str(output_file),
         line_name=str(cfg.name_str[index]),
-        rest_frequency_mhz=str(Decimal(str(cfg.freq[index])) * 1000),
+        rest_frequency_mhz=cfg.freq_mhz[index],
         velocity_range=selected_range,
     )
     script_path.parent.mkdir(parents=True, exist_ok=True)
@@ -181,7 +180,7 @@ def extract_line(
         output_file=output_file,
         script_path=script_path,
         velocity_range=selected_range,
-        rest_frequency_mhz=float(cfg.freq[index]) * 1000.0,
+        rest_frequency_mhz=float(cfg.freq_mhz[index]),
         execution=execution,
     )
 

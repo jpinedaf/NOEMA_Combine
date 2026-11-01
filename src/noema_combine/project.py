@@ -135,7 +135,7 @@ def _check_style(style: str) -> str:
 def _default_gildas_setup() -> tuple[str, str]:
     """Return the GILDAS setup defaults for the current host.
 
-    The CasAlma machines provide the ``gildas_latest`` shell function from
+    The CAS-ALMA machines provide the ``gildas_latest`` shell function from
     ``/etc/profile.d/gildas.sh``.  Other machines keep the setup disabled so
     generated project files remain portable.
     """

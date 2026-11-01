@@ -341,6 +341,7 @@ def test_line_reduce_30m_deprecated(
     "qn": np.array(["1-0"]),
     "Lid": np.array(["L09"]),
     "freq": np.array(["115.271"]),
+    "freq_mhz": np.array(["115271"]),
     "vel_width_sd": np.array(["3.0"]),
     "vel_width_base_sd": np.array(["5.0"]),
     "name_str": np.array(["CO(1-0)"]),
@@ -382,6 +383,7 @@ def test_line_reduce_sd_runs_through_configured_gildas_runner(
     "qn": np.array(["1-0"]),
     "Lid": np.array(["L09"]),
     "freq": np.array(["115.271"]),
+    "freq_mhz": np.array(["115271"]),
     "vel_width_sd": np.array(["3.0"]),
     "vel_width_base_sd": np.array(["5.0"]),
     "name_str": np.array(["CO(1-0)"]),
@@ -440,6 +442,7 @@ def test_line_reduce_sd_omits_ignored_files_from_class_script(
 # @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
 # @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
 # @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
+# @patch("noema_combine.data_handler.freq_mhz", np.array(["115271"]))
 # @patch("noema_combine.data_handler.vel_width_base_sd", np.array(["5.0"]))
 # @patch("noema_combine.data_handler.vel_width_sd", np.array(["3.0"]))
 # @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
@@ -492,6 +495,7 @@ def test_line_reduce_sd_omits_ignored_files_from_class_script(
 @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
 @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
 @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
+@patch("noema_combine.data_handler.freq_mhz", np.array(["115271"]))
 @patch("noema_combine.data_handler.vel_width", np.array(["5.0"]))
 @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
 @patch("os.system")
@@ -534,6 +538,7 @@ def test_line_make_uvt_default_parameters(
 @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
 @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
 @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
+@patch("noema_combine.data_handler.freq_mhz", np.array(["115271"]))
 @patch("noema_combine.data_handler.vel_width", np.array(["5.0"]))
 @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
 @patch("os.system")
@@ -579,6 +584,7 @@ def test_line_make_uvt_with_custom_dv(
 @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
 @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
 @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
+@patch("noema_combine.data_handler.freq_mhz", np.array(["115271"]))
 @patch("noema_combine.data_handler.vel_width", np.array(["5.0"]))
 @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
 @patch("os.system")
@@ -623,6 +629,7 @@ def test_line_make_uvt_with_dv_min_max(
 @patch("noema_combine.data_handler.qn", np.array(["1-0"]))
 @patch("noema_combine.data_handler.Lid", np.array(["L09"]))
 @patch("noema_combine.data_handler.freq", np.array(["115.271"]))
+@patch("noema_combine.data_handler.freq_mhz", np.array(["115271"]))
 @patch("noema_combine.data_handler.vel_width", np.array(["5.0"]))
 @patch("noema_combine.data_handler.name_str", np.array(["CO(1-0)"]))
 @patch("os.system")

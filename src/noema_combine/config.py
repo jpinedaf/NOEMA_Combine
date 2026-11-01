@@ -4,6 +4,7 @@ import os
 import re
 import warnings
 import configparser
+from decimal import Decimal
 from pathlib import Path
 import yaml
 import numpy as np
@@ -166,6 +167,13 @@ class Config:
             self.vel_width_sd,
             self.vel_width_base_sd,
         ) = (np.atleast_1d(column) for column in line_columns)
+        # The catalogue stores frequencies in GHz. Keep that source value for
+        # compatibility and expose the canonical script frequency in MHz.
+        self.freq_ghz = self.freq.copy()
+        self.freq_mhz = np.asarray(
+            [format(Decimal(str(value)) * Decimal("1000"), "f") for value in self.freq],
+            dtype="U",
+        )
         self.line_baseband = np.atleast_1d(np.loadtxt(
             self.file_line_catalogue,
             dtype="U",

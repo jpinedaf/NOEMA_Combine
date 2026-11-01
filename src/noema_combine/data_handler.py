@@ -20,7 +20,7 @@ def _bind_config(cfg: Config) -> None:
     global file_source_catalogue, region_catalogue
     global selfcal_ext, uvsub_ext, file_line_catalogue
     global file_extensions_sd, telescope_class
-    global ignorefiles, line_name, qn, freq, name_str, qn_str, Lid
+    global ignorefiles, line_name, qn, freq, freq_mhz, name_str, qn_str, Lid
     global vel_width, vel_width_sd, vel_width_base_sd
     global uvt_dir, dir_sd, uvt_dir_out, inputdir
 
@@ -36,6 +36,7 @@ def _bind_config(cfg: Config) -> None:
     line_name = cfg.line_name
     qn = cfg.qn
     freq = cfg.freq
+    freq_mhz = cfg.freq_mhz
     name_str = cfg.name_str
     qn_str = cfg.qn_str
     Lid = cfg.Lid
@@ -75,6 +76,7 @@ ignorefiles: list[str]
 line_name: NDArray[np.str_]
 qn: NDArray[np.str_]
 freq: NDArray[np.str_]
+freq_mhz: NDArray[np.str_]
 name_str: NDArray[np.str_]
 qn_str: NDArray[np.str_]
 Lid: NDArray[np.str_]
@@ -371,7 +373,7 @@ def line_prepare_merge(
     index = get_line_param(molecule, quantum_number)
     qn_name_i = qn[index]
     line_name_i = line_name[index]
-    freq_i = float(freq[index]) * 1e3
+    freq_i = freq_mhz[index]
     Lid_i = Lid[index]
     file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     merge_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
@@ -488,7 +490,8 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     Lid_i = Lid[index]
     qn_name_i = qn[index]
     line_name_i = line_name[index]
-    freq_i = float(freq[index]) * 1e3
+    freq_i = freq_mhz[index]
+    find_frequency = float(freq_i) * freq_corr
     dv_base = float(vel_width_base_sd[index])
     dv = float(vel_width_sd[index])
     print(vlsr + 0.1, dv + 0.1, dv_base + 0.1)
@@ -520,7 +523,7 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
         fb.write("set line *\n")
         # Open and check file
         # only observations with reference frequency
-        fb.write("find /frequency {0}\n".format(freq_i * freq_corr))
+        fb.write(f"find /frequency {find_frequency}\n")
         fb.write("set mode x auto\n")
         fb.write("set unit v\n")
         fb.write("get zero\n")
@@ -601,7 +604,7 @@ def line_make_uvt(
     Lid_i = Lid[index]
     qn_name_i = qn[index]
     line_name_i = line_name[index]
-    freq_i = float(freq[index]) * 1e3
+    freq_i = freq_mhz[index]
     if dv is not None:
         dv_window = dv
     else:

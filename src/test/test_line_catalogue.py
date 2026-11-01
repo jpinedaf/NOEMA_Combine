@@ -75,6 +75,7 @@ def test_lines_in_window_matches_pair_valued_catalogue_units(tmp_path):
         "OCS",
         "N2D+",
     ]
+    assert lines_in_window("l034l073", config_file=str(config))[0]["frequency_mhz"] == 231061.0
     assert [line["line"] for line in lines_in_window("l034", config_file=str(config))] == [
         "OCS",
         "N2D+",

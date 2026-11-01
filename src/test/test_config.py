@@ -20,6 +20,8 @@ def test_refresh_config_updates_aliases(mock_get_config: MagicMock):
     cfg.line_name = np.array(["CO"])
     cfg.qn = np.array(["1-0"])
     cfg.freq = np.array(["115.271"])
+    cfg.freq_ghz = cfg.freq.copy()
+    cfg.freq_mhz = np.array(["115271"])
     cfg.name_str = np.array(["CO(1-0)"])
     cfg.qn_str = np.array(["1-0"])
     cfg.Lid = np.array(["L09"])

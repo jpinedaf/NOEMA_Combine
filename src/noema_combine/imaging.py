@@ -49,21 +49,26 @@ def build_clean_image_script(
     primary_beam_correction: bool = True,
     primary_beam_truncate: int = 20,
     frequency_line: str | None = None,
+    rest_frequency_mhz: float | None = None,
     rest_frequency: float | None = None,
     header_line: str | None = None,
     method: str = "HOGBOM",
     support_mask: bool = False,
 ) -> str:
     """Build a MAPPING script for a cleaned wideband UVT."""
+    if rest_frequency_mhz is not None and rest_frequency is not None:
+        raise TypeError("Use only rest_frequency_mhz or rest_frequency")
+    if rest_frequency_mhz is None:
+        rest_frequency_mhz = rest_frequency
     clean_method = normalize_clean_method(method)
     if configuration.upper() in {"A", "ACD"}:
         beam_lines = ["let map_beam_step 2032", "let map_size 0 0"]
     else:
         beam_lines = ["let map_beam_step -1", "let map_size 0 0"]
     lines = ["sic message mapping s-i"]
-    if frequency_line is not None and rest_frequency is not None:
+    if frequency_line is not None and rest_frequency_mhz is not None:
         lines.append(
-            f'modify "{input_file}" /frequency {frequency_line} {rest_frequency:g}'
+            f'modify "{input_file}" /frequency {frequency_line} {rest_frequency_mhz:g}'
         )
     lines.extend([
         f'let name "{output_name}"',

@@ -345,6 +345,9 @@ An example of a line catalogue entry in CSV format is shown below:
 - The ``#name`` column specifies the common name of the spectral line to be used as identifing the molecule and used in the filename.
 - The ``QN(filename)`` column indicates the quantum numbers used for the line identification and in the filename.
 - The ``freq(GHz)`` column provides the frequency of the line in ``GHz``.
+  The configuration loader also exposes the same catalogue value as
+  ``freq_mhz`` in MHz for script generation; workflows use this canonical
+  MHz value instead of converting frequencies at each call site.
 - The ``mol(plot)`` and ``QN(plot)`` columns specify the molecule and quantum numbers to be used for the ``GILDAS`` header.
 - The ``Aul(logs^-1)`` and ``Eul(K)`` columns to provide the Einstein A coefficient and upper energy level of the transition, good information to access easily.
 - The ``cat`` column indicates the catalogue source (e.g., JPL, CDMS).

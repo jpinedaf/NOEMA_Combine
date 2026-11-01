@@ -106,10 +106,11 @@ def lines_in_window(
         start, end = _broadband_bounds(cfg, normalized)
 
     rows: list[dict[str, Any]] = []
-    for name, qn, frequency, molecule, qn_plot, lid, baseband in zip(
+    for name, qn, frequency_ghz, frequency_mhz, molecule, qn_plot, lid, baseband in zip(
         cfg.line_name,
         cfg.qn,
-        cfg.freq,
+        cfg.freq_ghz,
+        cfg.freq_mhz,
         cfg.name_str,
         cfg.qn_str,
         cfg.Lid,
@@ -142,14 +143,15 @@ def lines_in_window(
             {
                 "line": str(name),
                 "qn": str(qn),
-                "frequency_ghz": float(frequency),
+                "frequency_ghz": float(frequency_ghz),
+                "frequency_mhz": float(frequency_mhz),
                 "molecule": str(molecule),
                 "quantum_number": str(qn_plot),
                 "narrowband_window": catalogue_window,
                 "window": normalized,
             }
         )
-    return sorted(rows, key=lambda row: row["frequency_ghz"])
+    return sorted(rows, key=lambda row: row["frequency_mhz"])
 
 
 __all__ = ["lines_in_window"]

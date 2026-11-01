@@ -139,7 +139,7 @@ def make_merged_line_images(
     prepare_text = build_merged_line_prepare_script(
         str(input_file), str(prepared_uvt),
         line_name=str(cfg.line_name[index]),
-        rest_frequency_mhz=cfg.freq[index],
+        rest_frequency_mhz=cfg.freq_mhz[index],
         velocity_range=selected_range,
         systemic_velocity=vlsr,
         velocity_resolution=resolution,
