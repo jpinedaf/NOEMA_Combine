@@ -210,3 +210,20 @@ The workflows return structured result objects. For example:
     result = make_dirty_images("B5", "CD", windows=["li"], execute=False)[0]
     print(result.script_path)
     print(result.execution.succeeded)
+
+Self-calibration and support masks
+----------------------------------
+
+Apply configured self-calibration gain tables to wideband and narrowband UVTs
+with :func:`noema_combine.apply_selfcal_solutions`::
+
+    results = apply_selfcal_solutions("B5", "CD", basebands=["li"], execute=False)
+
+The workflow generates the ``UV_CAL`` initialization file and MAPPING script,
+and retains them by default.  Paths are controlled by the ``selfcal_*`` naming
+templates.  Support masks can be propagated without GILDAS using::
+
+    copies = copy_support_masks("B5", "CD", "li", target_basebands="all")
+
+This creates the standard and self-calibration-stage mask names.  Existing
+files are protected by default; pass ``overwrite=True`` to replace them.

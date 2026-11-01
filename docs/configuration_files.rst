@@ -197,7 +197,9 @@ The optional **[naming]** section controls folder and filename templates. Existi
   ``source_out`` and ``source_sd``,
   ``window``, ``window_upper``, ``window_folder``, ``selfcal``, ``contsub``, and
   ``product_type``. Merged line-cube products use the ``merged_line_*``
-  templates. Output templates should describe exact filenames;
+  templates. Self-calibration uses ``selfcal_*`` templates, while support-mask
+  propagation uses ``support_mask`` and ``support_mask_selfcal``.
+  Output templates should describe exact filenames;
   ``search_*`` templates may contain wildcards for locating files made by older scripts.
 
 For narrowband products, ``lid_pair_folder`` and ``lid_pair_filename`` can be

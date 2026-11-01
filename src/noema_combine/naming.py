@@ -96,6 +96,14 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "merged_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
     "mask_file": "{root}/{config}/masks/{source}_{config}_{lid}{suffix}.mask",
     "uvfits_file": "{root}/{config}/uvfits/{source}_{config}_{lid}.uvfits",
+    "selfcal_input_wideband": "{root}/{config}/wideband/{source_out}_{config}_{window}{contsub}.uvt",
+    "selfcal_output_wideband": "{root}/{config}/wideband/{source_out}_{config}_{window}{contsub}{selfcal}.uvt",
+    "selfcal_gain_wideband": "{root}/{config}/wideband/selfcal/{source_out}_{config}_{window}_cont_rob1-ave-3-gain.uvt",
+    "selfcal_input_narrowband": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}.uvt",
+    "selfcal_output_narrowband": "{root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}{selfcal}.uvt",
+    "selfcal_script": "{root}/{config}/{window_folder}/{source_out}_{config}_{window}{selfcal}_selfcal.map",
+    "support_mask": "{root}/{config}/{source_out}_{config}_{window}_cont_rob1.msk",
+    "support_mask_selfcal": "{root}/{config}/selfcal/{source_out}_{config}_{window}_cont_rob1-ave{mask_iteration}.msk",
 }
 
 _ALLOWED_FIELDS = {
@@ -106,6 +114,7 @@ _ALLOWED_FIELDS = {
     "narrowband_folder", "window", "window_upper", "window_folder", "dirty_folder",
     "selfcal", "contsub", "uvsub", "lid_suffix", "suffix", "product",
     "resolution", "weighting", "beam", "smoothing", "extension", "product_type", "style",
+    "mask_iteration",
 }
 
 
@@ -254,6 +263,7 @@ class FileNaming:
             f"_{context['lid']}" if context.get("lid") else "",
         )
         context.setdefault("suffix", "")
+        context.setdefault("mask_iteration", "")
         context.setdefault("style", "prodige")
         try:
             return os.path.normpath(self.templates[template_name].format_map(context))
