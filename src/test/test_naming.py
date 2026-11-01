@@ -53,6 +53,44 @@ def test_default_narrowband_naming_uses_prodige_pair_forms():
     assert path == ("/project/CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt")
 
 
+def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Path):
+    """Validate the default naming profile across the main product families."""
+    naming = FileNaming(root=tmp_path)
+    common = {
+        "source": "B5",
+        "source_out": "B5-IRS1",
+        "config": "CD",
+        "window": "l034l073",
+        "lid": "l034l073",
+        "lid_pair": "l034l073",
+        "lid_pair_folder": "l34l73",
+        "lid_pair_filename": "l034l073",
+        "line": "N2D+",
+        "qn": "3-2",
+        "selfcal": "_sc",
+        "contsub": "_contsub",
+    }
+    paths = {
+        key: Path(naming.render(template, **common))
+        for key, template in (
+            ("wideband", "clean_input"),
+            ("narrowband", "clean_input_narrowband"),
+            ("line", "line_clean_cube"),
+            ("merged", "merged_line_uvt"),
+        )
+    }
+
+    assert paths["wideband"] == (
+        tmp_path / "CD/wideband/B5_CD_l034l073_sc_contsub.uvt"
+    )
+    assert paths["narrowband"] == (
+        tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
+    )
+    assert paths["line"].parent == tmp_path / "CD/l34l73"
+    assert paths["merged"].parent == tmp_path / "CD30m/l034l073"
+    assert "/narrowband/" not in str(paths["narrowband"])
+
+
 def test_create_config_writes_style_profile_and_protects_existing_file(tmp_path: Path):
     config_path = tmp_path / "config.ini"
     assert create_config("propstar", config_path) == config_path

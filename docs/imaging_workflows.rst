@@ -85,6 +85,10 @@ can be supplied directly:
 
 Use ``channel_ranges`` with a dictionary when processing multiple windows.
 
+Narrowband scripts are retained by default as well.  Set ``keep_script=False``
+to remove both the configured workflow script and the runner's temporary copy
+after successful execution.
+
 The narrowband subtraction script operates on the existing UVT metadata and
 does not emit a ``modify`` command. Its generated script therefore contains
 the input name, ``go setup``, the baseline command, and the output write.

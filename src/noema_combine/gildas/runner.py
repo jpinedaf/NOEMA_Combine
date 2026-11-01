@@ -22,6 +22,7 @@ class GildasResult:
     returncode: int | None
     stdout: str
     stderr: str
+    script_retained: bool = True
 
     @property
     def succeeded(self) -> bool:
@@ -124,6 +125,7 @@ class GildasRunner:
             returncode=None,
             stdout="",
             stderr="",
+            script_retained=retain,
         )
         try:
             if run_enabled:
@@ -154,6 +156,7 @@ class GildasRunner:
                     returncode=completed.returncode,
                     stdout=completed.stdout,
                     stderr=completed.stderr,
+                    script_retained=retain,
                 )
                 if completed.returncode != 0:
                     details = completed.stderr.strip() or completed.stdout.strip()

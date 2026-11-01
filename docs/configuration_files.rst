@@ -182,6 +182,10 @@ Generated scripts can also be run directly from Python:
 selects script-only mode and retains the generated script for inspection.
 The high-level wideband continuum workflow also retains all generated scripts
 by default; pass ``keep_script=False`` to remove them after execution.
+Every returned ``GildasResult`` records this lifecycle in
+``result.script_retained``.  When it is ``True`` the temporary runner script is
+available at ``result.script_path``; when it is ``False`` the path is only a
+record of the removed temporary file.
 
 Naming templates
 ----------------

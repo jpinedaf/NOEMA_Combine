@@ -10,6 +10,7 @@ def test_script_only_runner_retains_generated_script(tmp_path: Path):
     assert result.executed is False
     assert result.succeeded is True
     assert result.script_path.exists()
+    assert result.script_retained is True
     assert result.script_path.read_text() == "say 'hello'"
 
 
@@ -32,6 +33,24 @@ def test_runner_executes_configured_program_and_checks_outputs(tmp_path: Path):
     assert result.returncode == 0
     assert result.succeeded is True
     assert (tmp_path / "expected.out").exists()
+    assert result.script_retained is False
+
+
+def test_runner_reports_retained_script_after_execution(tmp_path: Path):
+    executable = tmp_path / "fake_gildas"
+    executable.write_text("#!/bin/sh\nexit 0\n")
+    executable.chmod(0o755)
+    runner = GildasRunner(
+        execute=True,
+        workdir=tmp_path,
+        commands={"mapping": str(executable)},
+        keep_scripts=True,
+    )
+
+    result = runner.run_mapping("exit")
+
+    assert result.script_retained is True
+    assert result.script_path.exists()
 
 
 def test_runner_can_remove_scripts_after_execution(tmp_path: Path):
@@ -48,6 +67,7 @@ def test_runner_can_remove_scripts_after_execution(tmp_path: Path):
     result = runner.run_mapping("exit")
 
     assert not result.script_path.exists()
+    assert result.script_retained is False
 
 
 def test_runner_runs_setup_command_before_gildas_program(tmp_path: Path):

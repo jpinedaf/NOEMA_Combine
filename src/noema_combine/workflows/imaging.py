@@ -108,6 +108,7 @@ def make_dirty_images(
     selfcal: bool = False,
     contsub: bool = False,
     execute: bool | None = None,
+    keep_script: bool = True,
     config_file: str | None = None,
 ) -> list[DirtyImageResult]:
     """Generate and optionally execute dirty images for selected windows."""
@@ -166,10 +167,12 @@ def make_dirty_images(
         execution = runner.run_mapping(
             script,
             expected_outputs=[output_map],
-            keep_script=True,
+            keep_script=keep_script,
         )
         script_target.parent.mkdir(parents=True, exist_ok=True)
         script_target.write_text(script)
+        if not keep_script:
+            script_target.unlink(missing_ok=True)
         results.append(
             DirtyImageResult(
                 source=source,
@@ -483,6 +486,7 @@ def restore_image(
     selfcal: bool = False,
     contsub: bool = False,
     execute: bool | None = None,
+    keep_script: bool = True,
     config_file: str | None = None,
 ) -> list[RestoreImageResult]:
     """Restore cleaned images or cubes with their UV data.
@@ -595,9 +599,18 @@ def restore_image(
             expected.append(primary_beam_cube)
         if primary_beam_fits is not None:
             expected.append(primary_beam_fits)
-        execution = runner.run_mapping(script, expected_outputs=expected, keep_script=True)
         script_path.parent.mkdir(parents=True, exist_ok=True)
         script_path.write_text(script)
+        try:
+            execution = runner.run_mapping(
+                script, expected_outputs=expected, keep_script=keep_script
+            )
+        except Exception:
+            if not keep_script:
+                script_path.unlink(missing_ok=True)
+            raise
+        if not keep_script:
+            script_path.unlink(missing_ok=True)
         results.append(
             RestoreImageResult(
                 source=source,

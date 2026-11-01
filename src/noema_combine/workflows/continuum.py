@@ -256,6 +256,7 @@ def make_narrowband_continuum_subtraction(
     channel_range: str | None = None,
     channel_ranges: dict[str, str] | None = None,
     execute: bool | None = None,
+    keep_script: bool = True,
     config_file: str | None = None,
 ) -> list[NarrowbandSubtractionResult]:
     """Generate and optionally execute narrowband subtraction scripts."""
@@ -318,15 +319,20 @@ def make_narrowband_continuum_subtraction(
             str(output_file),
             channel_range=selected_range,
         )
-        execution = runner.run_mapping(
-            script,
-            expected_outputs=[output_file],
-            keep_script=True,
-        )
-        # The runner owns the generated temporary script; copy its path into
-        # the configured script location for the script-only workflow.
         script_target.parent.mkdir(parents=True, exist_ok=True)
         script_target.write_text(script)
+        try:
+            execution = runner.run_mapping(
+                script,
+                expected_outputs=[output_file],
+                keep_script=keep_script,
+            )
+        except Exception:
+            if not keep_script:
+                script_target.unlink(missing_ok=True)
+            raise
+        if not keep_script:
+            script_target.unlink(missing_ok=True)
         results.append(
             NarrowbandSubtractionResult(
                 source=source,
