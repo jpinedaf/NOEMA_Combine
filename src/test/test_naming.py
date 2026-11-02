@@ -71,13 +71,10 @@ def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Pat
         "contsub": "_contsub",
     }
     paths = {
-        key: Path(naming.render(template, **common))
-        for key, template in (
-            ("wideband", "clean_input"),
-            ("narrowband", "clean_input_narrowband"),
-            ("line", "line_clean_cube"),
-            ("merged", "merged_line_uvt"),
-        )
+        "wideband": Path(naming.render("clean_input", **common)),
+        "narrowband": Path(naming.render("clean_input_narrowband", **common)),
+        "line": Path(naming.render("line_clean_cube", **common)),
+        "merged": Path(naming.render("merged_line_uvt", **common)),
     }
 
     assert paths["wideband"] == (
@@ -87,7 +84,7 @@ def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Pat
         tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
     )
     assert paths["line"].parent == tmp_path / "CD/l34l73"
-    assert paths["merged"].parent == tmp_path / "CD30m/l034l073"
+    assert paths["merged"].parent == tmp_path / "CD30m/l34l73"
     assert "/narrowband/" not in str(paths["narrowband"])
 
 
@@ -232,10 +229,10 @@ def test_preview_naming_covers_merged_line_project_tree(tmp_path: Path):
     )
     outputs = preview["outputs"]
     assert outputs["merged_line_uvt"].endswith(
-        "/CD30m/l034l073/B5_CD_N2D+_3-2_sc_contsub_sm.uvt"
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm.uvt"
     )
     assert outputs["merged_line_clean_cube"].endswith(
-        "/CD30m/l034l073/B5_CD_N2D+_3-2_sc_contsub_sm-merged.lmv-clean"
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm-merged.lmv-clean"
     )
 
 

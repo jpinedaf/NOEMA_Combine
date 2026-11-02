@@ -254,6 +254,8 @@ class FileNaming:
         """Render a named template using common and product-specific values."""
         if template_name not in self.templates:
             raise ValueError(f"Unknown naming template: {template_name}")
+        explicit_pair_folder = "lid_pair_folder" in values
+        explicit_pair_filename = "lid_pair_filename" in values
         context = dict(self.values)
         context.update(values)
         context.setdefault("source_out", context.get("source", ""))
@@ -265,9 +267,19 @@ class FileNaming:
             context.update(self._lid_values(str(context["lid"]), context.get("lid_pair")))
         context.setdefault("lid_pair_folder", context.get("lid_pair", ""))
         context.setdefault("lid_pair_filename", context.get("lid_pair", ""))
+        if context.get("lid_pair"):
+            pair_values = _lid_pair_values(context["lid_pair"])
+            if not explicit_pair_folder:
+                context["lid_pair_folder"] = pair_values["lid_pair_folder"]
+            if not explicit_pair_filename:
+                context["lid_pair_filename"] = pair_values["lid_pair_filename"]
         context.setdefault("window", context.get("lid", ""))
         context.setdefault("window_upper", str(context["window"]).upper())
-        context.setdefault("window_folder", context.get("lid_folder", context["window"]))
+        if not context.get("window_folder"):
+            pair_folder = context.get("lid_pair_folder")
+            context["window_folder"] = pair_folder or context.get(
+                "lid_folder", context["window"]
+            )
         context.setdefault("dirty_folder", context.get("root", "."))
         context.setdefault("selfcal", "")
         context.setdefault("contsub", "")
