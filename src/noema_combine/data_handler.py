@@ -195,7 +195,7 @@ def get_uvt_window(
     -----------
     source_name: str
         Name of the source to reduce, e.g., "B5"
-    Lid: str
+    Lid: str | None
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     uvsub: bool
         If True, the file will include '_uvsub' in the name.
@@ -259,7 +259,7 @@ def get_uvt_file(
 
 
 def get_30m_file(
-    source_name: str, molecule: str, quantum_number: str, Lid: str, merge: bool = False
+    source_name: str, molecule: str, quantum_number: str, Lid: str | None = None, merge: bool = False
 ) -> str:
     """
     Function to generate the output file name for the single dish data.
@@ -285,7 +285,8 @@ def get_30m_file(
     Lid: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
-        If True, the file will include the Lid information in the name.
+    If True, the file will include the Lid information in the name when one
+    is supplied.  A lid is not required for standalone single-dish reduction.
     """
     warnings.warn(
         "get_30m_file() is deprecated and will be removed in a future version. "
@@ -300,7 +301,7 @@ def get_sd_file(
     source_name: str,
     molecule: str,
     quantum_number: str,
-    Lid: str,
+    Lid: str | None = None,
     merge: bool = False,
     **naming_values: object,
 ) -> str:
@@ -323,10 +324,11 @@ def get_sd_file(
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
     quantum_number: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
-    Lid: str
+    Lid: str | None
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
-        If True, the file will include the Lid information in the name.
+    If True, the file will include the Lid information in the name when one
+    is supplied.  A lid is not required for standalone single-dish reduction.
     """
     if getattr(_cfg, "naming_custom", False) is True:
         return _cfg.naming.sd_file(
@@ -338,12 +340,8 @@ def get_sd_file(
             **naming_values,
         )
 
-    if merge:
-        name_out = (
-            f"{source_name}_{molecule}_{quantum_number}_{Lid}{file_extensions_sd}"
-        )
-    else:
-        name_out = f"{source_name}_{molecule}_{quantum_number}{file_extensions_sd}"
+    lid_suffix = f"_{Lid}" if merge and Lid else ""
+    name_out = f"{source_name}_{molecule}_{quantum_number}{lid_suffix}{file_extensions_sd}"
     outputfile = os.path.join(dir_sd, name_out)
     return outputfile
 

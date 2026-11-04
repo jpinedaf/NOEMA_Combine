@@ -12,12 +12,11 @@ import re
 from collections.abc import Mapping
 from string import Formatter
 
-
 DEFAULT_TEMPLATES: dict[str, str] = {
     "uvt_file": "{uvt_root}/{lid}/{source}_{line}_{qn}_{lid}.uvt",
     "uvt_file_merge": "{uvt_out_root}/{lid}/{source}_{line}_{qn}_{lid}.uvt",
     "uvt_window": "{uvt_root}/{lid}/{source}_{lid}{selfcal}{uvsub}.uvt",
-    "sd_file": "{sd_root}/{source}_{line}_{qn}{lid_suffix}{sd_ext}",
+    "sd_file": "{sd_root}/{source}_{line}_{qn}{sd_ext}",
     "sd_file_merge": "{sd_root}/{source}_{line}_{qn}_{lid}{sd_ext}",
     "narrowband_folder": "{root}/{config}/{lid_pair_folder}",
     "search_uvt": "{uvt_root}/{lid}/*{source}*{line}*{qn}*{lid}*.uvt",
@@ -117,14 +116,45 @@ DEFAULT_TEMPLATES: dict[str, str] = {
 }
 
 _ALLOWED_FIELDS = {
-    "root", "uvt_root", "uvt_out_root", "sd_root", "sd_ext",
-    "source", "source_out", "source_sd", "config", "line", "qn",
-    "config_a", "config_b", "config_out",
-    "lid", "lid_lower", "lid_upper", "lid_folder", "lid_pair",
-    "lid_pair_folder", "lid_pair_filename",
-    "narrowband_folder", "window", "window_upper", "window_folder", "dirty_folder",
-    "selfcal", "contsub", "uvsub", "lid_suffix", "suffix", "product",
-    "resolution", "weighting", "beam", "smoothing", "extension", "product_type", "style",
+    "root",
+    "uvt_root",
+    "uvt_out_root",
+    "sd_root",
+    "sd_ext",
+    "source",
+    "source_out",
+    "source_sd",
+    "config",
+    "line",
+    "qn",
+    "config_a",
+    "config_b",
+    "config_out",
+    "lid",
+    "lid_lower",
+    "lid_upper",
+    "lid_folder",
+    "lid_pair",
+    "lid_pair_folder",
+    "lid_pair_filename",
+    "narrowband_folder",
+    "window",
+    "window_upper",
+    "window_folder",
+    "dirty_folder",
+    "selfcal",
+    "contsub",
+    "uvsub",
+    "lid_suffix",
+    "suffix",
+    "product",
+    "resolution",
+    "weighting",
+    "beam",
+    "smoothing",
+    "extension",
+    "product_type",
+    "style",
     "mask_iteration",
 }
 
@@ -224,17 +254,26 @@ class FileNaming:
         formatter = Formatter()
         for product, template in self.templates.items():
             if not isinstance(template, str) or not template:
-                raise ValueError(f"Naming template {product!r} must be a non-empty string")
+                raise ValueError(
+                    f"Naming template {product!r} must be a non-empty string"
+                )
             try:
-                fields = [field for _, field, _, _ in formatter.parse(template) if field]
+                fields = [
+                    field for _, field, _, _ in formatter.parse(template) if field
+                ]
             except ValueError as exc:
                 raise ValueError(f"Invalid naming template {product!r}: {exc}") from exc
-            unknown = sorted({field.split(".", 1)[0].split("[", 1)[0] for field in fields} - _ALLOWED_FIELDS)
+            unknown = sorted(
+                {field.split(".", 1)[0].split("[", 1)[0] for field in fields}
+                - _ALLOWED_FIELDS
+            )
             if unknown:
                 raise ValueError(
                     f"Naming template {product!r} uses unknown variable(s): {', '.join(unknown)}"
                 )
-            if not product.startswith("search_") and any(char in template for char in "*?"):
+            if not product.startswith("search_") and any(
+                char in template for char in "*?"
+            ):
                 raise ValueError(
                     f"Output naming template {product!r} cannot contain wildcard characters"
                 )
@@ -264,7 +303,9 @@ class FileNaming:
         context.setdefault("config_b", context.get("config", ""))
         context.setdefault("config_out", context.get("config", ""))
         if "lid" in context:
-            context.update(self._lid_values(str(context["lid"]), context.get("lid_pair")))
+            context.update(
+                self._lid_values(str(context["lid"]), context.get("lid_pair"))
+            )
         context.setdefault("lid_pair_folder", context.get("lid_pair", ""))
         context.setdefault("lid_pair_filename", context.get("lid_pair", ""))
         if context.get("lid_pair"):
@@ -299,13 +340,26 @@ class FileNaming:
             ) from exc
 
     def uvt_file(
-        self, source: str, line: str, qn: str, lid: str, *, merge: bool = False, **kwargs: object
+        self,
+        source: str,
+        line: str,
+        qn: str,
+        lid: str | None = None,
+        *,
+        merge: bool = False,
+        **kwargs: object,
     ) -> str:
         product = "uvt_file_merge" if merge else "uvt_file"
         return self.render(product, source=source, line=line, qn=qn, lid=lid, **kwargs)
 
     def uvt_window(
-        self, source: str, lid: str, *, selfcal: bool = False, uvsub: bool = True, **kwargs: object
+        self,
+        source: str,
+        lid: str,
+        *,
+        selfcal: bool = False,
+        uvsub: bool = True,
+        **kwargs: object,
     ) -> str:
         return self.render(
             "uvt_window",
@@ -317,7 +371,14 @@ class FileNaming:
         )
 
     def sd_file(
-        self, source: str, line: str, qn: str, lid: str, *, merge: bool = False, **kwargs: object
+        self,
+        source: str,
+        line: str,
+        qn: str,
+        lid: str,
+        *,
+        merge: bool = False,
+        **kwargs: object,
     ) -> str:
         product = "sd_file_merge" if merge else "sd_file"
         return self.render(
@@ -326,12 +387,18 @@ class FileNaming:
             line=line,
             qn=qn,
             lid=lid,
-            lid_suffix=f"_{lid}" if merge else "",
+            lid_suffix=f"_{lid}" if merge and lid else "",
             **kwargs,
         )
 
     def narrowband_folder(
-        self, source: str, config: str, lid: str, *, lid_pair: str | None = None, **kwargs: object
+        self,
+        source: str,
+        config: str,
+        lid: str,
+        *,
+        lid_pair: str | None = None,
+        **kwargs: object,
     ) -> str:
         return self.render(
             "narrowband_folder",
@@ -346,45 +413,88 @@ class FileNaming:
         """Render a wildcard pattern for locating existing products."""
         return self.render(product, **values)
 
-    def continuum_file(self, source: str, config: str, lid: str, **kwargs: object) -> str:
-        return self.render("continuum_file", source=source, config=config, lid=lid, **kwargs)
+    def continuum_file(
+        self, source: str, config: str, lid: str, **kwargs: object
+    ) -> str:
+        return self.render(
+            "continuum_file", source=source, config=config, lid=lid, **kwargs
+        )
 
-    def continuum_subtracted_file(self, source: str, config: str, lid: str, **kwargs: object) -> str:
+    def continuum_subtracted_file(
+        self, source: str, config: str, lid: str, **kwargs: object
+    ) -> str:
         return self.render(
             "continuum_subtracted_file", source=source, config=config, lid=lid, **kwargs
         )
 
     def clean_image(self, source: str, config: str, lid: str, **kwargs: object) -> str:
-        return self.render("clean_image", source=source, config=config, lid=lid, **kwargs)
-
-    def line_cube(self, source: str, config: str, line: str, qn: str, lid: str, **kwargs: object) -> str:
         return self.render(
-            "line_cube", source=source, config=config, line=line, qn=qn, lid=lid, **kwargs
+            "clean_image", source=source, config=config, lid=lid, **kwargs
         )
 
-    def merged_cube(self, source: str, config: str, line: str, qn: str, lid: str, **kwargs: object) -> str:
+    def line_cube(
+        self, source: str, config: str, line: str, qn: str, lid: str, **kwargs: object
+    ) -> str:
         return self.render(
-            "merged_cube", source=source, config=config, line=line, qn=qn, lid=lid, **kwargs
+            "line_cube",
+            source=source,
+            config=config,
+            line=line,
+            qn=qn,
+            lid=lid,
+            **kwargs,
+        )
+
+    def merged_cube(
+        self, source: str, config: str, line: str, qn: str, lid: str, **kwargs: object
+    ) -> str:
+        return self.render(
+            "merged_cube",
+            source=source,
+            config=config,
+            line=line,
+            qn=qn,
+            lid=lid,
+            **kwargs,
         )
 
     def mask_file(self, source: str, config: str, lid: str, **kwargs: object) -> str:
         return self.render("mask_file", source=source, config=config, lid=lid, **kwargs)
 
     def uvfits_file(self, source: str, config: str, lid: str, **kwargs: object) -> str:
-        return self.render("uvfits_file", source=source, config=config, lid=lid, **kwargs)
+        return self.render(
+            "uvfits_file", source=source, config=config, lid=lid, **kwargs
+        )
 
     def preview(self, **values: object) -> dict[str, str]:
         """Render every active template for a representative set of values."""
         preview_values = {
-            "source": "SOURCE", "source_out": "SOURCE", "source_sd": "SOURCE",
-            "config": "CD", "line": "LINE", "qn": "QN", "lid": "l10",
-            "lid_pair": "l10l49", "selfcal": "_sc", "contsub": "_contsub",
-            "uvsub": "_contsub", "lid_suffix": "_l10", "suffix": "_product",
-            "product": "product", "product_type": "continuum", "resolution": "natural", "weighting": "natural",
-            "beam": "pb", "smoothing": "smooth", "extension": ".fits",
+            "source": "SOURCE",
+            "source_out": "SOURCE",
+            "source_sd": "SOURCE",
+            "config": "CD",
+            "line": "LINE",
+            "qn": "QN",
+            "lid": "l10",
+            "lid_pair": "l10l49",
+            "selfcal": "_sc",
+            "contsub": "_contsub",
+            "uvsub": "_contsub",
+            "lid_suffix": "_l10",
+            "suffix": "_product",
+            "product": "product",
+            "product_type": "continuum",
+            "resolution": "natural",
+            "weighting": "natural",
+            "beam": "pb",
+            "smoothing": "smooth",
+            "extension": ".fits",
         }
         preview_values.update(values)
-        return {product: self.render(product, **preview_values) for product in self.templates}
+        return {
+            product: self.render(product, **preview_values)
+            for product in self.templates
+        }
 
     def describe(self) -> dict[str, str]:
         """Return the active templates for diagnostics and configuration UIs."""
@@ -414,9 +524,7 @@ def preview_naming(
     from .config import Config, get_config
 
     cfg = (
-        Config(config_file=config_file, isolated=True)
-        if config_file
-        else get_config()
+        Config(config_file=config_file, isolated=True) if config_file else get_config()
     )
     inferred_lid = lid or _infer_lid(cfg, line, qn)
     context: dict[str, object] = {
