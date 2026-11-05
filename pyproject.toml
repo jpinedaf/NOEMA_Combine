@@ -48,6 +48,7 @@ namespaces = false
 [tool.coverage.run]
 branch = true
 source = ["noema_combine"]
+omit = ["*/tests/*", "*/_version.py"]
 
 [tool.pytest.ini_options]
 pythonpath = "src/"
