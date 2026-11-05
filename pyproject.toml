@@ -51,6 +51,7 @@ source = ["noema_combine"]
 
 [tool.pytest.ini_options]
 pythonpath = "src/"
+testpaths = ["tests"]
 addopts = ["--ignore=src/noema_combine/_version.py"]
 
 [tool.coverage.report]

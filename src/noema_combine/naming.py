@@ -159,6 +159,41 @@ _ALLOWED_FIELDS = {
 }
 
 
+_PREVIEW_DEFAULTS: dict[str, str] = {
+    "source": "SOURCE",
+    "source_out": "SOURCE",
+    "source_sd": "SOURCE",
+    "config": "CD",
+    "line": "LINE",
+    "qn": "QN",
+    "lid": "l10",
+    "lid_pair": "l10l49",
+    "selfcal": "_sc",
+    "contsub": "_contsub",
+    "uvsub": "_contsub",
+    "lid_suffix": "_l10",
+    "suffix": "_product",
+    "product": "product",
+    "product_type": "continuum",
+    "resolution": "natural",
+    "weighting": "natural",
+    "beam": "pb",
+    "smoothing": "smooth",
+    "extension": ".fits",
+    "style": "prodige",
+}
+
+
+def _resolve_preview_context(naming: "FileNaming", values: Mapping[str, object]) -> dict[str, object]:
+    """Add intermediate folder products needed by dependent preview templates."""
+    context = dict(values)
+    context["narrowband_folder"] = naming.render(
+        "narrowband_folder", **context
+    )
+    context["dirty_folder"] = naming.render("dirty_folder", **context)
+    return context
+
+
 def _catalogue_key(value: object) -> str:
     """Normalize catalogue text for tolerant preview matching."""
     return (
@@ -468,29 +503,9 @@ class FileNaming:
 
     def preview(self, **values: object) -> dict[str, str]:
         """Render every active template for a representative set of values."""
-        preview_values = {
-            "source": "SOURCE",
-            "source_out": "SOURCE",
-            "source_sd": "SOURCE",
-            "config": "CD",
-            "line": "LINE",
-            "qn": "QN",
-            "lid": "l10",
-            "lid_pair": "l10l49",
-            "selfcal": "_sc",
-            "contsub": "_contsub",
-            "uvsub": "_contsub",
-            "lid_suffix": "_l10",
-            "suffix": "_product",
-            "product": "product",
-            "product_type": "continuum",
-            "resolution": "natural",
-            "weighting": "natural",
-            "beam": "pb",
-            "smoothing": "smooth",
-            "extension": ".fits",
-        }
+        preview_values = dict(_PREVIEW_DEFAULTS)
         preview_values.update(values)
+        preview_values = _resolve_preview_context(self, preview_values)
         return {
             product: self.render(product, **preview_values)
             for product in self.templates
@@ -527,7 +542,8 @@ def preview_naming(
         Config(config_file=config_file, isolated=True) if config_file else get_config()
     )
     inferred_lid = lid or _infer_lid(cfg, line, qn)
-    context: dict[str, object] = {
+    context: dict[str, object] = dict(_PREVIEW_DEFAULTS)
+    context.update({
         "source": source,
         "source_out": cfg.region_catalogue.get(source, {}).get("source_out", source),
         "source_sd": cfg.region_catalogue.get(source, {}).get("source_sd", source),
@@ -536,24 +552,15 @@ def preview_naming(
         "qn": qn,
         "lid": inferred_lid,
         "lid_pair": lid_pair or (inferred_lid.lower() if inferred_lid else ""),
-        "selfcal": "_sc",
-        "contsub": "_contsub",
-        "uvsub": "_contsub",
         "lid_suffix": f"_{inferred_lid}" if inferred_lid else "",
-        "suffix": "_product",
-        "product": "product",
-        "resolution": "natural",
-        "weighting": "natural",
-        "beam": "pb",
-        "smoothing": "smooth",
-        "extension": ".fits",
         "style": style or cfg.config.get("project", "style", fallback="prodige"),
-    }
+    })
     context.update(values)
     if context.get("lid_pair"):
         pair_values = _lid_pair_values(context["lid_pair"])
         for key in ("lid_pair_folder", "lid_pair_filename"):
             context.setdefault(key, pair_values[key])
+    context = _resolve_preview_context(cfg.naming, context)
 
     outputs: dict[str, str] = {}
     search_patterns: dict[str, str] = {}

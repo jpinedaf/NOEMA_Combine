@@ -193,7 +193,7 @@ def test_create_line_catalogue_and_project_files(tmp_path: Path):
     assert (
         default_catalogue.read_text()
         == (
-            Path(__file__).parents[1] / "noema_combine/line_catalogue_MIOP.csv"
+            Path(__file__).parents[1] / "src/noema_combine/line_catalogue_MIOP.csv"
         ).read_text()
     )
 
@@ -243,7 +243,7 @@ def test_import_succeeds_with_generated_config_in_current_directory(tmp_path: Pa
         catalogue_filename=tmp_path / "line_catalogue_prodige.csv",
         region_catalogue_filename=tmp_path / "region_catalogue.yml",
     )
-    source_root = Path(__file__).parents[1]
+    source_root = Path(__file__).parents[1] / "src"
     environment = os.environ.copy()
     environment["PYTHONPATH"] = (
         str(source_root) + os.pathsep + environment.get("PYTHONPATH", "")
@@ -316,7 +316,7 @@ def test_preview_naming_returns_outputs_and_search_patterns():
 
 def test_naming_uses_catalogue_source_out_for_wideband_and_narrowband(tmp_path: Path):
     """Output names use the catalogue output identifier for both clean products."""
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     region_file = tmp_path / "region_catalogue.yml"
     region_file.write_text(
         "B5-IRS1:\n"
@@ -367,7 +367,7 @@ def test_preview_naming_defaults_style_to_prodige_for_custom_templates():
 
 
 def test_preview_naming_infers_lid_from_line_catalogue(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "preview_prodige.ini"
     config_file.write_text(
         f"""[project]\nstyle = prodige\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_MIOP.csv"}\n\n[naming]\nroot = .\n"""
@@ -390,7 +390,7 @@ def test_preview_naming_infers_lid_from_line_catalogue(tmp_path: Path):
 
 
 def test_explicit_config_resolves_relative_paths_from_base_dir(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "project.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data, extra\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[naming]\nroot = .\nnarrowband_folder = {{root}}/{{config}}/narrowband/{{lid_pair}}\n"""
@@ -412,7 +412,7 @@ def test_explicit_config_resolves_relative_paths_from_base_dir(tmp_path: Path):
 
 
 def test_preview_with_explicit_config_does_not_replace_global_config(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "preview.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[naming]\nroot = .\nuvt_file = {{root}}/{{config}}/{{source}}_{{lid_upper}}.uvt\n"""
@@ -433,7 +433,7 @@ def test_preview_with_explicit_config_does_not_replace_global_config(tmp_path: P
 
 
 def test_wideband_continuum_workflow_script_only(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "workflow.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_plot = {{root}}/output/{{source}}_{{config}}_{{lid}}.png\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
@@ -450,7 +450,7 @@ def test_wideband_continuum_workflow_script_only(tmp_path: Path):
 
 
 def test_wideband_continuum_script_retention_is_explicit(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "retention.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
@@ -476,7 +476,7 @@ def test_wideband_continuum_script_retention_is_explicit(tmp_path: Path):
 def test_continuum_cube_clean_uses_support_mask_defaults(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "continuum-mask.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\n\n[naming]\nroot = .\ncontinuum_input = {{root}}/input/{{source}}_{{config}}_{{lid}}.uvt\ncontinuum_subtracted_file = {{root}}/output/{{source}}_{{config}}_{{lid}}{{contsub}}.uvt\ncontinuum_cube = {{root}}/output/{{source}}_{{config}}_{{lid}}.lmv-clean\ncontinuum_range_file = {{root}}/{{source}}_{{config}}_{{lid}}_linerange.txt\ncontinuum_filter_file = {{root}}/{{source}}_{{config}}_{{lid}}_filter.txt\n"""
@@ -502,7 +502,7 @@ def test_continuum_cube_clean_uses_support_mask_defaults(
 
 
 def test_narrowband_continuum_workflow_script_only(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "narrowband.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n\n[naming]\nroot = .\nnarrowband_folder = {{root}}/{{config}}/narrowband/{{lid_pair}}\nnarrowband_input = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_sc.uvt\nnarrowband_output = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_sc{{contsub}}.uvt\nnarrowband_script = {{narrowband_folder}}/{{source}}_{{config}}_{{lid_pair}}_contsub.map\n"""
@@ -524,7 +524,7 @@ def test_narrowband_continuum_workflow_script_only(tmp_path: Path):
 
 
 def test_narrowband_continuum_single_channel_range(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "narrowband-range.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n"""
@@ -543,7 +543,7 @@ def test_narrowband_continuum_single_channel_range(tmp_path: Path):
 
 
 def test_narrowband_continuum_accepts_single_window_string(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "narrowband-string.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l034l073\n"""
@@ -566,7 +566,7 @@ def test_narrowband_continuum_accepts_single_window_string(tmp_path: Path):
 def test_narrowband_continuum_single_channel_range_rejects_multiple_windows(
     tmp_path: Path,
 ):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "narrowband-range.ini"
     config_file.write_text(
         f"""[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[narrowband]\nwindows = l009l048, l010l049\n"""
@@ -584,7 +584,7 @@ def test_narrowband_continuum_single_channel_range_rejects_multiple_windows(
 
 
 def test_dirty_image_workflow_script_only(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "imaging.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[imaging]\nwideband_windows = li\ninclude_narrowband = false\n\n[naming]\nroot = .\ndirty_folder = {{root}}/{{config}}/{{window_folder}}\ndirty_input = {{dirty_folder}}/{{source}}_{{config}}_{{window}}.uvt\ndirty_script = {{dirty_folder}}/{{source}}_{{config}}_{{window}}_dirty.map\ndirty_map = {{dirty_folder}}/{{source}}_{{config}}_{{window}}.lmv\n"""
@@ -600,7 +600,7 @@ def test_dirty_image_workflow_script_only(tmp_path: Path):
 
 
 def test_dirty_images_support_selfcal_and_contsub_for_both_window_types(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "suffixes.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[narrowband]\nwindows = l009l048\n\n[imaging]\nwideband_windows = li\ninclude_narrowband = true\n\n[naming]\nroot = .\ndirty_folder = {{root}}/{{config}}/{{window_folder}}\ndirty_input = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\ndirty_script = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}_dirty.map\ndirty_map = {{dirty_folder}}/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.lmv\n"""
@@ -624,7 +624,7 @@ def test_dirty_images_support_selfcal_and_contsub_for_both_window_types(tmp_path
 
 
 def test_clean_image_workflow_script_only(tmp_path: Path):
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "cleaning.ini"
     config_file.write_text(
         f"""[project]\nbase_dir = .\n\n[folders]\nuvt_dir = uvts\nuvt_dir_out = merged\ndir_sd = single_dish\ninputdir = raw_data\n\n[catalogues]\nsource_catalogue = {package_dir / "region_catalogue.yml"}\nline_catalogue = {package_dir / "line_catalogue_3mm.csv"}\n\n[gildas]\nexecute = false\nworkdir = .\n\n[imaging]\nwideband_windows = li\n\n[cleaning]\nweighting = natural\nthreshold_factor = 5\nniter = 0\nprimary_beam_correction = true\nprimary_beam_truncate = 20\n\n[naming]\nroot = .\nclean_input = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.uvt\nclean_script = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}_clean.map\nclean_cube = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.lmv-clean\nclean_fits = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}.fits\nclean_pb_cube = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}-pbcor.lmv-sky\nclean_pb_fits = {{root}}/{{config}}/wideband/{{source}}_{{config}}_{{window}}{{selfcal}}{{contsub}}-pbcor.fits\n"""
@@ -660,7 +660,7 @@ def test_clean_image_workflow_script_only(tmp_path: Path):
 
 
 def _restoration_config(tmp_path: Path, *, include_narrowband: bool = True) -> Path:
-    package_dir = Path(__file__).parents[1] / "noema_combine"
+    package_dir = Path(__file__).parents[1] / "src" / "noema_combine"
     config_file = tmp_path / "restoration.ini"
     config_file.write_text(
         f"""[project]
