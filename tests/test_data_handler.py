@@ -42,7 +42,7 @@ def prepare_merge_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         data_handler,
         "get_uvt_file",
-        lambda *args, merge=False, selfcal=False, contsub=False: (
+        lambda *args, merge=False, configuration="CD", selfcal=False, contsub=False: (
             "merged/input[1].uvt" if merge else "input[1].uvt"
         ),
     )
@@ -77,7 +77,7 @@ def test_line_prepare_merge_script_only(
     run = MagicMock()
     monkeypatch.setattr("noema_combine.gildas.runner.subprocess.run", run)
 
-    result = line_prepare_merge("B5", "CO", "1-0", beam_eff=0.82, execute=override)
+    result = line_prepare_merge("B5", "CO", "1-0", configuration="CD", beam_eff=0.82, execute=override)
 
     assert not result.executed
     script = result.script_path.read_text()
@@ -115,7 +115,7 @@ def test_line_prepare_merge_executes_and_copies_uvt(
     )
     monkeypatch.setattr("noema_combine.gildas.runner.subprocess.run", run)
 
-    result = line_prepare_merge("B5", "CO", "1-0", execute=override)
+    result = line_prepare_merge("B5", "CO", "1-0", configuration="CD", execute=override)
 
     assert result.executed
     assert "modify Beam_Eff /Ruze" in result.script_path.read_text()
@@ -144,7 +144,7 @@ def test_line_prepare_merge_surfaces_class_failure(
     )
 
     with pytest.raises(RuntimeError, match="CLASS failed"):
-        line_prepare_merge("B5", "CO", "1-0", execute=True)
+        line_prepare_merge("B5", "CO", "1-0", configuration="CD", execute=True)
     assert (prepare_merge_files / "merged/input[1].uvt").read_text() == "existing UVT"
 
 
@@ -154,7 +154,7 @@ def test_line_prepare_merge_rejects_output_collision(
     monkeypatch.setattr(data_handler, "file_extensions_sd", ".uvt")
 
     with pytest.raises(ValueError, match="must not overwrite"):
-        line_prepare_merge("B5", "CO", "1-0", execute=True)
+        line_prepare_merge("B5", "CO", "1-0", configuration="CD", execute=True)
     assert (prepare_merge_files / "merged/input[1].uvt").read_text() == "existing UVT"
 
 
@@ -367,22 +367,22 @@ def test_get_uvt_window_different_lid():
 @patch("noema_combine.data_handler.uvt_dir", "/path/to/uvt")
 def test_get_uvt_file_no_merge():
     """Test uvt filename generation without merge"""
-    result = get_uvt_file("B5", "CO", "1-0", "L09", merge=False)
-    assert result == "/path/to/uvt/L09/B5_CO_1-0_L09.uvt"
+    result = get_uvt_file("B5", "CO", "1-0", "L09", configuration="CD", merge=False)
+    assert result == "/path/to/uvt/L09/B5_CD_CO_1-0_L09.uvt"
 
 
 @patch("noema_combine.data_handler.uvt_dir_out", "/path/to/uvt_out")
 def test_get_uvt_file_with_merge():
     """Test uvt filename generation with merge"""
-    result = get_uvt_file("B5", "CO", "1-0", "L09", merge=True)
-    assert result == "/path/to/uvt_out/L09/B5_CO_1-0_L09.uvt"
+    result = get_uvt_file("B5", "CO", "1-0", "L09", configuration="CD", merge=True)
+    assert result == "/path/to/uvt_out/L09/B5_CD_CO_1-0_L09.uvt"
 
 
 @patch("noema_combine.data_handler.uvt_dir", "/data/uvt")
 def test_get_uvt_file_complex_qn():
     """Test uvt filename with complex quantum number"""
-    result = get_uvt_file("B5", "N2H+", "J=1-0,F=2-1", "L09", merge=False)
-    assert result == "/data/uvt/L09/B5_N2H+_J=1-0,F=2-1_L09.uvt"
+    result = get_uvt_file("B5", "N2H+", "J=1-0,F=2-1", "L09", configuration="CD", merge=False)
+    assert result == "/data/uvt/L09/B5_CD_N2H+_J=1-0,F=2-1_L09.uvt"
 
 
 @patch("noema_combine.data_handler.uvt_dir", "/data/uvt")
@@ -390,8 +390,8 @@ def test_get_uvt_file_complex_qn():
 @patch("noema_combine.data_handler.uvsub_ext", "_sub")
 def test_get_uvt_file_legacy_suffixes():
     assert get_uvt_file(
-        "B5", "CO", "1-0", "L09", selfcal=True, contsub=True
-    ) == "/data/uvt/L09/B5_CO_1-0_L09_self_sub.uvt"
+        "B5", "CO", "1-0", "L09", configuration="CD", selfcal=True, contsub=True
+    ) == "/data/uvt/L09/B5_CD_CO_1-0_L09_self_sub.uvt"
 
 
 # Tests for get_30m_file (deprecated, use get_sd_file instead)
@@ -416,8 +416,8 @@ def test_get_30m_file_with_merge():
     """Test 30m filename generation with merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        result = get_30m_file("B5", "CO", "1-0", "L09", merge=True)
-        assert result == "/path/to/merged/L09/B5_CO_1-0_L09.30m"
+        result = get_30m_file("B5", "CO", "1-0", "L09", configuration="CD", merge=True)
+        assert result == "/path/to/merged/L09/B5_CD_CO_1-0_L09.30m"
         # Check that deprecation warning was issued
         assert len(w) == 1
         assert issubclass(w[0].category, DeprecationWarning)
@@ -446,13 +446,24 @@ def test_get_sd_file():
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=False)
     assert result == "/path/to/sd/B5_CO_1-0.30m"
 
-    result = get_sd_file("B5", "CO", "1-0", "L09", merge=True)
-    assert result == "/path/to/merged/L09/B5_CO_1-0_L09.30m"
+    result = get_sd_file("B5", "CO", "1-0", "L09", configuration="CD", merge=True)
+    assert result == "/path/to/merged/L09/B5_CD_CO_1-0_L09.30m"
 
 
 def test_get_sd_file_merge_requires_lid():
     with pytest.raises(ValueError, match="Lid is required"):
         get_sd_file("B5", "CO", "1-0", merge=True)
+
+
+def test_get_sd_file_merge_requires_configuration():
+    with pytest.raises(ValueError, match="configuration is required"):
+        get_sd_file("B5", "CO", "1-0", "L09", merge=True)
+
+
+@pytest.mark.parametrize("configuration", ["", "  "])
+def test_get_uvt_file_rejects_empty_configuration(configuration: str):
+    with pytest.raises(ValueError, match="configuration must be a non-empty"):
+        get_uvt_file("B5", "CO", "1-0", "L09", configuration=configuration)
 
 
 @patch("noema_combine.data_handler.dir_sd", "/data/sd")
@@ -675,11 +686,11 @@ def test_line_make_uvt_default_parameters(
     """Test line_make_uvt with default parameters"""
     mock_get_line.return_value = 0
     mock_get_uvt_window.return_value = "/uvt/L09/B5_L09_uvsub.uvt"
-    mock_get_uvt_file.return_value = "/uvt/L09/B5_CO_1-0_L09.uvt"
+    mock_get_uvt_file.return_value = "/uvt/L09/B5_CD_CO_1-0_L09.uvt"
     mock_file = MagicMock()
     mock_temp.return_value.__enter__.return_value = mock_file
     mock_file.name = "temp.map"
-    line_make_uvt("B5", "CO", "1-0")
+    line_make_uvt("B5", "CO", "1-0", configuration="CD")
     mock_get_line.assert_called_once_with("CO", "1-0")
 
 
@@ -718,12 +729,12 @@ def test_line_make_uvt_with_custom_dv(
     """Test line_make_uvt with custom dv parameter"""
     mock_get_line.return_value = 0
     mock_get_uvt_window.return_value = "/uvt/L09/B5_L09_uvsub.uvt"
-    mock_get_uvt_file.return_value = "/uvt/L09/B5_CO_1-0_L09.uvt"
+    mock_get_uvt_file.return_value = "/uvt/L09/B5_CD_CO_1-0_L09.uvt"
     mock_file = MagicMock()
     mock_temp.return_value.__enter__.return_value = mock_file
     mock_file.name = "temp.map"
 
-    line_make_uvt("B5", "CO", "1-0", dv=7.0)
+    line_make_uvt("B5", "CO", "1-0", configuration="CD", dv=7.0)
 
     # mock_get_source.assert_called_once_with("B5")
     # assert mock_file.write.called
@@ -764,12 +775,12 @@ def test_line_make_uvt_with_dv_min_max(
     """Test line_make_uvt with dv_min and dv_max parameters"""
     mock_get_line.return_value = 0
     mock_get_uvt_window.return_value = "/uvt/L09/B5_L09_uvsub.uvt"
-    mock_get_uvt_file.return_value = "/uvt/L09/B5_CO_1-0_L09.uvt"
+    mock_get_uvt_file.return_value = "/uvt/L09/B5_CD_CO_1-0_L09.uvt"
     mock_file = MagicMock()
     mock_temp.return_value.__enter__.return_value = mock_file
     mock_file.name = "temp.map"
 
-    line_make_uvt("B5", "CO", "1-0", dv_min=3.0, dv_max=8.0)
+    line_make_uvt("B5", "CO", "1-0", configuration="CD", dv_min=3.0, dv_max=8.0)
 
     # assert mock_file.write.called
 
@@ -809,13 +820,17 @@ def test_line_make_uvt_with_selfcal(
     """Test line_make_uvt with selfcal enabled"""
     mock_get_line.return_value = 0
     mock_get_uvt_window.return_value = "/uvt/L09/B5_L09_uvsub_sc.uvt"
-    mock_get_uvt_file.return_value = "/uvt/L09/B5_CO_1-0_L09.uvt"
+    mock_get_uvt_file.return_value = "/uvt/L09/B5_CD_CO_1-0_L09.uvt"
     mock_file = MagicMock()
     mock_temp.return_value.__enter__.return_value = mock_file
     mock_file.name = "temp.map"
 
-    line_make_uvt("B5", "CO", "1-0", selfcal=True)
+    line_make_uvt("B5", "CO", "1-0", configuration="CD", selfcal=True)
 
     mock_get_uvt_window.assert_called_once_with(
-        "B5_out", "L09", uvsub=True, selfcal=True
+        "B5_out", "L09", uvsub=True, selfcal=True, config="CD"
+    )
+    mock_get_uvt_file.assert_called_once_with(
+        "B5_out", "CO", "1-0", "L09", merge=False,
+        configuration="CD", selfcal=True, contsub=True,
     )

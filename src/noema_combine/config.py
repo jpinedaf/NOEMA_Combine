@@ -207,11 +207,11 @@ class Config:
         if self.config.get("project", "style", fallback="").lower() == "prodige":
             templates.setdefault(
                 "uvt_file",
-                "{uvt_root}/{uvt_folder}/{source}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
+                "{uvt_root}/{uvt_folder}/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
             )
             templates.setdefault(
                 "uvt_file_merge",
-                "{uvt_out_root}/{uvt_folder}/{source}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
+                "{uvt_out_root}/{uvt_folder}/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
             )
 
         root = self._resolve_path(

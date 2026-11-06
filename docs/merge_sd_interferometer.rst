@@ -36,7 +36,7 @@ Before merging, you need to prepare both the single dish and interferometer data
 
     .. code-block:: python
 
-         noema_combine.data_handler.line_make_uvt('B5', 'N2D+', '1-0')
+         noema_combine.data_handler.line_make_uvt('B5', 'N2D+', '1-0', configuration='CD')
 
     This function:
     - Extracts the specified molecular line from already calibrated NOEMA data
@@ -50,7 +50,7 @@ The merging is performed using :func:`noema_combine.data_handler.line_prepare_me
 
 .. code-block:: python
 
-    noema_combine.data_handler.line_prepare_merge('B5', 'N2D+', '1-0')
+    noema_combine.data_handler.line_prepare_merge('B5', 'N2D+', '1-0', configuration='CD', contsub=True)
 
 Use ``execute=False`` to generate a CLASS script without running it; the
 returned result contains its ``script_path``.
@@ -84,11 +84,11 @@ Here is a complete workflow for merging single dish and interferometer data:
 
     # Step 2: Extract line from NOEMA data
     print(f"Extracting {molecule} from NOEMA observations...")
-    noema_combine.data_handler.line_make_uvt(source, molecule, quantum_numbers)
+    noema_combine.data_handler.line_make_uvt(source, molecule, quantum_numbers, configuration='CD')
 
     # Step 3: Prepare for merging
     print(f"Preparing data for merging...")
-    noema_combine.data_handler.line_prepare_merge(source, molecule, quantum_numbers)
+    noema_combine.data_handler.line_prepare_merge(source, molecule, quantum_numbers, configuration='CD', contsub=True)
 
     print("Merging process complete!")
 
@@ -102,12 +102,14 @@ By default, velocity ranges are defined in the line catalogue. To use custom vel
     # Use a symmetric velocity range around vlsr
     noema_combine.data_handler.line_make_uvt(
         'B5', 'N2D+', '1-0',
+        configuration='CD',
         dv=2.5  # Extract [vlsr - 2.5, vlsr + 2.5] km/s
     )
 
     # Use an asymmetric velocity range
     noema_combine.data_handler.line_make_uvt(
         'B5', 'N2D+', '1-0',
+        configuration='CD',
         dv_min=1.0,  # vlsr - 1.0 km/s
         dv_max=3.0   # vlsr + 3.0 km/s
     )

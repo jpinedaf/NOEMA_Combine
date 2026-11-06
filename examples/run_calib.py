@@ -85,8 +85,8 @@ QN = "1-0"
 # mol = 'CCS'
 # QN = 'N=7-6,J=8-7'
 
-# noema_combine.data_handler.line_make_uvt('B5', mol, QN)
+# noema_combine.data_handler.line_make_uvt('B5', mol, QN, configuration='CD')
 # noema_combine.data_handler.line_reduce_sd('B5', mol, QN)  # use line_reduce_sd instead of line_reduce_30m
-noema_combine.data_handler.line_prepare_merge("B5", mol, QN)
+noema_combine.data_handler.line_prepare_merge("B5", mol, QN, configuration="CD")
 
 # noema_combine.data_handler.line_reduce_sd('B5', 'HCNH+', QN)  # use line_reduce_sd instead of line_reduce_30m

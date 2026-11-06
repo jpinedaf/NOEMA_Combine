@@ -226,6 +226,7 @@ def get_uvt_file(
     Lid: str,
     merge: bool = False,
     *,
+    configuration: str,
     selfcal: bool = False,
     contsub: bool = False,
     **naming_values: object,
@@ -248,15 +249,20 @@ def get_uvt_file(
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
         If True, the file will be saved in the merge folder, otherwise in the uvt folder.
+    configuration: str
+        Observing configuration, such as "CD" or "ACD".
     selfcal, contsub: bool
         Include the configured self-calibration and continuum-subtraction suffixes.
     """
+    if not configuration or not configuration.strip():
+        raise ValueError("configuration must be a non-empty observing configuration")
     if (
         getattr(_cfg, "naming_custom", False) is True
         or _cfg.config.get("project", "style", fallback="").lower() == "prodige"
     ):
         return _cfg.naming.uvt_file(
             source_name, line_name, qn, Lid, merge=merge,
+            config=configuration,
             selfcal=selfcal_ext if selfcal else "",
             contsub=uvsub_ext if contsub else "",
             **naming_values,
@@ -268,14 +274,15 @@ def get_uvt_file(
         dir_out = uvt_dir_out
     suffix = (selfcal_ext if selfcal else "") + (uvsub_ext if contsub else "")
     uvt_filename = os.path.join(
-        dir_out, Lid, f"{source_name}_{line_name}_{qn}_{Lid}{suffix}.uvt"
+        dir_out, Lid, f"{source_name}_{configuration}_{line_name}_{qn}_{Lid}{suffix}.uvt"
     )
     return uvt_filename
 
 
 def get_30m_file(
     source_name: str, molecule: str, quantum_number: str, Lid: str | None = None,
-    merge: bool = False, *, selfcal: bool = False, contsub: bool = False,
+    merge: bool = False, *, configuration: str | None = None,
+    selfcal: bool = False, contsub: bool = False,
 ) -> str:
     """
     Function to generate the output file name for the single dish data.
@@ -308,7 +315,7 @@ def get_30m_file(
     )
     return get_sd_file(
         source_name, molecule, quantum_number, Lid, merge=merge,
-        selfcal=selfcal, contsub=contsub,
+        configuration=configuration, selfcal=selfcal, contsub=contsub,
     )
 
 
@@ -319,6 +326,7 @@ def get_sd_file(
     Lid: str | None = None,
     merge: bool = False,
     *,
+    configuration: str | None = None,
     selfcal: bool = False,
     contsub: bool = False,
     **naming_values: object,
@@ -344,13 +352,18 @@ def get_sd_file(
     merge: bool
     If True, use the merge UVT's directory and basename with the single-dish
     extension. A Lid is required. Selfcal and contsub select UVT suffixes.
+    configuration: str | None
+        Observing configuration; required for merge-ready files.
     """
     if merge:
         if not Lid:
             raise ValueError("Lid is required for a merge-ready single-dish file")
+        if not configuration or not configuration.strip():
+            raise ValueError("configuration is required for a merge-ready single-dish file")
         uvt_path = get_uvt_file(
             source_name, molecule, quantum_number, Lid, merge=True,
-            selfcal=selfcal, contsub=contsub, **naming_values,
+            configuration=configuration, selfcal=selfcal, contsub=contsub,
+            **naming_values,
         )
         return os.path.splitext(uvt_path)[0] + file_extensions_sd
 
@@ -375,6 +388,7 @@ def line_prepare_merge(
     quantum_number: str,
     beam_eff: float | None = None,
     *,
+    configuration: str,
     execute: bool | None = None,
     selfcal: bool = False,
     contsub: bool = False,
@@ -395,6 +409,8 @@ def line_prepare_merge(
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     beam_eff: float | None
         Beam efficiency to convert from Ta* to Tmb. If None, the conversion will be done using the Ruze formula with the parameters in CLASS.
+    configuration: str
+        Observing configuration, such as "CD" or "ACD".
     execute: bool | None
         Override the configured GILDAS execution setting. False generates and
         retains a CLASS script without deleting or copying data files.
@@ -413,13 +429,13 @@ def line_prepare_merge(
     file_uvt = os.path.abspath(
         get_uvt_file(
             source_out, line_name_i, qn_name_i, Lid_i, merge=False,
-            selfcal=selfcal, contsub=contsub,
+            configuration=configuration, selfcal=selfcal, contsub=contsub,
         )
     )
     merge_uvt = os.path.abspath(
         get_uvt_file(
             source_out, line_name_i, qn_name_i, Lid_i, merge=True,
-            selfcal=selfcal, contsub=contsub,
+            configuration=configuration, selfcal=selfcal, contsub=contsub,
         )
     )
 
@@ -625,6 +641,8 @@ def line_make_uvt(
     dv: float | None = None,
     dv_min: float | None = None,
     dv_max: float | None = None,
+    *,
+    configuration: str,
 ) -> None:
     """
     Function to perform an excision of a targeted molecular line, from NOEMA data already calibrated.
@@ -649,6 +667,8 @@ def line_make_uvt(
         Minimum velocity difference with respect to vlsr to use for the extraction in km/s. Used only if dv is not defined and if vmax is also provided.
     dv_max: float
         Maximum velocity difference with respect to vlsr to use for the extraction in km/s. Used only if dv is not defined and if vmax is also provided.
+    configuration: str
+        Observing configuration, such as "CD" or "ACD".
     """
     _, _, source_out, _, _, vlsr = get_source_param(source_name)
 
@@ -665,8 +685,13 @@ def line_make_uvt(
     else:
         dv_window = float(vel_width[index])
     #
-    window_uvt = get_uvt_window(source_out, Lid_i, uvsub=uvsub, selfcal=selfcal)
-    file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    window_uvt = get_uvt_window(
+        source_out, Lid_i, uvsub=uvsub, selfcal=selfcal, config=configuration
+    )
+    file_uvt = get_uvt_file(
+        source_out, line_name_i, qn_name_i, Lid_i, merge=False,
+        configuration=configuration, selfcal=selfcal, contsub=uvsub,
+    )
     if dv is None and dv_min is not None and dv_max is not None:
         vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_min, vlsr + dv_max)
     else:

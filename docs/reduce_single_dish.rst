@@ -110,7 +110,9 @@ After reducing single dish data, prepare it for merging with NOEMA observations 
 
 .. code-block:: python
 
-    noema_combine.data_handler.line_prepare_merge(source_name, molecule, quantum_number)
+    noema_combine.data_handler.line_prepare_merge(
+        source_name, molecule, quantum_number, configuration="CD"
+    )
 
 This function:
 
@@ -127,7 +129,12 @@ merge UVT, with the configured single-dish extension (such as ``.30m``);
 the matching table uses the same basename with ``.tab``. The original
 single-dish input remains in ``dir_sd``. The public ``get_sd_file`` and
 deprecated ``get_30m_file`` helpers now use this same convention when
-``merge=True`` and require a window identifier.
+``merge=True`` and require a window identifier and observing configuration.
+The required ``configuration`` keyword, such as ``"CD"`` or ``"ACD"``,
+is included in the input UVT and merge-product filenames. Pass the same
+configuration to ``line_make_uvt`` and ``line_prepare_merge``. The configured
+``uvt_dir`` and ``uvt_dir_out`` still determine their directories; set those
+to the appropriate input and merge folders for your observing configuration.
 To change the shared basename, customize ``uvt_file_merge``. The
 ``sd_file_merge``, ``merged_line_uvt``, and ``merged_line_single_dish``
 templates are derived from it; independent overrides are ignored with a
@@ -144,9 +151,9 @@ Set ``selfcal=True`` and/or ``contsub=True`` to select UV tables with the
 configured self-calibration and continuum-subtraction suffixes, respectively.
 Both default to ``False``. The output table uses the same suffixes; the
 single-dish input filename is unchanged. For custom ``uvt_file`` or
-``uvt_file_merge`` templates, include ``{selfcal}`` and ``{contsub}`` where
-the suffixes should appear. The older ``line_make_uvt`` function still writes
-its extracted UVT without these suffixes.
+``uvt_file_merge`` templates, include ``{config}``, ``{selfcal}`` and
+``{contsub}`` where the configuration and suffixes should appear. The older
+``line_make_uvt`` uses its ``selfcal`` and ``uvsub`` settings for those suffixes.
 
 Example Workflow
 ----------------
@@ -159,10 +166,10 @@ Example Workflow
     noema_combine.data_handler.line_reduce_sd("B5", "N2D+", "1-0")
 
     # Step 2: Prepare for merging
-    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0")
+    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", configuration="CD")
 
     # Optional: user-defined beam efficiency instead of default Ruze estimate
-    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", beam_eff=0.82)
+    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", beam_eff=0.82, configuration="CD")
 
     # Task complete - data is ready for MAPPING uv_merge
 

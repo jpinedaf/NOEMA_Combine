@@ -35,7 +35,7 @@ from noema_combine.workflows import (
 def test_default_naming_matches_package_paths():
     naming = FileNaming()
 
-    assert naming.uvt_file("B5", "CO", "1-0", "L09") == "D/L09/B5_CO_1-0_L09.uvt"
+    assert naming.uvt_file("B5", "CO", "1-0", "L09", config="CD") == "D/L09/B5_CD_CO_1-0_L09.uvt"
     assert naming.uvt_window("B5", "L09") == "D/L09/B5_L09_contsub.uvt"
     assert naming.sd_file("B5", "CO", "1-0", "L09") == "30m/B5_CO_1-0.30m"
 
@@ -50,11 +50,12 @@ def test_merge_naming_warns_for_independent_templates(name: str):
 
 
 @pytest.mark.parametrize("style", ["prodige", "propstar"])
+@pytest.mark.parametrize("configuration", ["CD", "ACD"])
 @pytest.mark.parametrize(
     "selfcal,contsub", [("", ""), ("_sc", ""), ("", "_contsub"), ("_sc", "_contsub")]
 )
 def test_merge_products_share_uvt_basename(
-    tmp_path: Path, style: str, selfcal: str, contsub: str
+    tmp_path: Path, style: str, configuration: str, selfcal: str, contsub: str
 ):
     config_path, _ = create_project_files(
         style,
@@ -69,7 +70,7 @@ def test_merge_products_share_uvt_basename(
         "line": "N2D+",
         "qn": "3_2",
         "lid": "l034l073",
-        "config": "CD",
+        "config": configuration,
         "selfcal": selfcal,
         "contsub": contsub,
         "merge_uvt_base": "/ignored/unrelated",
@@ -80,7 +81,7 @@ def test_merge_products_share_uvt_basename(
     table = Path(cfg.naming.render("merged_line_single_dish", **values))
     assert sd.with_suffix("") == uvt.with_suffix("") == table.with_suffix("")
     assert (sd.suffix, uvt.suffix, table.suffix) == (".30m", ".uvt", ".tab")
-    assert uvt.name == f"B5-IRS1_N2D+_3_2_l034l073{selfcal}{contsub}.uvt"
+    assert uvt.name == f"B5-IRS1_{configuration}_N2D+_3_2_l034l073{selfcal}{contsub}.uvt"
 
 
 @pytest.mark.parametrize(
@@ -101,12 +102,12 @@ def test_generated_profile_line_uvt_pair_folder(
 
     for merge, root in [(False, cfg.uvt_dir), (True, cfg.uvt_dir_out)]:
         actual = data_handler.get_uvt_file(
-            "B5-IRS1", "N2D+", "3_2", "l034l073", merge=merge
+            "B5-IRS1", "N2D+", "3_2", "l034l073", merge=merge, configuration="CD"
         )
-        assert Path(actual) == Path(root) / folder / "B5-IRS1_N2D+_3_2_l034l073.uvt"
+        assert Path(actual) == Path(root) / folder / "B5-IRS1_CD_N2D+_3_2_l034l073.uvt"
 
-    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "L09")) == (
-        Path(cfg.uvt_dir) / "L09" / "B5_CO_1-0_L09.uvt"
+    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "L09", configuration="CD")) == (
+        Path(cfg.uvt_dir) / "L09" / "B5_CD_CO_1-0_L09.uvt"
     )
 
 
@@ -124,7 +125,7 @@ def test_prodige_line_uvt_explicit_template_is_respected(
     cfg = Config(config_file=str(config_path), isolated=True)
     monkeypatch.setattr(data_handler, "_cfg", cfg)
 
-    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "l034l073")) == (
+    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "l034l073", configuration="CD")) == (
         Path(cfg.uvt_dir) / "custom/l034l073/B5.uvt"
     )
 
@@ -149,7 +150,7 @@ def test_prodige_line_uvt_custom_template_uses_configured_suffixes(
 
     assert Path(
         data_handler.get_uvt_file(
-            "B5", "CO", "1-0", "l034l073", selfcal=True, contsub=True
+            "B5", "CO", "1-0", "l034l073", configuration="CD", selfcal=True, contsub=True
         )
     ) == Path(cfg.uvt_dir) / "custom/B5_self_sub.uvt"
 
@@ -175,7 +176,7 @@ def test_merge_single_dish_uses_custom_uvt_template_and_extension(
 
     expected = Path(cfg.uvt_dir_out) / "custom/B5_self_sub.apex"
     assert Path(data_handler.get_sd_file(
-        "B5", "CO", "1-0", "l034l073", merge=True, selfcal=True, contsub=True
+        "B5", "CO", "1-0", "l034l073", merge=True, configuration="CD", selfcal=True, contsub=True
     )) == expected
     assert Path(cfg.naming.sd_file(
         "B5", "CO", "1-0", "l034l073", merge=True,
@@ -206,8 +207,8 @@ def test_prodige_pair_folder_without_naming_section(
     cfg = Config(config_file=str(config_path), isolated=True)
     monkeypatch.setattr(data_handler, "_cfg", cfg)
 
-    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "l034l073")) == (
-        Path(cfg.uvt_dir) / "l34l73/B5_CO_1-0_l034l073.uvt"
+    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "l034l073", configuration="CD")) == (
+        Path(cfg.uvt_dir) / "l34l73/B5_CD_CO_1-0_l034l073.uvt"
     )
 
 
@@ -216,9 +217,10 @@ def test_prodige_pair_folder_without_naming_section(
     [(False, False, ""), (True, False, "_sc"), (False, True, "_contsub"),
      (True, True, "_sc_contsub")],
 )
+@pytest.mark.parametrize("configuration", ["CD", "ACD"])
 def test_prodige_line_prepare_merge_uses_pair_folder(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-    selfcal: bool, contsub: bool, suffix: str,
+    selfcal: bool, contsub: bool, suffix: str, configuration: str,
 ):
     config_path, _ = create_project_files(
         "prodige",
@@ -236,11 +238,11 @@ def test_prodige_line_prepare_merge_uses_pair_folder(
         monkeypatch.setattr(data_handler, name, getattr(cfg, name))
 
     result = data_handler.line_prepare_merge(
-        "B5-IRS1", "N2D+", "3-2", execute=False, selfcal=selfcal, contsub=contsub
+        "B5-IRS1", "N2D+", "3-2", configuration=configuration, execute=False, selfcal=selfcal, contsub=contsub
     )
     script = result.script_path.read_text()
 
-    basename = f"B5-IRS1_N2D+_3_2_l034l073{suffix}"
+    basename = f"B5-IRS1_{configuration}_N2D+_3_2_l034l073{suffix}"
     assert f'/like "{tmp_path / "CD/l34l73" / (basename + ".uvt")}"' in script
     assert f'table "{tmp_path / "CD30m/l34l73" / basename}"' in script
     assert f'file in "{tmp_path / "30m/B5-IRS1_N2D+_3_2.30m"}"' in script
@@ -249,11 +251,11 @@ def test_prodige_line_prepare_merge_uses_pair_folder(
     assert f'file in "{expected_sd}"' in script
     assert Path(data_handler.get_sd_file(
         "B5-IRS1", "N2D+", "3_2", "l034l073",
-        merge=True, selfcal=selfcal, contsub=contsub,
+        merge=True, configuration=configuration, selfcal=selfcal, contsub=contsub,
     )) == expected_sd
     assert Path(cfg.naming.sd_file(
         "B5-IRS1", "N2D+", "3_2", "l034l073", merge=True,
-        selfcal=cfg.selfcal_ext if selfcal else "",
+        config=configuration, selfcal=cfg.selfcal_ext if selfcal else "",
         contsub=cfg.uvsub_ext if contsub else "",
     )) == expected_sd
 
@@ -281,7 +283,7 @@ def test_prodige_line_prepare_merge_copies_selected_uvt(
         "freq_mhz", "Lid", "name_str", "selfcal_ext", "uvsub_ext",
     ):
         monkeypatch.setattr(data_handler, name, getattr(cfg, name))
-    input_file = tmp_path / "CD/l34l73/B5-IRS1_N2D+_3_2_l034l073_sc_contsub.uvt"
+    input_file = tmp_path / "CD/l34l73/B5-IRS1_CD_N2D+_3_2_l034l073_sc_contsub.uvt"
     input_file.parent.mkdir(parents=True)
     input_file.write_text("selected UVT")
     monkeypatch.setattr(
@@ -290,7 +292,7 @@ def test_prodige_line_prepare_merge_copies_selected_uvt(
     )
 
     result = data_handler.line_prepare_merge(
-        "B5-IRS1", "N2D+", "3-2", execute=True, selfcal=True, contsub=True
+        "B5-IRS1", "N2D+", "3-2", configuration="CD", execute=True, selfcal=True, contsub=True
     )
 
     assert result.executed
@@ -319,14 +321,14 @@ def test_merged_line_imaging_uses_prepared_single_dish_table(
     ):
         monkeypatch.setattr(data_handler, name, getattr(cfg, name))
     preparation = data_handler.line_prepare_merge(
-        "B5-IRS1", "N2D+", "3-2", selfcal=True, contsub=True, execute=False
+        "B5-IRS1", "N2D+", "3-2", configuration="CD", selfcal=True, contsub=True, execute=False
     )
     imaging = make_merged_line_images(
         "B5-IRS1", "CD", "N2D+", "3-2", "l034l073",
         selfcal=True, contsub=True, execute=False, config_file=str(config_path),
     )
 
-    table = tmp_path / "CD30m/l34l73/B5-IRS1_N2D+_3_2_l034l073_sc_contsub.tab"
+    table = tmp_path / "CD30m/l34l73/B5-IRS1_CD_N2D+_3_2_l034l073_sc_contsub.tab"
     assert imaging.single_dish_table == table
     assert imaging.prepared_uvt == table.with_suffix(".uvt")
     assert f'table "{table.with_suffix("")}"' in preparation.script_path.read_text()
@@ -540,7 +542,7 @@ def test_preview_naming_covers_merged_line_project_tree(tmp_path: Path):
     )
     outputs = preview["outputs"]
     assert outputs["merged_line_uvt"].endswith(
-        "/CD30m/l34l73/B5_N2D+_3-2_l034l073_sc_contsub.uvt"
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_l034l073_sc_contsub.uvt"
     )
     assert outputs["merged_line_clean_cube"].endswith(
         "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub-merged.lmv-clean"
@@ -621,7 +623,7 @@ def test_preview_naming_returns_outputs_and_search_patterns():
     assert "configuration" in preview
     assert "outputs" in preview
     assert "search_patterns" in preview
-    assert preview["outputs"]["uvt_file"] == "D/l10/B5_CO_1-0_l10_sc_contsub.uvt"
+    assert preview["outputs"]["uvt_file"] == "D/l10/B5_CD_CO_1-0_l10_sc_contsub.uvt"
     assert "search_uvt" in preview["search_patterns"]
 
 
