@@ -13,8 +13,8 @@ from collections.abc import Mapping
 from string import Formatter
 
 DEFAULT_TEMPLATES: dict[str, str] = {
-    "uvt_file": "{uvt_root}/{lid}/{source}_{line}_{qn}_{lid}.uvt",
-    "uvt_file_merge": "{uvt_out_root}/{lid}/{source}_{line}_{qn}_{lid}.uvt",
+    "uvt_file": "{uvt_root}/{lid}/{source}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
+    "uvt_file_merge": "{uvt_out_root}/{lid}/{source}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
     "uvt_window": "{uvt_root}/{lid}/{source}_{lid}{selfcal}{uvsub}.uvt",
     "sd_file": "{sd_root}/{source}_{line}_{qn}{sd_ext}",
     "sd_file_merge": "{sd_root}/{source}_{line}_{qn}_{lid}{sd_ext}",

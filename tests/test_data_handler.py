@@ -42,7 +42,9 @@ def prepare_merge_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         data_handler,
         "get_uvt_file",
-        lambda *args, merge=False: "merged/input.uvt" if merge else "input.uvt",
+        lambda *args, merge=False, selfcal=False, contsub=False: (
+            "merged/input.uvt" if merge else "input.uvt"
+        ),
     )
     monkeypatch.setattr(
         data_handler,
@@ -364,6 +366,15 @@ def test_get_uvt_file_complex_qn():
     """Test uvt filename with complex quantum number"""
     result = get_uvt_file("B5", "N2H+", "J=1-0,F=2-1", "L09", merge=False)
     assert result == "/data/uvt/L09/B5_N2H+_J=1-0,F=2-1_L09.uvt"
+
+
+@patch("noema_combine.data_handler.uvt_dir", "/data/uvt")
+@patch("noema_combine.data_handler.selfcal_ext", "_self")
+@patch("noema_combine.data_handler.uvsub_ext", "_sub")
+def test_get_uvt_file_legacy_suffixes():
+    assert get_uvt_file(
+        "B5", "CO", "1-0", "L09", selfcal=True, contsub=True
+    ) == "/data/uvt/L09/B5_CO_1-0_L09_self_sub.uvt"
 
 
 # Tests for get_30m_file (deprecated, use get_sd_file instead)

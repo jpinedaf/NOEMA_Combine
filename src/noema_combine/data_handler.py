@@ -225,6 +225,9 @@ def get_uvt_file(
     qn: str,
     Lid: str,
     merge: bool = False,
+    *,
+    selfcal: bool = False,
+    contsub: bool = False,
     **naming_values: object,
 ) -> str:
     """
@@ -245,21 +248,27 @@ def get_uvt_file(
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
         If True, the file will be saved in the merge folder, otherwise in the uvt folder.
+    selfcal, contsub: bool
+        Include the configured self-calibration and continuum-subtraction suffixes.
     """
     if (
         getattr(_cfg, "naming_custom", False) is True
         or _cfg.config.get("project", "style", fallback="").lower() == "prodige"
     ):
         return _cfg.naming.uvt_file(
-            source_name, line_name, qn, Lid, merge=merge, **naming_values
+            source_name, line_name, qn, Lid, merge=merge,
+            selfcal=selfcal_ext if selfcal else "",
+            contsub=uvsub_ext if contsub else "",
+            **naming_values,
         )
 
     if not merge:
         dir_out = uvt_dir
     else:
         dir_out = uvt_dir_out
+    suffix = (selfcal_ext if selfcal else "") + (uvsub_ext if contsub else "")
     uvt_filename = os.path.join(
-        dir_out, Lid, f"{source_name}_{line_name}_{qn}_{Lid}.uvt"
+        dir_out, Lid, f"{source_name}_{line_name}_{qn}_{Lid}{suffix}.uvt"
     )
     return uvt_filename
 
@@ -359,6 +368,8 @@ def line_prepare_merge(
     beam_eff: float | None = None,
     *,
     execute: bool | None = None,
+    selfcal: bool = False,
+    contsub: bool = False,
 ) -> GildasResult:
     """
     Function to prepare the single dish (30m) data for the merging.
@@ -379,6 +390,9 @@ def line_prepare_merge(
     execute: bool | None
         Override the configured GILDAS execution setting. False generates and
         retains a CLASS script without deleting or copying data files.
+    selfcal, contsub: bool
+        Select UVT filenames with the configured self-calibration and
+        continuum-subtraction suffixes.
     """
     _, _, source_out, _, _, _ = get_source_param(source_name)
 
@@ -389,10 +403,16 @@ def line_prepare_merge(
     freq_i = freq_mhz[index]
     Lid_i = Lid[index]
     file_uvt = os.path.abspath(
-        get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+        get_uvt_file(
+            source_out, line_name_i, qn_name_i, Lid_i, merge=False,
+            selfcal=selfcal, contsub=contsub,
+        )
     )
     merge_uvt = os.path.abspath(
-        get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+        get_uvt_file(
+            source_out, line_name_i, qn_name_i, Lid_i, merge=True,
+            selfcal=selfcal, contsub=contsub,
+        )
     )
 
     file_sd = os.path.abspath(

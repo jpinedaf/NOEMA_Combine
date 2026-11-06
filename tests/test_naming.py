@@ -3,6 +3,7 @@ import subprocess
 import sys
 from configparser import ConfigParser
 from pathlib import Path
+from subprocess import CompletedProcess
 
 import pytest
 
@@ -84,6 +85,31 @@ def test_prodige_line_uvt_explicit_template_is_respected(
     )
 
 
+def test_prodige_line_uvt_custom_template_uses_configured_suffixes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    with config_path.open("a") as config:
+        config.write(
+            "uvt_file = {uvt_root}/custom/{source}{selfcal}{uvsub}.uvt\n"
+        )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+    monkeypatch.setattr(data_handler, "selfcal_ext", "_self")
+    monkeypatch.setattr(data_handler, "uvsub_ext", "_sub")
+
+    assert Path(
+        data_handler.get_uvt_file(
+            "B5", "CO", "1-0", "l034l073", selfcal=True, contsub=True
+        )
+    ) == Path(cfg.uvt_dir) / "custom/B5_self_sub.uvt"
+
+
 def test_prodige_pair_folder_without_naming_section(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
@@ -106,7 +132,42 @@ def test_prodige_pair_folder_without_naming_section(
     )
 
 
+@pytest.mark.parametrize(
+    "selfcal, contsub, suffix",
+    [(False, False, ""), (True, False, "_sc"), (False, True, "_contsub"),
+     (True, True, "_sc_contsub")],
+)
 def test_prodige_line_prepare_merge_uses_pair_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    selfcal: bool, contsub: bool, suffix: str,
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+    for name in (
+        "region_catalogue", "line_name", "qn", "qn_str",
+        "freq_mhz", "Lid", "name_str", "selfcal_ext", "uvsub_ext",
+    ):
+        monkeypatch.setattr(data_handler, name, getattr(cfg, name))
+
+    result = data_handler.line_prepare_merge(
+        "B5-IRS1", "N2D+", "3-2", execute=False, selfcal=selfcal, contsub=contsub
+    )
+    script = result.script_path.read_text()
+
+    basename = f"B5-IRS1_N2D+_3_2_l034l073{suffix}"
+    assert f'/like "{tmp_path / "CD/l34l73" / (basename + ".uvt")}"' in script
+    assert f'table "{tmp_path / "CD30m/l34l73" / basename}"' in script
+    assert f'file in "{tmp_path / "30m/B5-IRS1_N2D+_3_2.30m"}"' in script
+
+
+def test_prodige_line_prepare_merge_copies_selected_uvt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     config_path, _ = create_project_files(
@@ -120,15 +181,23 @@ def test_prodige_line_prepare_merge_uses_pair_folder(
     monkeypatch.setattr(data_handler, "_cfg", cfg)
     for name in (
         "region_catalogue", "line_name", "qn", "qn_str",
-        "freq_mhz", "Lid", "name_str",
+        "freq_mhz", "Lid", "name_str", "selfcal_ext", "uvsub_ext",
     ):
         monkeypatch.setattr(data_handler, name, getattr(cfg, name))
+    input_file = tmp_path / "CD/l34l73/B5-IRS1_N2D+_3_2_l034l073_sc_contsub.uvt"
+    input_file.parent.mkdir(parents=True)
+    input_file.write_text("selected UVT")
+    monkeypatch.setattr(
+        "noema_combine.gildas.runner.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+    )
 
-    result = data_handler.line_prepare_merge("B5-IRS1", "N2D+", "3-2", execute=False)
-    script = result.script_path.read_text()
+    result = data_handler.line_prepare_merge(
+        "B5-IRS1", "N2D+", "3-2", execute=True, selfcal=True, contsub=True
+    )
 
-    assert str(tmp_path / "CD/l34l73/B5-IRS1_N2D+_3_2_l034l073.uvt") in script
-    assert str(tmp_path / "CD30m/l34l73/B5-IRS1_N2D+_3_2_l034l073") in script
+    assert result.executed
+    assert (tmp_path / "CD30m/l34l73" / input_file.name).read_text() == "selected UVT"
 
 
 def test_default_narrowband_naming_uses_prodige_pair_forms():
@@ -419,7 +488,7 @@ def test_preview_naming_returns_outputs_and_search_patterns():
     assert "configuration" in preview
     assert "outputs" in preview
     assert "search_patterns" in preview
-    assert preview["outputs"]["uvt_file"] == "D/l10/B5_CO_1-0_l10.uvt"
+    assert preview["outputs"]["uvt_file"] == "D/l10/B5_CO_1-0_l10_sc_contsub.uvt"
     assert "search_uvt" in preview["search_patterns"]
 
 

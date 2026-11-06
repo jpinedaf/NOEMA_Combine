@@ -128,6 +128,13 @@ Pass ``execute=False`` to generate and retain the CLASS script without running
 CLASS, deleting existing output files, or copying the NOEMA UV table. The
 returned ``GildasResult`` provides the generated script's ``script_path``.
 When ``execute`` is omitted, the configured ``[gildas] execute`` setting applies.
+Set ``selfcal=True`` and/or ``contsub=True`` to select UV tables with the
+configured self-calibration and continuum-subtraction suffixes, respectively.
+Both default to ``False``. The output table uses the same suffixes; the
+single-dish input filename is unchanged. For custom ``uvt_file`` or
+``uvt_file_merge`` templates, include ``{selfcal}`` and ``{contsub}`` where
+the suffixes should appear. The older ``line_make_uvt`` function still writes
+its extracted UVT without these suffixes.
 
 Example Workflow
 ----------------
