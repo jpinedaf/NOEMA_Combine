@@ -179,11 +179,8 @@ def create_config(
         else "raw_data"
     )
     parser["folders"] = {
-        "uvt_dir": "uvts",
-        "uvt_dir_out": str(
-            "merged_uvts"
-        or {"prodige": "CD30m", "propstar": "D30m"}[selected]
-        ),
+        "uvt_dir": {"prodige": "CD", "propstar": "D"}[selected],
+        "uvt_dir_out": {"prodige": "CD30m", "propstar": "D30m"}[selected],
         "dir_sd": "30m",
         "inputdir": inputdir,
     }

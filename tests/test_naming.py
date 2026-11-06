@@ -174,10 +174,18 @@ def test_prodige_config_contains_raw_script_narrowband_ranges(tmp_path: Path):
         in prodige_text
     )
     assert "inputdir = raw_data" in propstar_text
+    assert "uvt_dir_out = CD30m\n" in prodige_text
+    assert "uvt_dir_out = D30m\n" in propstar_text
     assert "l034l073 = 0 20 3200 3280 4800 4900 8172 8192" in prodige_text
     assert "l010l049 = 0 20 1004 1024" in prodige_text
     assert "[narrowband_channel_ranges]" in propstar_text
     assert "l034l073 =" not in propstar_text
+
+
+def test_create_config_defaults_to_prodige_output_directory(tmp_path: Path):
+    config_path = create_config(filename=tmp_path / "default.ini")
+
+    assert "uvt_dir_out = CD30m\n" in config_path.read_text()
 
 
 def test_create_line_catalogue_and_project_files(tmp_path: Path):

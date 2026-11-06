@@ -89,7 +89,9 @@ directory instead of copying files from the package installation:
 
 The supported configuration profiles are ``"prodige"`` and ``"propstar"``.
 They provide different starter naming conventions while retaining the same
-workflow options. By default, PRODIGE uses the packaged 1 mm PRODIGE catalogue
+workflow options. Newly generated configurations set ``uvt_dir_out`` to
+``CD30m`` for PRODIGE and ``D30m`` for ProPStar; existing configurations are
+unchanged. By default, PRODIGE uses the packaged 1 mm PRODIGE catalogue
 and ProPStar uses the packaged 3 mm catalogue under the ``propstar`` name. The starter
 ``region_catalogue.yml`` is also copied. The catalogues can be created
 separately when they need to be selected or replaced:
