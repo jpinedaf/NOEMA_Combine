@@ -246,7 +246,10 @@ def get_uvt_file(
     merge: bool
         If True, the file will be saved in the merge folder, otherwise in the uvt folder.
     """
-    if getattr(_cfg, "naming_custom", False) is True:
+    if (
+        getattr(_cfg, "naming_custom", False) is True
+        or _cfg.config.get("project", "style", fallback="").lower() == "prodige"
+    ):
         return _cfg.naming.uvt_file(
             source_name, line_name, qn, Lid, merge=merge, **naming_values
         )

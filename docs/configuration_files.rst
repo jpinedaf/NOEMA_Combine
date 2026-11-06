@@ -207,8 +207,13 @@ The optional **[naming]** section controls folder and filename templates. Existi
   ``search_*`` templates may contain wildcards for locating files made by older scripts.
 
 For narrowband products, ``lid_pair_folder`` and ``lid_pair_filename`` can be
-used to separate the folder and filename representations. If only ``lid_pair``
-is supplied, both values default to it. Explicit values take precedence.
+used to separate the folder and filename representations. Recognized window
+pairs are formatted separately for folders and filenames; explicit values
+take precedence.
+For PRODIGE line UVT paths, the default ``uvt_file`` and ``uvt_file_merge``
+templates use ``uvt_folder``: a pair such as ``l034l073`` becomes ``l34l73``
+in the folder while the filename retains the original ``lid``. Single-window
+folder names are unchanged. Explicit naming templates take precedence.
 The active templates can be inspected with ``get_config().naming.describe()`` and
 representative paths can be previewed with ``get_config().naming.preview(...)``.
 

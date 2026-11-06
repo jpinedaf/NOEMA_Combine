@@ -134,6 +134,7 @@ _ALLOWED_FIELDS = {
     "lid_lower",
     "lid_upper",
     "lid_folder",
+    "uvt_folder",
     "lid_pair",
     "lid_pair_folder",
     "lid_pair_filename",
@@ -340,6 +341,13 @@ class FileNaming:
         if "lid" in context:
             context.update(
                 self._lid_values(str(context["lid"]), context.get("lid_pair"))
+            )
+            lid_text = str(context["lid"])
+            context.setdefault(
+                "uvt_folder",
+                _lid_pair_values(lid_text)["lid_pair_folder"]
+                if re.fullmatch(r"l?\d+l\d+", lid_text, re.IGNORECASE)
+                else lid_text,
             )
         context.setdefault("lid_pair_folder", context.get("lid_pair", ""))
         context.setdefault("lid_pair_filename", context.get("lid_pair", ""))

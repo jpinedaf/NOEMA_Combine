@@ -1,10 +1,12 @@
 import os
 import subprocess
 import sys
+from configparser import ConfigParser
 from pathlib import Path
 
 import pytest
 
+import noema_combine.data_handler as data_handler
 import noema_combine.project as project_module
 from noema_combine import (
     create_config,
@@ -12,7 +14,7 @@ from noema_combine import (
     create_project_files,
     create_region_catalogue,
 )
-from noema_combine.config import get_config, reload_config
+from noema_combine.config import Config, get_config, reload_config
 from noema_combine.continuum import (
     baseline_command,
     build_continuum_subtraction_script,
@@ -34,6 +36,99 @@ def test_default_naming_matches_package_paths():
     assert naming.uvt_file("B5", "CO", "1-0", "L09") == "D/L09/B5_CO_1-0_L09.uvt"
     assert naming.uvt_window("B5", "L09") == "D/L09/B5_L09_contsub.uvt"
     assert naming.sd_file("B5", "CO", "1-0", "L09") == "30m/B5_CO_1-0.30m"
+
+
+@pytest.mark.parametrize(
+    "style, folder",
+    [("prodige", "l34l73"), ("propstar", "l034l073")],
+)
+def test_generated_profile_line_uvt_pair_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, style: str, folder: str
+):
+    config_path, _ = create_project_files(
+        style,
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+
+    for merge, root in [(False, cfg.uvt_dir), (True, cfg.uvt_dir_out)]:
+        actual = data_handler.get_uvt_file(
+            "B5-IRS1", "N2D+", "3_2", "l034l073", merge=merge
+        )
+        assert Path(actual) == Path(root) / folder / "B5-IRS1_N2D+_3_2_l034l073.uvt"
+
+    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "L09")) == (
+        Path(cfg.uvt_dir) / "L09" / "B5_CO_1-0_L09.uvt"
+    )
+
+
+def test_prodige_line_uvt_explicit_template_is_respected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    with config_path.open("a") as config:
+        config.write("uvt_file = {uvt_root}/custom/{lid}/{source}.uvt\n")
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+
+    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "l034l073")) == (
+        Path(cfg.uvt_dir) / "custom/l034l073/B5.uvt"
+    )
+
+
+def test_prodige_pair_folder_without_naming_section(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    parser = ConfigParser()
+    parser.read(config_path)
+    parser.remove_section("naming")
+    with config_path.open("w") as config:
+        parser.write(config)
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+
+    assert Path(data_handler.get_uvt_file("B5", "CO", "1-0", "l034l073")) == (
+        Path(cfg.uvt_dir) / "l34l73/B5_CO_1-0_l034l073.uvt"
+    )
+
+
+def test_prodige_line_prepare_merge_uses_pair_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+    for name in (
+        "region_catalogue", "line_name", "qn", "qn_str",
+        "freq_mhz", "Lid", "name_str",
+    ):
+        monkeypatch.setattr(data_handler, name, getattr(cfg, name))
+
+    result = data_handler.line_prepare_merge("B5-IRS1", "N2D+", "3-2", execute=False)
+    script = result.script_path.read_text()
+
+    assert str(tmp_path / "CD/l34l73/B5-IRS1_N2D+_3_2_l034l073.uvt") in script
+    assert str(tmp_path / "CD30m/l34l73/B5-IRS1_N2D+_3_2_l034l073") in script
 
 
 def test_default_narrowband_naming_uses_prodige_pair_forms():

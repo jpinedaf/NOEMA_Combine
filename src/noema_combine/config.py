@@ -204,6 +204,16 @@ class Config:
                     templates[key] = value
                     self.naming_custom = True
 
+        if self.config.get("project", "style", fallback="").lower() == "prodige":
+            templates.setdefault(
+                "uvt_file",
+                "{uvt_root}/{uvt_folder}/{source}_{line}_{qn}_{lid}.uvt",
+            )
+            templates.setdefault(
+                "uvt_file_merge",
+                "{uvt_out_root}/{uvt_folder}/{source}_{line}_{qn}_{lid}.uvt",
+            )
+
         root = self._resolve_path(
             self.config.get("naming", "root", fallback=".")
         )
