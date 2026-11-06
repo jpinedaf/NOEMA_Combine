@@ -26,6 +26,7 @@ from noema_combine.workflows import (
     make_clean_images,
     make_continuum_subtraction,
     make_dirty_images,
+    make_merged_line_images,
     make_narrowband_continuum_subtraction,
     restore_image,
 )
@@ -37,6 +38,11 @@ def test_default_naming_matches_package_paths():
     assert naming.uvt_file("B5", "CO", "1-0", "L09") == "D/L09/B5_CO_1-0_L09.uvt"
     assert naming.uvt_window("B5", "L09") == "D/L09/B5_L09_contsub.uvt"
     assert naming.sd_file("B5", "CO", "1-0", "L09") == "30m/B5_CO_1-0.30m"
+
+
+def test_merge_single_dish_rejects_independent_naming_template():
+    with pytest.raises(ValueError, match="customize uvt_file_merge instead"):
+        FileNaming({"sd_file_merge": "{sd_root}/different{sd_ext}"})
 
 
 @pytest.mark.parametrize(
@@ -110,6 +116,35 @@ def test_prodige_line_uvt_custom_template_uses_configured_suffixes(
     ) == Path(cfg.uvt_dir) / "custom/B5_self_sub.uvt"
 
 
+def test_merge_single_dish_uses_custom_uvt_template_and_extension(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    with config_path.open("a") as config:
+        config.write(
+            "uvt_file_merge = {uvt_out_root}/custom/{source}{selfcal}{contsub}.uvt\n"
+        )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+    monkeypatch.setattr(data_handler, "file_extensions_sd", ".apex")
+    monkeypatch.setattr(data_handler, "selfcal_ext", "_self")
+    monkeypatch.setattr(data_handler, "uvsub_ext", "_sub")
+
+    expected = Path(cfg.uvt_dir_out) / "custom/B5_self_sub.apex"
+    assert Path(data_handler.get_sd_file(
+        "B5", "CO", "1-0", "l034l073", merge=True, selfcal=True, contsub=True
+    )) == expected
+    assert Path(cfg.naming.sd_file(
+        "B5", "CO", "1-0", "l034l073", merge=True,
+        selfcal="_self", contsub="_sub", sd_ext=".apex",
+    )) == expected
+
+
 def test_prodige_pair_folder_without_naming_section(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
@@ -165,10 +200,23 @@ def test_prodige_line_prepare_merge_uses_pair_folder(
     assert f'/like "{tmp_path / "CD/l34l73" / (basename + ".uvt")}"' in script
     assert f'table "{tmp_path / "CD30m/l34l73" / basename}"' in script
     assert f'file in "{tmp_path / "30m/B5-IRS1_N2D+_3_2.30m"}"' in script
+    expected_sd = tmp_path / "CD30m/l34l73" / f"{basename}.30m"
+    assert f'file out "{expected_sd}"' in script
+    assert f'file in "{expected_sd}"' in script
+    assert Path(data_handler.get_sd_file(
+        "B5-IRS1", "N2D+", "3_2", "l034l073",
+        merge=True, selfcal=selfcal, contsub=contsub,
+    )) == expected_sd
+    assert Path(cfg.naming.sd_file(
+        "B5-IRS1", "N2D+", "3_2", "l034l073", merge=True,
+        selfcal=cfg.selfcal_ext if selfcal else "",
+        contsub=cfg.uvsub_ext if contsub else "",
+    )) == expected_sd
 
 
+@pytest.mark.parametrize("custom_output", [False, True])
 def test_prodige_line_prepare_merge_copies_selected_uvt(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, custom_output: bool
 ):
     config_path, _ = create_project_files(
         "prodige",
@@ -176,6 +224,11 @@ def test_prodige_line_prepare_merge_copies_selected_uvt(
         catalogue_filename=tmp_path / "lines.csv",
         region_catalogue_filename=tmp_path / "regions.yml",
     )
+    if custom_output:
+        with config_path.open("a") as config:
+            config.write(
+                "uvt_file_merge = {uvt_out_root}/custom/renamed{selfcal}{contsub}.uvt\n"
+            )
     cfg = Config(config_file=str(config_path), isolated=True)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(data_handler, "_cfg", cfg)
@@ -197,7 +250,42 @@ def test_prodige_line_prepare_merge_copies_selected_uvt(
     )
 
     assert result.executed
-    assert (tmp_path / "CD30m/l34l73" / input_file.name).read_text() == "selected UVT"
+    destination = (
+        tmp_path / "CD30m/custom/renamed_sc_contsub.uvt"
+        if custom_output else tmp_path / "CD30m/l34l73" / input_file.name
+    )
+    assert destination.read_text() == "selected UVT"
+
+
+def test_merged_line_imaging_uses_prepared_single_dish_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    config_path, _ = create_project_files(
+        "prodige",
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(data_handler, "_cfg", cfg)
+    for name in (
+        "region_catalogue", "line_name", "qn", "qn_str",
+        "freq_mhz", "Lid", "name_str", "selfcal_ext", "uvsub_ext",
+    ):
+        monkeypatch.setattr(data_handler, name, getattr(cfg, name))
+    preparation = data_handler.line_prepare_merge(
+        "B5-IRS1", "N2D+", "3-2", selfcal=True, contsub=True, execute=False
+    )
+    imaging = make_merged_line_images(
+        "B5-IRS1", "CD", "N2D+", "3-2", "l034l073",
+        selfcal=True, contsub=True, execute=False, config_file=str(config_path),
+    )
+
+    table = tmp_path / "CD30m/l34l73/B5-IRS1_N2D+_3_2_l034l073_sc_contsub.tab"
+    assert imaging.single_dish_table == table
+    assert f'table "{table.with_suffix("")}"' in preparation.script_path.read_text()
+    assert str(table) in imaging.image_script.read_text()
 
 
 def test_default_narrowband_naming_uses_prodige_pair_forms():

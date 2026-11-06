@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 import warnings
-from glob import escape, glob
+from glob import glob
 from io import StringIO
 
 import astropy.units as u  # type: ignore
@@ -274,15 +274,13 @@ def get_uvt_file(
 
 
 def get_30m_file(
-    source_name: str, molecule: str, quantum_number: str, Lid: str | None = None, merge: bool = False
+    source_name: str, molecule: str, quantum_number: str, Lid: str | None = None,
+    merge: bool = False, *, selfcal: bool = False, contsub: bool = False,
 ) -> str:
     """
     Function to generate the output file name for the single dish data.
-    The format will be:
-    {dir_sd}{source_out}_{molecule}_{quantum_number}.{file_extensions_sd}
-    of
-    {dir_sd}{source_out}_{molecule}_{quantum_number}_{Lid}.{file_extensions_sd}
-    depending on the merge parameter.
+    Standalone data are in ``dir_sd``. Merge-ready data share the merge
+    UVT's directory and basename with a single-dish extension.
 
     .. deprecated::
         This function is deprecated and will be removed in a future version.
@@ -300,8 +298,7 @@ def get_30m_file(
     Lid: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
-    If True, the file will include the Lid information in the name when one
-    is supplied.  A lid is not required for standalone single-dish reduction.
+    If True, use the merge UVT's directory and basename; Lid is required.
     """
     warnings.warn(
         "get_30m_file() is deprecated and will be removed in a future version. "
@@ -309,7 +306,10 @@ def get_30m_file(
         DeprecationWarning,
         stacklevel=2,
     )
-    return get_sd_file(source_name, molecule, quantum_number, Lid, merge=merge)
+    return get_sd_file(
+        source_name, molecule, quantum_number, Lid, merge=merge,
+        selfcal=selfcal, contsub=contsub,
+    )
 
 
 def get_sd_file(
@@ -318,6 +318,9 @@ def get_sd_file(
     quantum_number: str,
     Lid: str | None = None,
     merge: bool = False,
+    *,
+    selfcal: bool = False,
+    contsub: bool = False,
     **naming_values: object,
 ) -> str:
     """
@@ -325,11 +328,8 @@ def get_sd_file(
     Supports all single dish telescopes (IRAM 30m, APEX, etc.) as configured
     in the `telescope_sd` setting.
 
-    The file format will be:
-    {dir_sd}{source_out}_{molecule}_{quantum_number}.{file_extensions_sd}
-    or
-    {dir_sd}{source_out}_{molecule}_{quantum_number}_{Lid}.{file_extensions_sd}
-    depending on the merge parameter.
+    Standalone data are in ``dir_sd``. Merge-ready data share the merge
+    UVT's directory and basename with a single-dish extension.
 
     parameters:
     -----------
@@ -342,9 +342,18 @@ def get_sd_file(
     Lid: str | None
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
-    If True, the file will include the Lid information in the name when one
-    is supplied.  A lid is not required for standalone single-dish reduction.
+    If True, use the merge UVT's directory and basename with the single-dish
+    extension. A Lid is required. Selfcal and contsub select UVT suffixes.
     """
+    if merge:
+        if not Lid:
+            raise ValueError("Lid is required for a merge-ready single-dish file")
+        uvt_path = get_uvt_file(
+            source_name, molecule, quantum_number, Lid, merge=True,
+            selfcal=selfcal, contsub=contsub, **naming_values,
+        )
+        return os.path.splitext(uvt_path)[0] + file_extensions_sd
+
     if getattr(_cfg, "naming_custom", False) is True:
         return _cfg.naming.sd_file(
             source_name,
@@ -355,8 +364,7 @@ def get_sd_file(
             **naming_values,
         )
 
-    lid_suffix = f"_{Lid}" if merge and Lid else ""
-    name_out = f"{source_name}_{molecule}_{quantum_number}{lid_suffix}{file_extensions_sd}"
+    name_out = f"{source_name}_{molecule}_{quantum_number}{file_extensions_sd}"
     outputfile = os.path.join(dir_sd, name_out)
     return outputfile
 
@@ -419,8 +427,14 @@ def line_prepare_merge(
         get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
     )
     merge_sd = os.path.abspath(
-        get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+        os.path.splitext(merge_uvt)[0] + file_extensions_sd
     )
+    protected_paths = (file_sd, file_uvt, merge_uvt)
+    if any(
+        os.path.realpath(merge_sd) == os.path.realpath(path)
+        for path in protected_paths
+    ):
+        raise ValueError("Single-dish output must not overwrite an input or merge UVT")
 
     fb = StringIO()
     fb.write(f'file in "{file_sd}"\n')
@@ -455,12 +469,12 @@ def line_prepare_merge(
     runner = _cfg.make_gildas_runner(**runner_kwargs)
     merged_folder = os.path.dirname(merge_uvt)
     if runner.execute:
-        for old_file in glob(escape(os.path.splitext(merge_sd)[0]) + ".*"):
-            os.remove(old_file)
         os.makedirs(merged_folder, exist_ok=True)
+        if os.path.exists(merge_sd):
+            os.remove(merge_sd)
     result = runner.run_class(fb.getvalue())
-    if result.executed:
-        shutil.copy(file_uvt, merged_folder)
+    if result.executed and os.path.realpath(file_uvt) != os.path.realpath(merge_uvt):
+        shutil.copyfile(file_uvt, merge_uvt)
     return result
 
 

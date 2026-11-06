@@ -43,7 +43,7 @@ def prepare_merge_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         data_handler,
         "get_uvt_file",
         lambda *args, merge=False, selfcal=False, contsub=False: (
-            "merged/input.uvt" if merge else "input.uvt"
+            "merged/input[1].uvt" if merge else "input[1].uvt"
         ),
     )
     monkeypatch.setattr(
@@ -51,9 +51,12 @@ def prepare_merge_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         "get_sd_file",
         lambda *args, merge=False: "output[1].30m" if merge else "input.30m",
     )
-    (tmp_path / "input.uvt").write_text("uvt data")
-    (tmp_path / "output[1].30m").write_text("existing output")
-    (tmp_path / "output1.30m").write_text("unrelated output")
+    (tmp_path / "input[1].uvt").write_text("uvt data")
+    (tmp_path / "merged").mkdir()
+    (tmp_path / "merged/input[1].30m").write_text("existing output")
+    (tmp_path / "merged/input[1].uvt").write_text("existing UVT")
+    (tmp_path / "merged/input[1].tab").write_text("existing table")
+    (tmp_path / "merged/input1.30m").write_text("unrelated output")
     return tmp_path
 
 
@@ -80,9 +83,12 @@ def test_line_prepare_merge_script_only(
     script = result.script_path.read_text()
     assert "modify Beam_Eff 0.82" in script
     assert f'file in "{prepare_merge_files / "input.30m"}"' in script
-    assert f'/like "{prepare_merge_files / "input.uvt"}"' in script
-    assert (prepare_merge_files / "output[1].30m").read_text() == "existing output"
-    assert not (prepare_merge_files / "merged").exists()
+    assert f'/like "{prepare_merge_files / "input[1].uvt"}"' in script
+    assert f'file out "{prepare_merge_files / "merged/input[1].30m"}"' in script
+    assert f'file in "{prepare_merge_files / "merged/input[1].30m"}"' in script
+    assert (prepare_merge_files / "merged/input[1].30m").read_text() == "existing output"
+    assert (prepare_merge_files / "merged/input[1].uvt").read_text() == "existing UVT"
+    assert (prepare_merge_files / "merged/input[1].tab").read_text() == "existing table"
     run.assert_not_called()
     runner_factory.assert_called_once_with(
         **({} if override is None else {"execute": override})
@@ -113,9 +119,10 @@ def test_line_prepare_merge_executes_and_copies_uvt(
 
     assert result.executed
     assert "modify Beam_Eff /Ruze" in result.script_path.read_text()
-    assert not (prepare_merge_files / "output[1].30m").exists()
-    assert (prepare_merge_files / "output1.30m").exists()
-    assert (prepare_merge_files / "merged/input.uvt").read_text() == "uvt data"
+    assert not (prepare_merge_files / "merged/input[1].30m").exists()
+    assert (prepare_merge_files / "merged/input1.30m").exists()
+    assert (prepare_merge_files / "merged/input[1].tab").read_text() == "existing table"
+    assert (prepare_merge_files / "merged/input[1].uvt").read_text() == "uvt data"
     run.assert_called_once()
 
 
@@ -138,7 +145,17 @@ def test_line_prepare_merge_surfaces_class_failure(
 
     with pytest.raises(RuntimeError, match="CLASS failed"):
         line_prepare_merge("B5", "CO", "1-0", execute=True)
-    assert not (prepare_merge_files / "merged/input.uvt").exists()
+    assert (prepare_merge_files / "merged/input[1].uvt").read_text() == "existing UVT"
+
+
+def test_line_prepare_merge_rejects_output_collision(
+    prepare_merge_files: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(data_handler, "file_extensions_sd", ".uvt")
+
+    with pytest.raises(ValueError, match="must not overwrite"):
+        line_prepare_merge("B5", "CO", "1-0", execute=True)
+    assert (prepare_merge_files / "merged/input[1].uvt").read_text() == "existing UVT"
 
 
 # Tests for get_line_param
@@ -394,12 +411,13 @@ def test_get_30m_file_no_merge():
 
 @patch("noema_combine.data_handler.dir_sd", "/path/to/30m")
 @patch("noema_combine.data_handler.file_extensions_sd", ".30m")
+@patch("noema_combine.data_handler.uvt_dir_out", "/path/to/merged")
 def test_get_30m_file_with_merge():
     """Test 30m filename generation with merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         result = get_30m_file("B5", "CO", "1-0", "L09", merge=True)
-        assert result == "/path/to/30m/B5_CO_1-0_L09.30m"
+        assert result == "/path/to/merged/L09/B5_CO_1-0_L09.30m"
         # Check that deprecation warning was issued
         assert len(w) == 1
         assert issubclass(w[0].category, DeprecationWarning)
@@ -422,13 +440,19 @@ def test_get_30m_file_different_molecule():
 # Tests for get_sd_file (new generic single-dish function)
 @patch("noema_combine.data_handler.dir_sd", "/path/to/sd")
 @patch("noema_combine.data_handler.file_extensions_sd", ".30m")
+@patch("noema_combine.data_handler.uvt_dir_out", "/path/to/merged")
 def test_get_sd_file():
     """Test single-dish filename generation with and without merge"""
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=False)
     assert result == "/path/to/sd/B5_CO_1-0.30m"
 
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=True)
-    assert result == "/path/to/sd/B5_CO_1-0_L09.30m"
+    assert result == "/path/to/merged/L09/B5_CO_1-0_L09.30m"
+
+
+def test_get_sd_file_merge_requires_lid():
+    with pytest.raises(ValueError, match="Lid is required"):
+        get_sd_file("B5", "CO", "1-0", merge=True)
 
 
 @patch("noema_combine.data_handler.dir_sd", "/data/sd")

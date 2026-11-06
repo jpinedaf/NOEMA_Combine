@@ -17,7 +17,7 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "uvt_file_merge": "{uvt_out_root}/{lid}/{source}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
     "uvt_window": "{uvt_root}/{lid}/{source}_{lid}{selfcal}{uvsub}.uvt",
     "sd_file": "{sd_root}/{source}_{line}_{qn}{sd_ext}",
-    "sd_file_merge": "{sd_root}/{source}_{line}_{qn}_{lid}{sd_ext}",
+    "sd_file_merge": "{merge_uvt_base}{sd_ext}",
     "narrowband_folder": "{root}/{config}/{lid_pair_folder}",
     "search_uvt": "{uvt_root}/{lid}/*{source}*{line}*{qn}*{lid}*.uvt",
     "continuum_file": "{root}/{config}/wideband/{source}_{config}_{lid}_continuum.uvt",
@@ -80,7 +80,7 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "line_clean_pb_cube": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.lmv-sky",
     "line_clean_pb_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.fits",
     "merged_line_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}.uvt",
-    "merged_line_single_dish": "{sd_root}/{source_out}_{line}_{qn}{sd_ext}",
+    "merged_line_single_dish": "{merge_uvt_base}.tab",
     "merged_line_merged_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.uvt",
     "merged_line_prepare_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_prepare.map",
     "merged_line_image_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_clean.map",
@@ -121,6 +121,7 @@ _ALLOWED_FIELDS = {
     "uvt_out_root",
     "sd_root",
     "sd_ext",
+    "merge_uvt_base",
     "source",
     "source_out",
     "source_sd",
@@ -271,6 +272,15 @@ class FileNaming:
         sd_ext: str = ".30m",
         root: str = ".",
     ) -> None:
+        if (
+            templates
+            and "sd_file_merge" in templates
+            and templates["sd_file_merge"] != DEFAULT_TEMPLATES["sd_file_merge"]
+        ):
+            raise ValueError(
+                "sd_file_merge must be {merge_uvt_base}{sd_ext}; "
+                "customize uvt_file_merge instead"
+            )
         self.templates = dict(DEFAULT_TEMPLATES)
         if templates:
             self.templates.update(templates)
@@ -375,6 +385,12 @@ class FileNaming:
         context.setdefault("suffix", "")
         context.setdefault("mask_iteration", "")
         context.setdefault("style", "prodige")
+        if template_name in {"sd_file_merge", "merged_line_single_dish"}:
+            uvt_context = dict(context)
+            if template_name == "merged_line_single_dish":
+                uvt_context["source"] = context["source_out"]
+            merge_uvt = self.render("uvt_file_merge", **uvt_context)
+            context.setdefault("merge_uvt_base", os.path.splitext(merge_uvt)[0])
         try:
             return os.path.normpath(self.templates[template_name].format_map(context))
         except KeyError as exc:
