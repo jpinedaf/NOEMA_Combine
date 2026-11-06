@@ -77,9 +77,7 @@ def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Pat
         "merged": Path(naming.render("merged_line_uvt", **common)),
     }
 
-    assert paths["wideband"] == (
-        tmp_path / "CD/wideband/B5_CD_l034l073_sc_contsub.uvt"
-    )
+    assert paths["wideband"] == (tmp_path / "CD/wideband/B5_CD_l034l073_sc_contsub.uvt")
     assert paths["narrowband"] == (
         tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
     )
@@ -91,11 +89,19 @@ def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Pat
 def test_new_merge_selfcal_and_uvfits_templates_render(tmp_path: Path):
     naming = FileNaming(root=tmp_path)
     values = {
-        "source": "B5", "source_out": "B5-IRS1", "config": "ACD",
-        "config_a": "A", "config_b": "CD", "config_out": "ACD",
-        "window": "l034l073", "lid": "l034l073",
-        "lid_pair_folder": "l34l73", "lid_pair_filename": "l034l073",
-        "selfcal": "_sc", "contsub": "_contsub", "suffix": "_sc_contsub",
+        "source": "B5",
+        "source_out": "B5-IRS1",
+        "config": "ACD",
+        "config_a": "A",
+        "config_b": "CD",
+        "config_out": "ACD",
+        "window": "l034l073",
+        "lid": "l034l073",
+        "lid_pair_folder": "l34l73",
+        "lid_pair_filename": "l034l073",
+        "selfcal": "_sc",
+        "contsub": "_contsub",
+        "suffix": "_sc_contsub",
         "window_folder": "l34l73",
     }
     assert naming.render("merge_input_a_narrowband", **values).endswith(
@@ -710,7 +716,7 @@ def test_restore_image_supports_wideband_and_narrowband_script_only(tmp_path: Pa
 
     assert [result.window_kind for result in results] == ["wideband", "narrowband"]
     assert results[0].input_uv == tmp_path / "CD/wideband/B5_CD_li_sc_contsub.uvt"
-    assert results[1].input_uv == (tmp_path / "CD/l9l48/B5_CD_l009l048_sc_contsub.uvt")
+    assert results[1].input_uv == (tmp_path / "CD/l09l48/B5_CD_l009l048_sc_contsub.uvt")
     assert results[0].restored_cube.name == "B5_CD_li_sc_contsub_uvres.lmv-clean"
     assert results[0].script_path.exists()
     script = results[0].script_path.read_text()

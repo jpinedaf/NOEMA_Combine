@@ -79,17 +79,17 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "line_clean_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.fits",
     "line_clean_pb_cube": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.lmv-sky",
     "line_clean_pb_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.fits",
-    "merged_line_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm.uvt",
+    "merged_line_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}.uvt",
     "merged_line_single_dish": "{sd_root}/{source_out}_{line}_{qn}{sd_ext}",
-    "merged_line_merged_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.uvt",
+    "merged_line_merged_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.uvt",
     "merged_line_prepare_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_prepare.map",
     "merged_line_image_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_clean.map",
-    "merged_line_dirty_map": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.lmv",
+    "merged_line_dirty_map": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.lmv",
     "merged_line_dirty_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_dirty.map",
-    "merged_line_clean_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.lmv-clean",
-    "merged_line_clean_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.fits",
-    "merged_line_clean_pb_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged-pbcor.lmv-sky",
-    "merged_line_clean_pb_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged-pbcor.fits",
+    "merged_line_clean_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.lmv-clean",
+    "merged_line_clean_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.fits",
+    "merged_line_clean_pb_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged-pbcor.lmv-sky",
+    "merged_line_clean_pb_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged-pbcor.fits",
     "clean_image": "{root}/{config}/images/{source}_{config}_{lid}{suffix}.fits",
     "line_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
     "merged_cube": "{root}/{config}30m/{source}_{line}_{qn}{lid_suffix}{suffix}.fits",
@@ -184,12 +184,12 @@ _PREVIEW_DEFAULTS: dict[str, str] = {
 }
 
 
-def _resolve_preview_context(naming: "FileNaming", values: Mapping[str, object]) -> dict[str, object]:
+def _resolve_preview_context(
+    naming: "FileNaming", values: Mapping[str, object]
+) -> dict[str, object]:
     """Add intermediate folder products needed by dependent preview templates."""
     context = dict(values)
-    context["narrowband_folder"] = naming.render(
-        "narrowband_folder", **context
-    )
+    context["narrowband_folder"] = naming.render("narrowband_folder", **context)
     context["dirty_folder"] = naming.render("dirty_folder", **context)
     return context
 
@@ -220,7 +220,7 @@ def _lid_pair_values(value: object) -> dict[str, str]:
     first, second = (int(part) for part in match.groups())
     return {
         "lid_pair": f"l{first:03d}l{second:03d}",
-        "lid_pair_folder": f"l{first}l{second}",
+        "lid_pair_folder": f"l{first:02d}l{second:02d}",
         "lid_pair_filename": f"l{first:03d}l{second:03d}",
     }
 
@@ -543,18 +543,22 @@ def preview_naming(
     )
     inferred_lid = lid or _infer_lid(cfg, line, qn)
     context: dict[str, object] = dict(_PREVIEW_DEFAULTS)
-    context.update({
-        "source": source,
-        "source_out": cfg.region_catalogue.get(source, {}).get("source_out", source),
-        "source_sd": cfg.region_catalogue.get(source, {}).get("source_sd", source),
-        "config": config,
-        "line": line,
-        "qn": qn,
-        "lid": inferred_lid,
-        "lid_pair": lid_pair or (inferred_lid.lower() if inferred_lid else ""),
-        "lid_suffix": f"_{inferred_lid}" if inferred_lid else "",
-        "style": style or cfg.config.get("project", "style", fallback="prodige"),
-    })
+    context.update(
+        {
+            "source": source,
+            "source_out": cfg.region_catalogue.get(source, {}).get(
+                "source_out", source
+            ),
+            "source_sd": cfg.region_catalogue.get(source, {}).get("source_sd", source),
+            "config": config,
+            "line": line,
+            "qn": qn,
+            "lid": inferred_lid,
+            "lid_pair": lid_pair or (inferred_lid.lower() if inferred_lid else ""),
+            "lid_suffix": f"_{inferred_lid}" if inferred_lid else "",
+            "style": style or cfg.config.get("project", "style", fallback="prodige"),
+        }
+    )
     context.update(values)
     if context.get("lid_pair"):
         pair_values = _lid_pair_values(context["lid_pair"])
