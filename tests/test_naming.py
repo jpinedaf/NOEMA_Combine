@@ -40,9 +40,47 @@ def test_default_naming_matches_package_paths():
     assert naming.sd_file("B5", "CO", "1-0", "L09") == "30m/B5_CO_1-0.30m"
 
 
-def test_merge_single_dish_rejects_independent_naming_template():
-    with pytest.raises(ValueError, match="customize uvt_file_merge instead"):
-        FileNaming({"sd_file_merge": "{sd_root}/different{sd_ext}"})
+@pytest.mark.parametrize(
+    "name", ["sd_file_merge", "merged_line_uvt", "merged_line_single_dish"]
+)
+def test_merge_naming_warns_for_independent_templates(name: str):
+    with pytest.warns(UserWarning, match="customize 'uvt_file_merge'"):
+        naming = FileNaming({name: "{root}/different"})
+    assert naming.describe()[name] != "{root}/different"
+
+
+@pytest.mark.parametrize("style", ["prodige", "propstar"])
+@pytest.mark.parametrize(
+    "selfcal,contsub", [("", ""), ("_sc", ""), ("", "_contsub"), ("_sc", "_contsub")]
+)
+def test_merge_products_share_uvt_basename(
+    tmp_path: Path, style: str, selfcal: str, contsub: str
+):
+    config_path, _ = create_project_files(
+        style,
+        config_filename=tmp_path / "config.ini",
+        catalogue_filename=tmp_path / "lines.csv",
+        region_catalogue_filename=tmp_path / "regions.yml",
+    )
+    cfg = Config(config_file=str(config_path), isolated=True)
+    values = {
+        "source": "B5",
+        "source_out": "B5-IRS1",
+        "line": "N2D+",
+        "qn": "3_2",
+        "lid": "l034l073",
+        "config": "CD",
+        "selfcal": selfcal,
+        "contsub": contsub,
+        "merge_uvt_base": "/ignored/unrelated",
+    }
+
+    sd = Path(cfg.naming.render("sd_file_merge", **values))
+    uvt = Path(cfg.naming.render("merged_line_uvt", **values))
+    table = Path(cfg.naming.render("merged_line_single_dish", **values))
+    assert sd.with_suffix("") == uvt.with_suffix("") == table.with_suffix("")
+    assert (sd.suffix, uvt.suffix, table.suffix) == (".30m", ".uvt", ".tab")
+    assert uvt.name == f"B5-IRS1_N2D+_3_2_l034l073{selfcal}{contsub}.uvt"
 
 
 @pytest.mark.parametrize(
@@ -143,6 +181,12 @@ def test_merge_single_dish_uses_custom_uvt_template_and_extension(
         "B5", "CO", "1-0", "l034l073", merge=True,
         selfcal="_self", contsub="_sub", sd_ext=".apex",
     )) == expected
+    values = {
+        "source": "B5", "source_out": "B5", "line": "CO", "qn": "1-0",
+        "lid": "l034l073", "selfcal": "_self", "contsub": "_sub",
+    }
+    assert Path(cfg.naming.render("merged_line_uvt", **values)) == expected.with_suffix(".uvt")
+    assert Path(cfg.naming.render("merged_line_single_dish", **values)) == expected.with_suffix(".tab")
 
 
 def test_prodige_pair_folder_without_naming_section(
@@ -284,8 +328,9 @@ def test_merged_line_imaging_uses_prepared_single_dish_table(
 
     table = tmp_path / "CD30m/l34l73/B5-IRS1_N2D+_3_2_l034l073_sc_contsub.tab"
     assert imaging.single_dish_table == table
+    assert imaging.prepared_uvt == table.with_suffix(".uvt")
     assert f'table "{table.with_suffix("")}"' in preparation.script_path.read_text()
-    assert str(table) in imaging.image_script.read_text()
+    assert f'sic copy "{table}" "{table}"' not in imaging.image_script.read_text()
 
 
 def test_default_narrowband_naming_uses_prodige_pair_forms():
@@ -307,7 +352,7 @@ def test_default_narrowband_naming_uses_prodige_pair_forms():
 
 def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Path):
     """Validate the default naming profile across the main product families."""
-    naming = FileNaming(root=tmp_path)
+    naming = FileNaming(root=tmp_path, uvt_out_root=str(tmp_path / "CD30m"))
     common = {
         "source": "B5",
         "source_out": "B5-IRS1",
@@ -334,7 +379,7 @@ def test_prodige_naming_matrix_matches_representative_project_tree(tmp_path: Pat
         tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
     )
     assert paths["line"].parent == tmp_path / "CD/l34l73"
-    assert paths["merged"].parent == tmp_path / "CD30m/l34l73"
+    assert paths["merged"].parent == tmp_path / "CD30m/l034l073"
     assert "/narrowband/" not in str(paths["narrowband"])
 
 
@@ -495,7 +540,7 @@ def test_preview_naming_covers_merged_line_project_tree(tmp_path: Path):
     )
     outputs = preview["outputs"]
     assert outputs["merged_line_uvt"].endswith(
-        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub.uvt"
+        "/CD30m/l34l73/B5_N2D+_3-2_l034l073_sc_contsub.uvt"
     )
     assert outputs["merged_line_clean_cube"].endswith(
         "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub-merged.lmv-clean"

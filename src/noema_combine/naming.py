@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import re
+import warnings
 from collections.abc import Mapping
 from string import Formatter
 
@@ -79,7 +80,7 @@ DEFAULT_TEMPLATES: dict[str, str] = {
     "line_clean_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}.fits",
     "line_clean_pb_cube": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.lmv-sky",
     "line_clean_pb_fits": "{root}/{config}/{window_folder}/{source_out}_{config}_{line}_{qn}{lid_suffix}{selfcal}{contsub}-pbcor.fits",
-    "merged_line_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}.uvt",
+    "merged_line_uvt": "{merge_uvt_base}.uvt",
     "merged_line_single_dish": "{merge_uvt_base}.tab",
     "merged_line_merged_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.uvt",
     "merged_line_prepare_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_prepare.map",
@@ -272,18 +273,18 @@ class FileNaming:
         sd_ext: str = ".30m",
         root: str = ".",
     ) -> None:
-        if (
-            templates
-            and "sd_file_merge" in templates
-            and templates["sd_file_merge"] != DEFAULT_TEMPLATES["sd_file_merge"]
-        ):
-            raise ValueError(
-                "sd_file_merge must be {merge_uvt_base}{sd_ext}; "
-                "customize uvt_file_merge instead"
-            )
         self.templates = dict(DEFAULT_TEMPLATES)
         if templates:
             self.templates.update(templates)
+            for name in ("sd_file_merge", "merged_line_uvt", "merged_line_single_dish"):
+                if name in templates and templates[name] != DEFAULT_TEMPLATES[name]:
+                    warnings.warn(
+                        f"Naming template {name!r} is ignored; customize "
+                        "'uvt_file_merge' to set the shared merge basename.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                self.templates[name] = DEFAULT_TEMPLATES[name]
         self.values = {
             "root": root,
             "uvt_root": uvt_root,
@@ -385,12 +386,11 @@ class FileNaming:
         context.setdefault("suffix", "")
         context.setdefault("mask_iteration", "")
         context.setdefault("style", "prodige")
-        if template_name in {"sd_file_merge", "merged_line_single_dish"}:
+        if template_name in {"sd_file_merge", "merged_line_uvt", "merged_line_single_dish"}:
             uvt_context = dict(context)
-            if template_name == "merged_line_single_dish":
-                uvt_context["source"] = context["source_out"]
+            uvt_context["source"] = context["source_out"]
             merge_uvt = self.render("uvt_file_merge", **uvt_context)
-            context.setdefault("merge_uvt_base", os.path.splitext(merge_uvt)[0])
+            context["merge_uvt_base"] = os.path.splitext(merge_uvt)[0]
         try:
             return os.path.normpath(self.templates[template_name].format_map(context))
         except KeyError as exc:

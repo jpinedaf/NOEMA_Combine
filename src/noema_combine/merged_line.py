@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from pathlib import Path
 
 
 def _frequency(value: object) -> str:
@@ -74,10 +75,10 @@ def build_merged_line_image_script(
         "sic message mapping s-i",
         f'let name "{prepared_name}"',
         "go setup",
-        f'sic copy "{single_dish_table}" "{prepared_name}.tab"',
-        'let uvshort%unit "K (Tmb)"',
-        "go uvshort",
     ]
+    if Path(single_dish_table).resolve() != Path(f"{prepared_name}.tab").resolve():
+        lines.append(f'sic copy "{single_dish_table}" "{prepared_name}.tab"')
+    lines.extend(['let uvshort%unit "K (Tmb)"', "go uvshort"])
     default_merged = f"{prepared_name}-merged.uvt"
     if merged_uvt != default_merged:
         lines.append(f'sic copy "{default_merged}" "{merged_uvt}"')

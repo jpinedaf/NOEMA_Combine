@@ -2,6 +2,7 @@ from pathlib import Path
 
 from noema_combine import make_line_images, make_merged_line_images
 from noema_combine.imaging import build_clean_image_script
+from noema_combine.merged_line import build_merged_line_image_script
 
 HEADER = (
     "#name,QN(filename),freq(GHz),mol(plot),QN(plot),Aul(logs^-1),Eul(K),"
@@ -43,8 +44,7 @@ def _merged_config(tmp_path: Path) -> Path:
         "[gildas]\nexecute = false\n\n"
         "[naming]\nroot = .\n"
         "clean_input_narrowband = {root}/{config}/{lid_pair_folder}/{source_out}_{config}_{lid_pair_filename}_sc_contsub.uvt\n"
-        "merged_line_uvt = {root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}_sc_contsub_sm.uvt\n"
-        "merged_line_single_dish = {root}/30m/{source_out}_{line}_{qn}.30m\n"
+        "uvt_file_merge = {root}/{config}30m/{window_folder}/{source}_{config}_{line}_{qn}_sc_contsub_sm.uvt\n"
         "merged_line_merged_uvt = {root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}_sc_contsub_sm-merged.uvt\n"
         "merged_line_prepare_script = {root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}_prepare.map\n"
         "merged_line_image_script = {root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}_merged_clean.map\n"
@@ -95,17 +95,32 @@ def test_make_merged_line_images_generates_prepare_and_merge_scripts(tmp_path):
         result.input_file == tmp_path / "CD/l34l73/B5-IRS1_CD_l034l073_sc_contsub.uvt"
     )
     assert result.prepared_uvt.name == "B5-IRS1_CD_N2D+_3_2_sc_contsub_sm.uvt"
-    assert result.single_dish_table == tmp_path / "30m/B5-IRS1_N2D+_3_2.30m"
+    assert result.single_dish_table == result.prepared_uvt.with_suffix(".tab")
     assert len(result.executions) == 2
     prepare = result.prepare_script.read_text()
     image = result.image_script.read_text()
     assert 'modify "' in prepare
     assert "231321.8283" in prepare
     assert "uv_resample" in prepare
-    assert 'sic copy "' in image
+    assert f'sic copy "{result.single_dish_table}"' not in image
     assert "go uvshort" in image
     assert "let method SDI" in image
     assert "let MYCLEAN%SUPPORT NO" in image
+
+
+def test_merged_line_script_copies_table_only_if_paths_differ(tmp_path):
+    prepared = tmp_path / "output" / "line.uvt"
+    table = tmp_path / "input" / "line.tab"
+    script = build_merged_line_image_script(
+        str(prepared),
+        str(table),
+        str(tmp_path / "output" / "line-merged.uvt"),
+        str(tmp_path / "output" / "image"),
+        configuration="CD",
+        map_size=(500, 500),
+        map_cell=(0.17, 0.17),
+    )
+    assert f'sic copy "{table}" "{prepared.with_suffix(".tab")}"' in script
 
 
 def test_make_line_images_can_generate_only_clean_products(tmp_path):

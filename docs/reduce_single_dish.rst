@@ -128,11 +128,11 @@ the matching table uses the same basename with ``.tab``. The original
 single-dish input remains in ``dir_sd``. The public ``get_sd_file`` and
 deprecated ``get_30m_file`` helpers now use this same convention when
 ``merge=True`` and require a window identifier.
-To change the shared basename, customize ``uvt_file_merge``; independent
-``sd_file_merge`` templates are no longer supported. Remove an existing
-``sd_file_merge`` override, or set it to ``{merge_uvt_base}{sd_ext}``.
-An explicit ``merged_line_single_dish`` template remains an override for the
-imaging workflow and must point to the matching ``.tab`` file.
+To change the shared basename, customize ``uvt_file_merge``. The
+``sd_file_merge``, ``merged_line_uvt``, and ``merged_line_single_dish``
+templates are derived from it; independent overrides are ignored with a
+warning. Update existing configurations to customize ``uvt_file_merge``
+instead.
 
 By default, beam efficiency is computed with the Ruze formula. You can override this with the ``beam_eff`` argument.
 
