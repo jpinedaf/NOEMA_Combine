@@ -77,7 +77,10 @@ def test_line_prepare_merge_script_only(
     run = MagicMock()
     monkeypatch.setattr("noema_combine.gildas.runner.subprocess.run", run)
 
-    result = line_prepare_merge("B5", "CO", "1-0", configuration="CD", beam_eff=0.82, execute=override)
+    result = line_prepare_merge(
+        source="B5", line="CO", qn="1-0",
+        configuration="CD", beam_eff=0.82, execute=override,
+    )
 
     assert not result.executed
     script = result.script_path.read_text()
@@ -335,7 +338,7 @@ def test_get_uvt_window_default():
 @patch("noema_combine.data_handler.uvt_dir", "/path/to/uvt")
 def test_get_uvt_window_no_uvsub():
     """Test uvt window filename without uvsub"""
-    result = get_uvt_window("B5", "L09", uvsub=False)
+    result = get_uvt_window(source="B5", window="L09", contsub=False)
     assert result == "/path/to/uvt/L09/B5_L09.uvt"
 
 
@@ -351,7 +354,7 @@ def test_get_uvt_window_with_selfcal():
 @patch("noema_combine.data_handler.uvt_dir", "/path/to/uvt")
 def test_get_uvt_window_no_uvsub_with_selfcal():
     """Test uvt window filename with selfcal but no uvsub"""
-    result = get_uvt_window("B5", "L09", uvsub=False, selfcal=True)
+    result = get_uvt_window("B5", "L09", contsub=False, selfcal=True)
     assert result == "/path/to/uvt/L09/B5_L09_sc.uvt"
 
 
@@ -359,7 +362,7 @@ def test_get_uvt_window_no_uvsub_with_selfcal():
 @patch("noema_combine.data_handler.uvsub_ext", "_uvsub")
 def test_get_uvt_window_different_lid():
     """Test uvt window filename with different Lid"""
-    result = get_uvt_window("NGC1333", "L11", uvsub=True, selfcal=False)
+    result = get_uvt_window("NGC1333", "L11", contsub=True, selfcal=False)
     assert result == "/data/uvt/L11/NGC1333_L11_uvsub.uvt"
 
 
@@ -367,7 +370,10 @@ def test_get_uvt_window_different_lid():
 @patch("noema_combine.data_handler.uvt_dir", "/path/to/uvt")
 def test_get_uvt_file_no_merge():
     """Test uvt filename generation without merge"""
-    result = get_uvt_file("B5", "CO", "1-0", "L09", configuration="CD", merge=False)
+    result = get_uvt_file(
+        source="B5", line="CO", qn="1-0", window="L09",
+        configuration="CD", merge=False,
+    )
     assert result == "/path/to/uvt/L09/B5_CD_CO_1-0_L09.uvt"
 
 
@@ -394,6 +400,11 @@ def test_get_uvt_file_legacy_suffixes():
     ) == "/data/uvt/L09/B5_CD_CO_1-0_L09_self_sub.uvt"
 
 
+def test_legacy_uvsub_keyword_is_not_silently_ignored():
+    with pytest.raises(TypeError, match="uvsub.*contsub"):
+        get_uvt_window("B5", "L09", uvsub=False)
+
+
 # Tests for get_30m_file (deprecated, use get_sd_file instead)
 @patch("noema_combine.data_handler.dir_sd", "/path/to/30m")
 @patch("noema_combine.data_handler.file_extensions_sd", ".30m")
@@ -416,7 +427,10 @@ def test_get_30m_file_with_merge():
     """Test 30m filename generation with merge - deprecated function"""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        result = get_30m_file("B5", "CO", "1-0", "L09", configuration="CD", merge=True)
+        result = get_30m_file(
+            source="B5", line="CO", qn="1-0", window="L09",
+            configuration="CD", merge=True,
+        )
         assert result == "/path/to/merged/L09/B5_CD_CO_1-0_L09.30m"
         # Check that deprecation warning was issued
         assert len(w) == 1
@@ -446,12 +460,15 @@ def test_get_sd_file():
     result = get_sd_file("B5", "CO", "1-0", "L09", merge=False)
     assert result == "/path/to/sd/B5_CO_1-0.30m"
 
-    result = get_sd_file("B5", "CO", "1-0", "L09", configuration="CD", merge=True)
+    result = get_sd_file(
+        source="B5", line="CO", qn="1-0", window="L09",
+        configuration="CD", merge=True,
+    )
     assert result == "/path/to/merged/L09/B5_CD_CO_1-0_L09.30m"
 
 
 def test_get_sd_file_merge_requires_lid():
-    with pytest.raises(ValueError, match="Lid is required"):
+    with pytest.raises(ValueError, match="window is required"):
         get_sd_file("B5", "CO", "1-0", merge=True)
 
 
@@ -485,7 +502,7 @@ def test_line_reduce_30m_deprecated(
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        line_reduce_30m("B5", "CO", "1-0")
+        line_reduce_30m(source="B5", line="CO", qn="1-0")
 
         # Check that deprecation warning was issued
         assert len(w) == 1
@@ -534,7 +551,7 @@ def test_line_reduce_sd_runs_through_configured_gildas_runner(
     mock_glob.return_value = ["/input/scan.30m"]
     runner = mock_cfg.make_gildas_runner.return_value
 
-    line_reduce_sd("B5", "CO", "1-0")
+    line_reduce_sd(source="B5", line="CO", qn="1-0")
 
     runner.run_class.assert_called_once()
     assert 'file out "/tmp/B5_CO_1-0.30m"' in runner.run_class.call_args.args[0]
@@ -825,10 +842,13 @@ def test_line_make_uvt_with_selfcal(
     mock_temp.return_value.__enter__.return_value = mock_file
     mock_file.name = "temp.map"
 
-    line_make_uvt("B5", "CO", "1-0", configuration="CD", selfcal=True)
+    line_make_uvt(
+        source="B5", line="CO", qn="1-0",
+        configuration="CD", selfcal=True, contsub=True,
+    )
 
     mock_get_uvt_window.assert_called_once_with(
-        "B5_out", "L09", uvsub=True, selfcal=True, config="CD"
+        "B5_out", "L09", contsub=True, selfcal=True, config="CD"
     )
     mock_get_uvt_file.assert_called_once_with(
         "B5_out", "CO", "1-0", "L09", merge=False,

@@ -16,11 +16,11 @@ To reduce single dish data, use the :py:func:`~noema_combine.data_handler.line_r
 
     import noema_combine
 
-    source_name = "B5"
-    molecule = "N2D+"
-    quantum_number = "1-0"
+    source = "B5"
+    line = "N2D+"
+    qn = "1-0"
 
-    noema_combine.data_handler.line_reduce_sd(source_name, molecule, quantum_number)
+    noema_combine.data_handler.line_reduce_sd(source=source, line=line, qn=qn)
 
 This function will:
 
@@ -35,15 +35,15 @@ The reduction step supports all configured single-dish telescopes (including IRA
 Required Parameters
 -------------------
 
-**source_name** : str
+**source** : str
     Name of the source to reduce (e.g., ``"B5"``, ``"B5-IRS1"``).
     Must exist in the ``region_catalogue`` configuration.
 
-**molecule** : str
+**line** : str
     Molecule name (e.g., ``"CO"``, ``"N2D+"``, ``"HCN"``).
     Must exist in the line catalogue.
 
-**quantum_number** : str
+**qn** : str
     Quantum numbers of the line (e.g., ``"1-0"``, ``"N=1-0,J=3/2-1/2,F=1/2-1/2"``).
     Combined with the molecule name, must uniquely identify a line in the catalogue.
 
@@ -111,7 +111,7 @@ After reducing single dish data, prepare it for merging with NOEMA observations 
 .. code-block:: python
 
     noema_combine.data_handler.line_prepare_merge(
-        source_name, molecule, quantum_number, configuration="CD"
+        source=source, line=line, qn=qn, configuration="CD"
     )
 
 This function:
@@ -153,7 +153,13 @@ Both default to ``False``. The output table uses the same suffixes; the
 single-dish input filename is unchanged. For custom ``uvt_file`` or
 ``uvt_file_merge`` templates, include ``{config}``, ``{selfcal}`` and
 ``{contsub}`` where the configuration and suffixes should appear. The older
-``line_make_uvt`` uses its ``selfcal`` and ``uvsub`` settings for those suffixes.
+``line_make_uvt`` uses its ``selfcal`` and ``contsub`` settings for those suffixes.
+
+The single-dish functions and legacy UVT helpers use ``source``, ``line``,
+``qn``, and, where applicable, ``window`` keyword names, consistent with the
+imaging APIs. Older keyword names such as ``source_name``, ``molecule``,
+``quantum_number``, ``Lid`` and ``uvsub`` are no longer accepted by these
+functions; positional arguments retain their original order.
 
 Example Workflow
 ----------------
