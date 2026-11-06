@@ -63,17 +63,11 @@ _NARROWBAND = {
 }
 
 _MERGED_LINE = {
-    "merged_line_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm.uvt",
-    "merged_line_single_dish": "{sd_root}/{source_out}_{line}_{qn}{sd_ext}",
-    "merged_line_merged_uvt": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.uvt",
-    "merged_line_prepare_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_prepare.map",
-    "merged_line_image_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_clean.map",
-    "merged_line_dirty_map": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.lmv",
-    "merged_line_dirty_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_merged_dirty.map",
-    "merged_line_clean_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.lmv-clean",
-    "merged_line_clean_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged.fits",
-    "merged_line_clean_pb_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged-pbcor.lmv-sky",
-    "merged_line_clean_pb_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}_sm-merged-pbcor.fits",
+    "merged_line_dirty_script": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged_dirty.map",
+    "merged_line_clean_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.lmv-clean",
+    "merged_line_clean_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged.fits",
+    "merged_line_clean_pb_cube": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged-pbcor.lmv-sky",
+    "merged_line_clean_pb_fits": "{root}/{config}30m/{window_folder}/{source_out}_{config}_{line}_{qn}{selfcal}{contsub}-merged-pbcor.fits",
 }
 
 _RESTORE = {

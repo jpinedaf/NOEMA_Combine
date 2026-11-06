@@ -243,10 +243,10 @@ def test_preview_naming_covers_merged_line_project_tree(tmp_path: Path):
     )
     outputs = preview["outputs"]
     assert outputs["merged_line_uvt"].endswith(
-        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm.uvt"
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub.uvt"
     )
     assert outputs["merged_line_clean_cube"].endswith(
-        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub_sm-merged.lmv-clean"
+        "/CD30m/l34l73/B5_CD_N2D+_3-2_sc_contsub-merged.lmv-clean"
     )
 
 
