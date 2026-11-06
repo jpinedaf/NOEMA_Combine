@@ -52,6 +52,9 @@ The merging is performed using :func:`noema_combine.data_handler.line_prepare_me
 
     noema_combine.data_handler.line_prepare_merge('B5', 'N2D+', '1-0')
 
+Use ``execute=False`` to generate a CLASS script without running it; the
+returned result contains its ``script_path``.
+
 This function prepares the single dish data for combination with NOEMA observations by:
 
 1. Reading the reduced single dish data

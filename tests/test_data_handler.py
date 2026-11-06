@@ -1,9 +1,12 @@
 import warnings
+from pathlib import Path
+from subprocess import CompletedProcess
 from unittest.mock import MagicMock, patch  # , mock_open, call
 
 import numpy as np
 import pytest
 
+import noema_combine.data_handler as data_handler
 from noema_combine.data_handler import (
     get_30m_file,
     get_line_param,
@@ -12,10 +15,128 @@ from noema_combine.data_handler import (
     get_uvt_file,
     get_uvt_window,
     line_make_uvt,
-    # line_prepare_merge,
+    line_prepare_merge,
     line_reduce_30m,
     line_reduce_sd,
 )
+from noema_combine.gildas import GildasRunner
+
+
+@pytest.fixture
+def prepare_merge_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        data_handler,
+        "get_source_param",
+        lambda source: (source, source, source, 0, 0, 0),
+    )
+    monkeypatch.setattr(data_handler, "get_line_param", lambda molecule, qn: 0)
+    for name, value in {
+        "qn": "1-0",
+        "line_name": "CO",
+        "freq_mhz": "115271",
+        "Lid": "l09",
+        "name_str": "CO",
+    }.items():
+        monkeypatch.setattr(data_handler, name, np.array([value]))
+    monkeypatch.setattr(
+        data_handler,
+        "get_uvt_file",
+        lambda *args, merge=False: "merged/input.uvt" if merge else "input.uvt",
+    )
+    monkeypatch.setattr(
+        data_handler,
+        "get_sd_file",
+        lambda *args, merge=False: "output[1].30m" if merge else "input.30m",
+    )
+    (tmp_path / "input.uvt").write_text("uvt data")
+    (tmp_path / "output[1].30m").write_text("existing output")
+    (tmp_path / "output1.30m").write_text("unrelated output")
+    return tmp_path
+
+
+@pytest.mark.parametrize("configured_execute, override", [(True, False), (False, None)])
+def test_line_prepare_merge_script_only(
+    prepare_merge_files: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    configured_execute: bool,
+    override: bool | None,
+):
+    runner_factory = MagicMock(
+        side_effect=lambda **kwargs: GildasRunner(
+            execute=kwargs.get("execute", configured_execute),
+            workdir=prepare_merge_files / "scripts",
+        )
+    )
+    monkeypatch.setattr(data_handler._cfg, "make_gildas_runner", runner_factory)
+    run = MagicMock()
+    monkeypatch.setattr("noema_combine.gildas.runner.subprocess.run", run)
+
+    result = line_prepare_merge("B5", "CO", "1-0", beam_eff=0.82, execute=override)
+
+    assert not result.executed
+    script = result.script_path.read_text()
+    assert "modify Beam_Eff 0.82" in script
+    assert f'file in "{prepare_merge_files / "input.30m"}"' in script
+    assert f'/like "{prepare_merge_files / "input.uvt"}"' in script
+    assert (prepare_merge_files / "output[1].30m").read_text() == "existing output"
+    assert not (prepare_merge_files / "merged").exists()
+    run.assert_not_called()
+    runner_factory.assert_called_once_with(
+        **({} if override is None else {"execute": override})
+    )
+
+
+@pytest.mark.parametrize("configured_execute, override", [(False, True), (True, None)])
+def test_line_prepare_merge_executes_and_copies_uvt(
+    prepare_merge_files: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    configured_execute: bool,
+    override: bool | None,
+):
+    runner_factory = MagicMock(
+        side_effect=lambda **kwargs: GildasRunner(
+            execute=kwargs.get("execute", configured_execute),
+            workdir=prepare_merge_files / "scripts",
+            keep_scripts=True,
+        )
+    )
+    monkeypatch.setattr(data_handler._cfg, "make_gildas_runner", runner_factory)
+    run = MagicMock(
+        return_value=CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+    )
+    monkeypatch.setattr("noema_combine.gildas.runner.subprocess.run", run)
+
+    result = line_prepare_merge("B5", "CO", "1-0", execute=override)
+
+    assert result.executed
+    assert "modify Beam_Eff /Ruze" in result.script_path.read_text()
+    assert not (prepare_merge_files / "output[1].30m").exists()
+    assert (prepare_merge_files / "output1.30m").exists()
+    assert (prepare_merge_files / "merged/input.uvt").read_text() == "uvt data"
+    run.assert_called_once()
+
+
+def test_line_prepare_merge_surfaces_class_failure(
+    prepare_merge_files: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        data_handler._cfg,
+        "make_gildas_runner",
+        lambda **kwargs: GildasRunner(workdir=prepare_merge_files / "scripts", **kwargs),
+    )
+    monkeypatch.setattr(
+        "noema_combine.gildas.runner.subprocess.run",
+        MagicMock(
+            return_value=CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="CLASS failed"
+            )
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="CLASS failed"):
+        line_prepare_merge("B5", "CO", "1-0", execute=True)
+    assert not (prepare_merge_files / "merged/input.uvt").exists()
 
 
 # Tests for get_line_param

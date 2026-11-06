@@ -124,6 +124,11 @@ This function:
 
 By default, beam efficiency is computed with the Ruze formula. You can override this with the ``beam_eff`` argument.
 
+Pass ``execute=False`` to generate and retain the CLASS script without running
+CLASS, deleting existing output files, or copying the NOEMA UV table. The
+returned ``GildasResult`` provides the generated script's ``script_path``.
+When ``execute`` is omitted, the configured ``[gildas] execute`` setting applies.
+
 Example Workflow
 ----------------
 

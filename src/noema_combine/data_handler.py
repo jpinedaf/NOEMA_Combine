@@ -1,7 +1,9 @@
 import os
+import shutil
 import tempfile
 import warnings
-from glob import glob
+from glob import escape, glob
+from io import StringIO
 
 import astropy.units as u  # type: ignore
 import numpy as np
@@ -10,6 +12,7 @@ from numpy.typing import NDArray
 
 # Import configuration
 from .config import Config, get_config
+from .gildas import GildasResult
 
 # Initialize configuration (loaded once)
 _cfg = get_config()
@@ -347,8 +350,13 @@ def get_sd_file(
 
 
 def line_prepare_merge(
-    source_name: str, molecule: str, quantum_number: str, beam_eff: float | None = None
-) -> None:
+    source_name: str,
+    molecule: str,
+    quantum_number: str,
+    beam_eff: float | None = None,
+    *,
+    execute: bool | None = None,
+) -> GildasResult:
     """
     Function to prepare the single dish (30m) data for the merging.
     It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
@@ -365,6 +373,9 @@ def line_prepare_merge(
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     beam_eff: float | None
         Beam efficiency to convert from Ta* to Tmb. If None, the conversion will be done using the Ruze formula with the parameters in CLASS.
+    execute: bool | None
+        Override the configured GILDAS execution setting. False generates and
+        retains a CLASS script without deleting or copying data files.
     """
     _, _, source_out, _, _, _ = get_source_param(source_name)
 
@@ -374,14 +385,21 @@ def line_prepare_merge(
     line_name_i = line_name[index]
     freq_i = freq_mhz[index]
     Lid_i = Lid[index]
-    file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    merge_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    file_uvt = os.path.abspath(
+        get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    )
+    merge_uvt = os.path.abspath(
+        get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    )
 
-    file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    merge_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    file_sd = os.path.abspath(
+        get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    )
+    merge_sd = os.path.abspath(
+        get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    )
 
-    os.system(f"rm {os.path.splitext(merge_sd)[0]}.*")
-    fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
+    fb = StringIO()
     fb.write(f'file in "{file_sd}"\n')
     fb.write(f'file out "{merge_sd}"  single /overwrite\n')
     fb.write("say [INFO] Removing old output file\n")
@@ -410,16 +428,17 @@ def line_prepare_merge(
         f'table "{os.path.splitext(merge_uvt)[0]}" new /NOCHECK source /like "{file_uvt}"\n'
     )
     fb.write("exit\n")
-    fb.flush()
-    merged_folder = os.path.dirname(merge_uvt)  # get path only
-    if not os.path.exists(merged_folder):
-        os.makedirs(merged_folder)
-
-    # copy to folder for merging
-    # os.system("cp {0}.tab {1}/.".format(outputfile, merged_folder))
-    os.system(f"class -nw @ {fb.name}")
-    fb.close()
-    os.system(f"cp {file_uvt} {merged_folder}/.")
+    runner_kwargs = {} if execute is None else {"execute": execute}
+    runner = _cfg.make_gildas_runner(**runner_kwargs)
+    merged_folder = os.path.dirname(merge_uvt)
+    if runner.execute:
+        for old_file in glob(escape(os.path.splitext(merge_sd)[0]) + ".*"):
+            os.remove(old_file)
+        os.makedirs(merged_folder, exist_ok=True)
+    result = runner.run_class(fb.getvalue())
+    if result.executed:
+        shutil.copy(file_uvt, merged_folder)
+    return result
 
 
 def line_reduce_30m(source_name: str, molecule: str, quantum_number: str) -> None:
