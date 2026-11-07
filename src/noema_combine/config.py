@@ -1,14 +1,16 @@
 """Configuration loader for NOEMA Combine package."""
 
+import configparser
 import os
 import re
 import warnings
-import configparser
 from decimal import Decimal
-from pathlib import Path
-import yaml
-import numpy as np
 from importlib.resources import files
+from pathlib import Path
+
+import numpy as np
+import yaml
+
 from .naming import FileNaming
 
 
@@ -108,9 +110,7 @@ class Config:
                 files("noema_combine").joinpath(configured_source)
             )
             if not os.path.isfile(self.file_source_catalogue):
-                raise FileNotFoundError(
-                    f"File not found: {configured_source}"
-                )
+                raise FileNotFoundError(f"File not found: {configured_source}")
 
         with open(self.file_source_catalogue, "r") as fh:
             self.region_catalogue: dict[str, dict[str, str]] = yaml.safe_load(fh)
@@ -123,9 +123,7 @@ class Config:
                 files("noema_combine").joinpath(configured_line)
             )
             if not os.path.isfile(self.file_line_catalogue):
-                raise FileNotFoundError(
-                    f"File not found: {configured_line}"
-                )
+                raise FileNotFoundError(f"File not found: {configured_line}")
 
     def _load_telescope_params(self):
         """Load single dish telescope parameters."""
@@ -174,17 +172,19 @@ class Config:
             [format(Decimal(str(value)) * Decimal("1000"), "f") for value in self.freq],
             dtype="U",
         )
-        self.line_baseband = np.atleast_1d(np.loadtxt(
-            self.file_line_catalogue,
-            dtype="U",
-            delimiter=",",
-            quotechar='"',
-            comments="#",
-            skiprows=1,
-            usecols=(8,),
-            ndmin=1,
-            unpack=True,
-        ))
+        self.line_baseband = np.atleast_1d(
+            np.loadtxt(
+                self.file_line_catalogue,
+                dtype="U",
+                delimiter=",",
+                quotechar='"',
+                comments="#",
+                skiprows=1,
+                usecols=(8,),
+                ndmin=1,
+                unpack=True,
+            )
+        )
 
     def _load_file_handling(self):
         """Load file handling configuration."""
@@ -214,9 +214,7 @@ class Config:
                 "{uvt_out_root}/{uvt_folder}/{source}_{config}_{line}_{qn}_{lid}{selfcal}{contsub}.uvt",
             )
 
-        root = self._resolve_path(
-            self.config.get("naming", "root", fallback=".")
-        )
+        root = self._resolve_path(self.config.get("naming", "root", fallback="."))
         self.naming = FileNaming(
             templates,
             root=root,
@@ -246,11 +244,15 @@ class Config:
         if self.config.has_section("continuum_subtraction"):
             for key, value in self.config.items("continuum_subtraction"):
                 if key.startswith("wideband_") and value.strip():
-                    self.continuum_wideband_ranges[_normalize_window(key[9:])] = value.strip()
+                    self.continuum_wideband_ranges[_normalize_window(key[9:])] = (
+                        value.strip()
+                    )
         if self.config.has_section("narrowband_channel_ranges"):
             for key, value in self.config.items("narrowband_channel_ranges"):
                 if value.strip():
-                    self.continuum_narrowband_ranges[_normalize_window(key)] = value.strip()
+                    self.continuum_narrowband_ranges[_normalize_window(key)] = (
+                        value.strip()
+                    )
 
     def _load_spectral_windows(self):
         """Load the user-defined broadband to narrowband window mapping."""
@@ -290,7 +292,11 @@ class Config:
                 continue
             window = key.removesuffix("_start").strip().lower()
             start = parse_lid(value, key)
-            if not self.spectral_narrowband_start <= start <= self.spectral_narrowband_end:
+            if (
+                not self.spectral_narrowband_start
+                <= start
+                <= self.spectral_narrowband_end
+            ):
                 raise ValueError(
                     f"{key}={value!r} is outside the configured narrowband range"
                 )
@@ -317,10 +323,12 @@ class Config:
             self.imaging_include_narrowband = self.config.getboolean(
                 "imaging", "include_narrowband", fallback=True
             )
-        self.cleaning_weighting = self.config.get("cleaning", "weighting", fallback="natural")
-        self.cleaning_method = self.config.get(
-            "cleaning", "method", fallback="HOGBOM"
-        ).strip().upper()
+        self.cleaning_weighting = self.config.get(
+            "cleaning", "weighting", fallback="natural"
+        )
+        self.cleaning_method = (
+            self.config.get("cleaning", "method", fallback="HOGBOM").strip().upper()
+        )
         if self.cleaning_method not in {"HOGBOM", "SDI"}:
             raise ValueError("cleaning method must be 'HOGBOM' or 'SDI'")
         self.cleaning_threshold_factor = self.config.getfloat(

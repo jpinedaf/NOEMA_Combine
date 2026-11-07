@@ -386,7 +386,11 @@ class FileNaming:
         context.setdefault("suffix", "")
         context.setdefault("mask_iteration", "")
         context.setdefault("style", "prodige")
-        if template_name in {"sd_file_merge", "merged_line_uvt", "merged_line_single_dish"}:
+        if template_name in {
+            "sd_file_merge",
+            "merged_line_uvt",
+            "merged_line_single_dish",
+        }:
             uvt_context = dict(context)
             uvt_context["source"] = context["source_out"]
             merge_uvt = self.render("uvt_file_merge", **uvt_context)
