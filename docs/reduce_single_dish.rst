@@ -16,11 +16,11 @@ To reduce single dish data, use the :py:func:`~noema_combine.data_handler.line_r
 
     import noema_combine
 
-    source_name = "B5"
-    molecule = "N2D+"
-    quantum_number = "1-0"
+    source = "B5"
+    line = "N2D+"
+    qn = "1-0"
 
-    noema_combine.data_handler.line_reduce_sd(source_name, molecule, quantum_number)
+    noema_combine.data_handler.line_reduce_sd(source=source, line=line, qn=qn)
 
 This function will:
 
@@ -35,15 +35,15 @@ The reduction step supports all configured single-dish telescopes (including IRA
 Required Parameters
 -------------------
 
-**source_name** : str
+**source** : str
     Name of the source to reduce (e.g., ``"B5"``, ``"B5-IRS1"``).
     Must exist in the ``region_catalogue`` configuration.
 
-**molecule** : str
+**line** : str
     Molecule name (e.g., ``"CO"``, ``"N2D+"``, ``"HCN"``).
     Must exist in the line catalogue.
 
-**quantum_number** : str
+**qn** : str
     Quantum numbers of the line (e.g., ``"1-0"``, ``"N=1-0,J=3/2-1/2,F=1/2-1/2"``).
     Combined with the molecule name, must uniquely identify a line in the catalogue.
 
@@ -110,7 +110,9 @@ After reducing single dish data, prepare it for merging with NOEMA observations 
 
 .. code-block:: python
 
-    noema_combine.data_handler.line_prepare_merge(source_name, molecule, quantum_number)
+    noema_combine.data_handler.line_prepare_merge(
+        source=source, line=line, qn=qn, configuration="CD"
+    )
 
 This function:
 
@@ -122,7 +124,42 @@ This function:
 6. Updates antenna efficiency to convert to Main Beam Temperature (Tmb)
 7. Generates merge-ready output files in the merge directory, including a ``.tab`` product matched to the NOEMA UV table spectral setup
 
+The intermediate CLASS file uses the same directory and basename as the
+merge UVT, with the configured single-dish extension (such as ``.30m``);
+the matching table uses the same basename with ``.tab``. The original
+single-dish input remains in ``dir_sd``. The public ``get_sd_file`` and
+deprecated ``get_30m_file`` helpers now use this same convention when
+``merge=True`` and require a window identifier and observing configuration.
+The required ``configuration`` keyword, such as ``"CD"`` or ``"ACD"``,
+is included in the input UVT and merge-product filenames. Pass the same
+configuration to ``line_make_uvt`` and ``line_prepare_merge``. The configured
+``uvt_dir`` and ``uvt_dir_out`` still determine their directories; set those
+to the appropriate input and merge folders for your observing configuration.
+To change the shared basename, customize ``uvt_file_merge``. The
+``sd_file_merge``, ``merged_line_uvt``, and ``merged_line_single_dish``
+templates are derived from it; independent overrides are ignored with a
+warning. Update existing configurations to customize ``uvt_file_merge``
+instead.
+
 By default, beam efficiency is computed with the Ruze formula. You can override this with the ``beam_eff`` argument.
+
+Pass ``execute=False`` to generate and retain the CLASS script without running
+CLASS, deleting existing output files, or copying the NOEMA UV table. The
+returned ``GildasResult`` provides the generated script's ``script_path``.
+When ``execute`` is omitted, the configured ``[gildas] execute`` setting applies.
+Set ``selfcal=True`` and/or ``contsub=True`` to select UV tables with the
+configured self-calibration and continuum-subtraction suffixes, respectively.
+Both default to ``False``. The output table uses the same suffixes; the
+single-dish input filename is unchanged. For custom ``uvt_file`` or
+``uvt_file_merge`` templates, include ``{config}``, ``{selfcal}`` and
+``{contsub}`` where the configuration and suffixes should appear. The older
+``line_make_uvt`` uses its ``selfcal`` and ``contsub`` settings for those suffixes.
+
+The single-dish functions and legacy UVT helpers use ``source``, ``line``,
+``qn``, and, where applicable, ``window`` keyword names, consistent with the
+imaging APIs. Older keyword names such as ``source_name``, ``molecule``,
+``quantum_number``, ``Lid`` and ``uvsub`` are no longer accepted by these
+functions; positional arguments retain their original order.
 
 Example Workflow
 ----------------
@@ -135,10 +172,10 @@ Example Workflow
     noema_combine.data_handler.line_reduce_sd("B5", "N2D+", "1-0")
 
     # Step 2: Prepare for merging
-    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0")
+    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", configuration="CD")
 
     # Optional: user-defined beam efficiency instead of default Ruze estimate
-    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", beam_eff=0.82)
+    noema_combine.data_handler.line_prepare_merge("B5", "N2D+", "1-0", beam_eff=0.82, configuration="CD")
 
     # Task complete - data is ready for MAPPING uv_merge
 

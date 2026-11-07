@@ -1,14 +1,18 @@
-import tempfile
 import os
-from glob import glob
-import numpy as np
-from numpy.typing import NDArray
+import shutil
+import tempfile
 import warnings
-from astropy.coordinates import SkyCoord  # type: ignore
+from glob import glob
+from io import StringIO
+
 import astropy.units as u  # type: ignore
+import numpy as np
+from astropy.coordinates import SkyCoord  # type: ignore
+from numpy.typing import NDArray
 
 # Import configuration
-from .config import get_config, Config
+from .config import Config, get_config
+from .gildas import GildasResult
 
 # Initialize configuration (loaded once)
 _cfg = get_config()
@@ -20,7 +24,7 @@ def _bind_config(cfg: Config) -> None:
     global file_source_catalogue, region_catalogue
     global selfcal_ext, uvsub_ext, file_line_catalogue
     global file_extensions_sd, telescope_class
-    global ignorefiles, line_name, qn, freq, name_str, qn_str, Lid
+    global ignorefiles, line_name, qn, freq, freq_mhz, name_str, qn_str, Lid
     global vel_width, vel_width_sd, vel_width_base_sd
     global uvt_dir, dir_sd, uvt_dir_out, inputdir
 
@@ -36,6 +40,7 @@ def _bind_config(cfg: Config) -> None:
     line_name = cfg.line_name
     qn = cfg.qn
     freq = cfg.freq
+    freq_mhz = cfg.freq_mhz
     name_str = cfg.name_str
     qn_str = cfg.qn_str
     Lid = cfg.Lid
@@ -75,6 +80,7 @@ ignorefiles: list[str]
 line_name: NDArray[np.str_]
 qn: NDArray[np.str_]
 freq: NDArray[np.str_]
+freq_mhz: NDArray[np.str_]
 name_str: NDArray[np.str_]
 qn_str: NDArray[np.str_]
 Lid: NDArray[np.str_]
@@ -174,78 +180,130 @@ def get_source_param(source_name: str) -> tuple[str, str, str, float, float, flo
     )
 
 
+def _reject_legacy_keywords(values: dict[str, object]) -> None:
+    renamed = {
+        "source_name": "source",
+        "line_name": "line",
+        "molecule": "line",
+        "quantum_number": "qn",
+        "Lid": "window",
+        "uvsub": "contsub",
+    }
+    for old, new in renamed.items():
+        if old in values:
+            raise TypeError(f"Keyword {old!r} was renamed to {new!r}")
+
+
 def get_uvt_window(
-    source_name: str, Lid: str, uvsub: bool = True, selfcal: bool = False
+    source: str,
+    window: str,
+    contsub: bool = True,
+    selfcal: bool = False,
+    **naming_values: object,
 ) -> str:
     """
     Function to generate the output file name for NOEMA uvt file.
     The file will be in the uvt_dir folder.
     The format will be:
-    {uvt_dir}/{Lid}/{source_name}_{Lid}(extension).uvt
-    where (extension) depends on the uvsub and selfcal parameters.
+    {uvt_dir}/{window}/{source}_{window}(extension).uvt
+    where (extension) depends on the contsub and selfcal parameters.
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    Lid: str
+    window: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
-    uvsub: bool
+    contsub: bool
         If True, the file will include '_uvsub' in the name.
     selfcal: bool
         If True, the file will include '_sc' in the name.
     """
+    _reject_legacy_keywords(naming_values)
+    if getattr(_cfg, "naming_custom", False) is True:
+        return _cfg.naming.uvt_window(
+            source, window, selfcal=selfcal, uvsub=contsub, **naming_values
+        )
+
     extension = ""
     if selfcal:
         extension += selfcal_ext
-    if uvsub:
+    if contsub:
         extension += uvsub_ext
-    uvt_filename = os.path.join(uvt_dir, Lid, f"{source_name}_{Lid}{extension}.uvt")
+    uvt_filename = os.path.join(uvt_dir, window, f"{source}_{window}{extension}.uvt")
     return uvt_filename
 
 
 def get_uvt_file(
-    source_name: str, line_name: str, qn: str, Lid: str, merge: bool = False
+    source: str,
+    line: str,
+    qn: str,
+    window: str,
+    merge: bool = False,
+    *,
+    configuration: str,
+    selfcal: bool = False,
+    contsub: bool = False,
+    **naming_values: object,
 ) -> str:
     """
     Function to generate the output file name for NOEMA uvt file.
     The format will be:
-    {dir_out}/{source_name}_{line_name}_{qn}_{Lid}.uvt
+    {dir_out}/{source}_{configuration}_{line}_{qn}_{window}.uvt
     where {dir_out} depends on the merge parameter.
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    line_name: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
     qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
-    Lid: str
+    window: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
         If True, the file will be saved in the merge folder, otherwise in the uvt folder.
+    configuration: str
+        Observing configuration, such as "CD" or "ACD".
+    selfcal, contsub: bool
+        Include the configured self-calibration and continuum-subtraction suffixes.
     """
+    _reject_legacy_keywords(naming_values)
+    if not configuration or not configuration.strip():
+        raise ValueError("configuration must be a non-empty observing configuration")
+    if (
+        getattr(_cfg, "naming_custom", False) is True
+        or _cfg.config.get("project", "style", fallback="").lower() == "prodige"
+    ):
+        return _cfg.naming.uvt_file(
+            source, line, qn, window, merge=merge,
+            config=configuration,
+            selfcal=selfcal_ext if selfcal else "",
+            contsub=uvsub_ext if contsub else "",
+            **naming_values,
+        )
+
     if not merge:
         dir_out = uvt_dir
     else:
         dir_out = uvt_dir_out
+    suffix = (selfcal_ext if selfcal else "") + (uvsub_ext if contsub else "")
     uvt_filename = os.path.join(
-        dir_out, Lid, f"{source_name}_{line_name}_{qn}_{Lid}.uvt"
+        dir_out, window, f"{source}_{configuration}_{line}_{qn}_{window}{suffix}.uvt"
     )
     return uvt_filename
 
 
 def get_30m_file(
-    source_name: str, molecule: str, quantum_number: str, Lid: str, merge: bool = False
+    source: str, line: str, qn: str, window: str | None = None,
+    merge: bool = False, *, configuration: str | None = None,
+    selfcal: bool = False, contsub: bool = False,
 ) -> str:
     """
     Function to generate the output file name for the single dish data.
-    The format will be:
-    {dir_sd}{source_out}_{molecule}_{quantum_number}.{file_extensions_sd}
-    of
-    {dir_sd}{source_out}_{molecule}_{quantum_number}_{Lid}.{file_extensions_sd}
-    depending on the merge parameter.
+    Standalone data are in ``dir_sd``. Merge-ready data share the merge
+    UVT's directory and basename with a single-dish extension.
 
     .. deprecated::
         This function is deprecated and will be removed in a future version.
@@ -254,16 +312,16 @@ def get_30m_file(
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    molecule: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    quantum_number: str
+    qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
-    Lid: str
+    window: str
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
-        If True, the file will include the Lid information in the name.
+    If True, use the merge UVT's directory and basename; window is required.
     """
     warnings.warn(
         "get_30m_file() is deprecated and will be removed in a future version. "
@@ -271,49 +329,91 @@ def get_30m_file(
         DeprecationWarning,
         stacklevel=2,
     )
-    return get_sd_file(source_name, molecule, quantum_number, Lid, merge=merge)
+    return get_sd_file(
+        source, line, qn, window, merge=merge,
+        configuration=configuration, selfcal=selfcal, contsub=contsub,
+    )
 
 
 def get_sd_file(
-    source_name: str, molecule: str, quantum_number: str, Lid: str, merge: bool = False
+    source: str,
+    line: str,
+    qn: str,
+    window: str | None = None,
+    merge: bool = False,
+    *,
+    configuration: str | None = None,
+    selfcal: bool = False,
+    contsub: bool = False,
+    **naming_values: object,
 ) -> str:
     """
     Function to generate the output file name for single dish data.
     Supports all single dish telescopes (IRAM 30m, APEX, etc.) as configured
     in the `telescope_sd` setting.
 
-    The file format will be:
-    {dir_sd}{source_out}_{molecule}_{quantum_number}.{file_extensions_sd}
-    or
-    {dir_sd}{source_out}_{molecule}_{quantum_number}_{Lid}.{file_extensions_sd}
-    depending on the merge parameter.
+    Standalone data are in ``dir_sd``. Merge-ready data share the merge
+    UVT's directory and basename with a single-dish extension.
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    molecule: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    quantum_number: str
+    qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
-    Lid: str
+    window: str | None
         Window unit for the NOEMA data, e.g., "L09", "l11", depending on the specification from the line catalogue.
     merge: bool
-        If True, the file will include the Lid information in the name.
+    If True, use the merge UVT's directory and basename with the single-dish
+    extension. A window is required. Selfcal and contsub select UVT suffixes.
+    configuration: str | None
+        Observing configuration; required for merge-ready files.
     """
+    _reject_legacy_keywords(naming_values)
     if merge:
-        name_out = (
-            f"{source_name}_{molecule}_{quantum_number}_{Lid}{file_extensions_sd}"
+        if not window:
+            raise ValueError("window is required for a merge-ready single-dish file")
+        if not configuration or not configuration.strip():
+            raise ValueError("configuration is required for a merge-ready single-dish file")
+        uvt_path = get_uvt_file(
+            source, line, qn, window, merge=True,
+            configuration=configuration, selfcal=selfcal, contsub=contsub,
+            **naming_values,
         )
-    else:
-        name_out = f"{source_name}_{molecule}_{quantum_number}{file_extensions_sd}"
+        return os.path.splitext(uvt_path)[0] + file_extensions_sd
+
+    if getattr(_cfg, "naming_custom", False) is True:
+        return _cfg.naming.sd_file(
+            source,
+            line,
+            qn,
+            window,
+            merge=merge,
+            **naming_values,
+        )
+
+    name_out = f"{source}_{line}_{qn}{file_extensions_sd}"
     outputfile = os.path.join(dir_sd, name_out)
     return outputfile
 
 
+def _line_filename_fields(index: int) -> tuple[str, str, str]:
+    return line_name[index], qn[index], Lid[index]
+
+
 def line_prepare_merge(
-    source_name: str, molecule: str, quantum_number: str, beam_eff: float | None = None
-) -> None:
+    source: str,
+    line: str,
+    qn: str,
+    beam_eff: float | None = None,
+    *,
+    configuration: str,
+    execute: bool | None = None,
+    selfcal: bool = False,
+    contsub: bool = False,
+) -> GildasResult:
     """
     Function to prepare the single dish (30m) data for the merging.
     It will ensure that the single dish (30m) data are in Tmb and in the correct frequency.
@@ -322,31 +422,56 @@ def line_prepare_merge(
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    molecule: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    quantum_number: str
+    qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     beam_eff: float | None
         Beam efficiency to convert from Ta* to Tmb. If None, the conversion will be done using the Ruze formula with the parameters in CLASS.
+    configuration: str
+        Observing configuration, such as "CD" or "ACD".
+    execute: bool | None
+        Override the configured GILDAS execution setting. False generates and
+        retains a CLASS script without deleting or copying data files.
+    selfcal, contsub: bool
+        Select UVT filenames with the configured self-calibration and
+        continuum-subtraction suffixes.
     """
-    _, _, source_out, _, _, _ = get_source_param(source_name)
+    _, _, source_out, _, _, _ = get_source_param(source)
 
-    print(f"[INFO] Reducing line: {molecule} with qn: {quantum_number}")
-    index = get_line_param(molecule, quantum_number)
-    qn_name_i = qn[index]
-    line_name_i = line_name[index]
-    freq_i = float(freq[index]) * 1e3
-    Lid_i = Lid[index]
-    file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    merge_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    print(f"[INFO] Reducing line: {line} with qn: {qn}")
+    index = get_line_param(line, qn)
+    line_name_i, qn_name_i, Lid_i = _line_filename_fields(index)
+    freq_i = freq_mhz[index]
+    file_uvt = os.path.abspath(
+        get_uvt_file(
+            source_out, line_name_i, qn_name_i, Lid_i, merge=False,
+            configuration=configuration, selfcal=selfcal, contsub=contsub,
+        )
+    )
+    merge_uvt = os.path.abspath(
+        get_uvt_file(
+            source_out, line_name_i, qn_name_i, Lid_i, merge=True,
+            configuration=configuration, selfcal=selfcal, contsub=contsub,
+        )
+    )
 
-    file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    merge_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=True)
+    file_sd = os.path.abspath(
+        get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    )
+    merge_sd = os.path.abspath(
+        os.path.splitext(merge_uvt)[0] + file_extensions_sd
+    )
+    protected_paths = (file_sd, file_uvt, merge_uvt)
+    if any(
+        os.path.realpath(merge_sd) == os.path.realpath(path)
+        for path in protected_paths
+    ):
+        raise ValueError("Single-dish output must not overwrite an input or merge UVT")
 
-    os.system(f"rm {os.path.splitext(merge_sd)[0]}.*")
-    fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
+    fb = StringIO()
     fb.write(f'file in "{file_sd}"\n')
     fb.write(f'file out "{merge_sd}"  single /overwrite\n')
     fb.write("say [INFO] Removing old output file\n")
@@ -375,19 +500,20 @@ def line_prepare_merge(
         f'table "{os.path.splitext(merge_uvt)[0]}" new /NOCHECK source /like "{file_uvt}"\n'
     )
     fb.write("exit\n")
-    fb.flush()
-    merged_folder = os.path.dirname(merge_uvt)  # get path only
-    if not os.path.exists(merged_folder):
-        os.makedirs(merged_folder)
+    runner_kwargs = {} if execute is None else {"execute": execute}
+    runner = _cfg.make_gildas_runner(**runner_kwargs)
+    merged_folder = os.path.dirname(merge_uvt)
+    if runner.execute:
+        os.makedirs(merged_folder, exist_ok=True)
+        if os.path.exists(merge_sd):
+            os.remove(merge_sd)
+    result = runner.run_class(fb.getvalue())
+    if result.executed and os.path.realpath(file_uvt) != os.path.realpath(merge_uvt):
+        shutil.copyfile(file_uvt, merge_uvt)
+    return result
 
-    # copy to folder for merging
-    # os.system("cp {0}.tab {1}/.".format(outputfile, merged_folder))
-    os.system(f"class -nw @ {fb.name}")
-    fb.close()
-    os.system(f"cp {file_uvt} {merged_folder}/.")
 
-
-def line_reduce_30m(source_name: str, molecule: str, quantum_number: str) -> None:
+def line_reduce_30m(source: str, line: str, qn: str) -> None:
     """
     Function to perform a simple data reduction of the 30m data.
     Output spectra will be stored in Ta* scale.
@@ -400,11 +526,11 @@ def line_reduce_30m(source_name: str, molecule: str, quantum_number: str) -> Non
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    molecule: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    quantum_number: str
+    qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     """
     warnings.warn(
@@ -413,10 +539,10 @@ def line_reduce_30m(source_name: str, molecule: str, quantum_number: str) -> Non
         DeprecationWarning,
         stacklevel=2,
     )
-    line_reduce_sd(source_name, molecule, quantum_number)
+    line_reduce_sd(source, line, qn)
 
 
-def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None:
+def line_reduce_sd(source: str, line: str, qn: str) -> None:
     """
     Function to perform simple data reduction on single dish data.
     Supports all single dish telescopes (IRAM 30m, APEX, etc.) as configured
@@ -427,14 +553,14 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    molecule: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    quantum_number: str
+    qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
     """
-    _, source_find, source_out, ra0, dec0, vlsr = get_source_param(source_name)
+    _, source_find, source_out, ra0, dec0, vlsr = get_source_param(source)
 
     freq_corr = 1 - vlsr / 3e5
     # Get data files list from all input directories
@@ -447,14 +573,13 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
         raise ValueError(f"No files found in the input directory: {inputdir}")
 
     print(f"[INFO] Found {len(inputfiles)} files in input directories")
-    print(f"[INFO] Reducing line: {molecule} with qn: {quantum_number}")
-    index = get_line_param(molecule, quantum_number)
-    print(source_out, line_name[index], qn[index])
+    print(f"[INFO] Reducing line: {line} with qn: {qn}")
+    index = get_line_param(line, qn)
+    line_name_i, qn_name_i, Lid_i = _line_filename_fields(index)
+    print(source_out, line_name_i, qn_name_i)
     # Get frequency
-    Lid_i = Lid[index]
-    qn_name_i = qn[index]
-    line_name_i = line_name[index]
-    freq_i = float(freq[index]) * 1e3
+    freq_i = freq_mhz[index]
+    find_frequency = float(freq_i) * freq_corr
     dv_base = float(vel_width_base_sd[index])
     dv = float(vel_width_sd[index])
     print(vlsr + 0.1, dv + 0.1, dv_base + 0.1)
@@ -462,9 +587,9 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     vel_ext = "{0:.2f}  {1:.2f}".format(vlsr - dv, vlsr + dv)
     # Define output
     file_sd = get_sd_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
-    os.system(f"rm {os.path.splitext(file_sd)[0]}.*")
+    os.system(f"rm -f {os.path.splitext(file_sd)[0]}.*")
     fb = tempfile.NamedTemporaryFile(delete=True, mode="w+", dir=".", suffix=".class")
-    fb.write(f"file out {file_sd}  single\n")
+    fb.write(f'file out "{file_sd}"  single\n')
     fb.write("say [INFO] Removing old output file\n")
     fb.write(f'say "[INFO] Making new output file: {file_sd}"\n')
     ####
@@ -486,7 +611,7 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
         fb.write("set line *\n")
         # Open and check file
         # only observations with reference frequency
-        fb.write("find /frequency {0}\n".format(freq_i * freq_corr))
+        fb.write(f"find /frequency {find_frequency}\n")
         fb.write("set mode x auto\n")
         fb.write("set unit v\n")
         fb.write("get zero\n")
@@ -497,7 +622,7 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
         fb.write(f"  modify freq {freq_i}\n")
         fb.write(f"  modify source {source_out}\n")
         # RA and Dec centers are in hrs and degrees, respectively
-        fb.write(f"  modify projection = {ra0/15.0} {dec0} =\n")
+        fb.write(f"  modify projection = {ra0 / 15.0} {dec0} =\n")
         fb.write(f"  modify telescope {telescope_class}\n")
         fb.write(f"  extract {vel_ext} velocity\n")  # cut out spectra
         fb.write(f"  set window {vel_win}\n")  # define baseline window
@@ -511,27 +636,30 @@ def line_reduce_sd(source_name: str, molecule: str, quantum_number: str) -> None
     # Now process the whole dataset available
     # Regrid and output to fits file
     print(file_sd)
-    fb.write(f"file in {file_sd}\n")
+    fb.write(f'file in "{file_sd}"\n')
     fb.write("find /all\n")
     fb.write("if found.eq.0 exit\n")
-    fb.write(f"table {os.path.splitext(file_sd)[0]} new /nocheck\n")
-    fb.write(f"xy_map {os.path.splitext(file_sd)[0]}\n")
+    fb.write(f'table "{os.path.splitext(file_sd)[0]}" new /nocheck\n')
+    fb.write(f'xy_map "{os.path.splitext(file_sd)[0]}"\n')
     fb.write("exit\n")
     fb.flush()
     os.system(f"rm -f {file_sd}")
-    os.system(f"class -nw @ {fb.name}")
+    fb.seek(0)
+    _cfg.make_gildas_runner().run_class(fb.read())
     fb.close()
 
 
 def line_make_uvt(
-    source_name: str,
-    line_i: str,
-    qn_i: str,
-    uvsub: bool = True,
+    source: str,
+    line: str,
+    qn: str,
+    contsub: bool = True,
     selfcal: bool = False,
     dv: float | None = None,
     dv_min: float | None = None,
     dv_max: float | None = None,
+    *,
+    configuration: str,
 ) -> None:
     """
     Function to perform an excision of a targeted molecular line, from NOEMA data already calibrated.
@@ -540,13 +668,13 @@ def line_make_uvt(
 
     parameters:
     -----------
-    source_name: str
+    source: str
         Name of the source to reduce, e.g., "B5"
-    line_i: str
+    line: str
         Molecule to reduce, e.g., "CO", "13CO", "N2H+"
-    qn_i: str
+    qn: str
         Quantum numbers of the line to reduce, e.g., "1-0" or "N=1-0,J=3/2-1/2,F=1/2-1/2"
-    uvsub: bool
+    contsub: bool
         If True, the file will include '_uvsub' in the name.
     selfcal: bool
         If True, the file will include '_sc' in the name.
@@ -556,24 +684,29 @@ def line_make_uvt(
         Minimum velocity difference with respect to vlsr to use for the extraction in km/s. Used only if dv is not defined and if vmax is also provided.
     dv_max: float
         Maximum velocity difference with respect to vlsr to use for the extraction in km/s. Used only if dv is not defined and if vmax is also provided.
+    configuration: str
+        Observing configuration, such as "CD" or "ACD".
     """
-    _, _, source_out, _, _, vlsr = get_source_param(source_name)
+    _, _, source_out, _, _, vlsr = get_source_param(source)
 
-    print(f"[INFO] Reducing line: {line_i} with qn: {qn_i}")
-    index = get_line_param(line_i, qn_i)
-    print(source_out, line_name[index], qn[index])
+    print(f"[INFO] Reducing line: {line} with qn: {qn}")
+    index = get_line_param(line, qn)
+    line_name_i, qn_name_i, Lid_i = _line_filename_fields(index)
+    print(source_out, line_name_i, qn_name_i)
     # Get frequency
-    Lid_i = Lid[index]
-    qn_name_i = qn[index]
-    line_name_i = line_name[index]
-    freq_i = float(freq[index]) * 1e3
+    freq_i = freq_mhz[index]
     if dv is not None:
         dv_window = dv
     else:
         dv_window = float(vel_width[index])
     #
-    window_uvt = get_uvt_window(source_out, Lid_i, uvsub=uvsub, selfcal=selfcal)
-    file_uvt = get_uvt_file(source_out, line_name_i, qn_name_i, Lid_i, merge=False)
+    window_uvt = get_uvt_window(
+        source_out, Lid_i, contsub=contsub, selfcal=selfcal, config=configuration
+    )
+    file_uvt = get_uvt_file(
+        source_out, line_name_i, qn_name_i, Lid_i, merge=False,
+        configuration=configuration, selfcal=selfcal, contsub=contsub,
+    )
     if dv is None and dv_min is not None and dv_max is not None:
         vel_win = "{0:.2f}  {1:.2f}".format(vlsr - dv_min, vlsr + dv_max)
     else:

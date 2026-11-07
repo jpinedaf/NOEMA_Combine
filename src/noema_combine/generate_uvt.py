@@ -94,7 +94,7 @@ def calibration_type(
         file.write("set amplitude baseline relative\n")
     file.write("set drop 0.00000001 0.00000001\n")
     file.write("!\n")
-    file.write(f"file in {file_name}\n")
+    file.write(f'file in "{file_name}"\n')
     return
 
 
@@ -157,30 +157,30 @@ def prepare_config(
     high_res_parameters: Dict[str, int],
     config: str = "C",
 ) -> None:
-    #
     print(f"Creating {config} configuration CLIC file for {setup_name}")
-    file_out = open(f"{setup_name}-{config}-uvts.clic", "w")
-    make_header(file_out)
+    # validate sources before creating the output file
     uvt_names = make_uvt_names(sources, config)
-    print_makespw(file_out, uvt_names, sources)
-    look_spw(file_out, high_res_parameters)
-    for i, entry in enumerate(hpb_dict):
-        file_name = entry.get("file", None)
-        if file_name is None:
-            print(f"Warning: No file specified in entry {i}. Skipping.")
-            continue
-        phase_cal = entry.get("phase calibration type", "antenna")
-        amp_cal = entry.get("amplitude calibration type", "antenna")
-        RF_cal = entry.get("RF calibration type", "antenna")
+    with open(f"{setup_name}-{config}-uvts.clic", "w") as file_out:
+        make_header(file_out)
+        print_makespw(file_out, uvt_names, sources)
+        look_spw(file_out, high_res_parameters)
+        for i, entry in enumerate(hpb_dict):
+            file_name = entry.get("file", None)
+            if file_name is None:
+                print(f"Warning: No file specified in entry {i}. Skipping.")
+                continue
+            phase_cal = entry.get("phase calibration type", "antenna")
+            amp_cal = entry.get("amplitude calibration type", "antenna")
+            RF_cal = entry.get("RF calibration type", "antenna")
 
-        calibration_type(file_out, receiver, file_name, phase_cal, amp_cal, RF_cal)
-        file_out.write("@ loopspw\n")
-        if i == 0:
-            file_out.write("!\n!reuse the previous file\nlet new_file 0\n!\n")
-        print(
-            f"File: {file_name}, Phase Calibration: {phase_cal}, Amplitude Calibration: {amp_cal}, RF Calibration: {RF_cal}"
-        )
-    return
+            calibration_type(file_out, receiver, file_name, phase_cal, amp_cal, RF_cal)
+            file_out.write("@ loopspw\n")
+            if i == 0:
+                file_out.write("!\n!reuse the previous file\nlet new_file 0\n!\n")
+            print(
+                f"File: {file_name}, Phase Calibration: {phase_cal}, "
+                f"Amplitude Calibration: {amp_cal}, RF Calibration: {RF_cal}"
+            )
 
 
 def process_source(setup_name: str, config_path: str = "clic_config_MIOP.yaml") -> None:

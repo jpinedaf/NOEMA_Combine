@@ -3,7 +3,7 @@ requires = ["setuptools >= 64", "setuptools-scm >= 8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-dependencies = ["numpy", "pyyaml", "astropy", "ruff==0.4.6"]
+dependencies = ["numpy", "pyyaml", "astropy"]
 name = "noema_combine"
 requires-python = ">=3.10"
 authors = [{ name = "Jaime E. Pineda", email = "jpineda@mpe.mpg.de" }]
@@ -11,7 +11,6 @@ maintainers = [{ name = "Jaime E. Pineda", email = "jpineda@mpe.mpg.de" }]
 description = "Package to be used for 30-m and NOEMA data processing and combination."
 readme = "README.md"
 license = { text = "MIT License" }
-
 dynamic = ["version"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -24,6 +23,15 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+]
+
+
+[project.optional-dependencies]
+docs = ["sphinx>=7", "myst-parser>0.18", "sphinx-copybutton>=0.5"]
+dev = [
+  "coverage[toml]>=7",
+  "pytest>=8",
+  "ruff>=0.4.6",
 ]
 
 [tool.setuptools_scm]
@@ -40,9 +48,11 @@ namespaces = false
 [tool.coverage.run]
 branch = true
 source = ["noema_combine"]
+omit = ["*/tests/*", "*/_version.py"]
 
 [tool.pytest.ini_options]
 pythonpath = "src/"
+testpaths = ["tests"]
 addopts = ["--ignore=src/noema_combine/_version.py"]
 
 [tool.coverage.report]
